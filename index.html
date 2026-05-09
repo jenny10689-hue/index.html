@@ -114,7 +114,7 @@
     .preset-chip-del:hover { background: #f1efe8; color: #5f5e5a; }
 
     /* 課金快速輸入 */
-    #topup-inline { background: #f9f6f0; border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid #e8e4dc; }
+#topup-inline { background: var(--hover); border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); }
     #topup-inline h3 { font-size: 0.85rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.6rem; }
     #topup-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     #topup-result { font-size: 0.85rem; color: #5f5e5a; line-height: 1.8; }
@@ -212,7 +212,13 @@
       font-size: 1.1rem; cursor: pointer; transition: all 0.12s;
       position: relative;
     }
-    .emoji-option:hover { background: #e8e4dc; }
+.emoji-option {
+  width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid transparent;
+  background: var(--input-bg); display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; cursor: pointer; transition: all 0.12s;
+  position: relative;
+}
+.emoji-option:hover { background: var(--hover); }
     .emoji-option.selected { border-color: #444441; background: #fff; }
     .emoji-option .emoji-tooltip {
       display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
@@ -501,7 +507,7 @@ body { background-color: var(--bg); color: var(--text); }
           <div id="filter-buttons" style="display:flex; flex-wrap:wrap; gap:0.4rem; flex:1;"></div>
           <div class="emoji-option" onclick="openCategoryModalFromRecord()"
                title="管理分類"
-               style="background:#e8e4dc; flex-shrink:0; font-size:0.75rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none;">
+style="background:var(--hover); flex-shrink:0; font-size:0.75rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none"
             ⚙️ 管理
           </div>
         </div>
@@ -685,7 +691,7 @@ body { background-color: var(--bg); color: var(--text); }
           <div class="emoji-picker" id="cat-picker" style="display:contents;"></div>
           <div style="flex:1;"></div>
           <div class="emoji-option" onclick="openCategoryModalFromRecord()" title="管理分類"
-               style="background:#e8e4dc; border:1.5px dashed #b4b2a9; color:#5f5e5a; font-size:0.75rem; width:auto; padding:0 0.5rem; border-radius:8px; white-space:nowrap;">
+style="background:var(--hover); border:1.5px dashed var(--border); color:var(--text-sub); font-size:0.75rem; width:auto; padding:0 0.5rem; border-radius:8px; white-space:nowrap;"
             ⚙️
           </div>
         </div>
