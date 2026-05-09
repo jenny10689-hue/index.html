@@ -439,15 +439,7 @@ body { background-color: var(--bg); color: var(--text); }
   <button class="sidebar-item" id="btn-budget" onclick="showPage('budget')">    <span class="sidebar-icon">🎯</span><span class="sidebar-label">預算管理</span></button>
   <button class="sidebar-item" id="btn-stocks" onclick="showPage('stocks')">    <span class="sidebar-icon">📈</span><span class="sidebar-label">存股記錄</span></button>
   <button class="sidebar-item" id="btn-manage" onclick="showPage('ledger-manage')"><span class="sidebar-icon">📒</span><span class="sidebar-label">帳本管理</span></button>  <div style="flex:1;"></div>
- <button class="sidebar-item" id="btn-settings" onclick="showPage('settings')"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">設定</span></button>
   <button class="sidebar-item" onclick="logout()"><span class="sidebar-icon">🚪</span><span class="sidebar-label">登出</span></button>
-</div>
-<div id="page-settings" class="container" style="display:none;">
-  <h1>⚙️ 設定</h1>
-  <div class="card">
-    <h2>🎨 配色主題</h2>
-    <div class="theme-grid" id="theme-grid"></div>
-  </div>
 </div>
 <!-- 主畫面 -->
 <div id="main" style="display:none;">
@@ -843,6 +835,14 @@ body { background-color: var(--bg); color: var(--text); }
   </div>
 </div>
 
+<!-- 配色主題 -->
+<div id="theme-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'theme-modal')">
+  <div class="modal-box" style="width:400px;">
+    <h2 id="theme-modal-title">🎨 選擇配色</h2>
+    <div class="theme-grid" id="theme-grid" style="margin-bottom:1rem;"></div>
+    <button class="btn-full" onclick="closeThemeModal()">關閉</button>
+  </div>
+</div>
 <!-- 邀請成員 -->
 <div id="invite-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'invite-modal')">
   <div class="modal-box">
@@ -1194,7 +1194,8 @@ async function updateLedgerUI() {
       await updateDoc(doc(db,'ledgers',currentLedgerId), { expenseCategories });
       currentLedger.expenseCategories = expenseCategories;
     }
-
+// 套用帳本配色
+applyTheme(currentLedger.theme || 'original');
     renderCategories();
     renderPresets();
   }
@@ -1226,6 +1227,12 @@ if (ledger.owner === currentEmail) {
   invBtn.onclick = () => openInviteModal(ledger);
   btnGroup.appendChild(invBtn);
 
+  const themeBtn = document.createElement('button');
+  themeBtn.textContent = '🎨';
+  themeBtn.className = 'btn-sm';
+  themeBtn.title = '配色主題';
+  themeBtn.onclick = () => openThemeModal(ledger);
+  btnGroup.appendChild(themeBtn);
   // 個人帳本不能刪
 if (ledger.type !== 'personal') {
     const delBtn = document.createElement('button');
@@ -2826,6 +2833,82 @@ window.showPage = (function(original) {
     }
   };
 })(window.showPage);
+// ===========================
+// 🎨 配色主題
+// ===========================
+
+const THEMES = [
+  { id:'original',  name:'原色',   bg:'#f1efe8', sidebar:'#ffffff', card:'#ffffff', border:'#d3d1c7', accent:'#444441', text:'#2c2c2a', textSub:'#5f5e5a', hover:'#f1efe8' },
+  { id:'cream',     name:'奶油粉', bg:'#fdf6f0', sidebar:'#fff9f5', card:'#ffffff', border:'#e8d5c4', accent:'#c0845a', text:'#2c2c2a', textSub:'#6b5244', hover:'#fdf0e8' },
+  { id:'mist-blue', name:'霧藍',   bg:'#eef2f7', sidebar:'#f5f8fc', card:'#ffffff', border:'#c8d8eb', accent:'#4a7fb5', text:'#2c2c2a', textSub:'#445566', hover:'#e4ecf5' },
+  { id:'yellow',    name:'鵝黃',   bg:'#fdfbee', sidebar:'#fffef5', card:'#ffffff', border:'#e8e0b0', accent:'#b5960a', text:'#2c2c2a', textSub:'#5a5020', hover:'#f5f0d0' },
+  { id:'rose',      name:'玫瑰粉', bg:'#fdf0f3', sidebar:'#fff5f7', card:'#ffffff', border:'#edc4cd', accent:'#c0607a', text:'#2c2c2a', textSub:'#6b3040', hover:'#fae0e6' },
+  { id:'purple',    name:'霧紫',   bg:'#f3f0f8', sidebar:'#f8f5fc', card:'#ffffff', border:'#d4c8eb', accent:'#7a5faa', text:'#2c2c2a', textSub:'#4a3866', hover:'#ece5f5' },
+  { id:'forest',    name:'森林綠', bg:'#eef4ef', sidebar:'#f5faf5', card:'#ffffff', border:'#bdd8c0', accent:'#3d7a4a', text:'#2c2c2a', textSub:'#2a4a30', hover:'#ddeedd' },
+  { id:'dark',      name:'深色',   bg:'#1a1a18', sidebar:'#242422', card:'#2c2c2a', border:'#3a3a38', accent:'#a0a09e', text:'#e8e8e6', textSub:'#b0b0ae', hover:'#323230' },
+];
+
+let currentTheme = 'original';
+let themingLedgerId = null;
+
+function applyTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+  const r = document.documentElement;
+  r.style.setProperty('--bg',       theme.bg);
+  r.style.setProperty('--sidebar',  theme.sidebar);
+  r.style.setProperty('--card',     theme.card);
+  r.style.setProperty('--border',   theme.border);
+  r.style.setProperty('--accent',   theme.accent);
+  r.style.setProperty('--accent2',  theme.accent);
+  r.style.setProperty('--text',     theme.text);
+  r.style.setProperty('--text-sub', theme.textSub);
+  r.style.setProperty('--hover',    theme.hover);
+  r.style.setProperty('--input-bg', theme.bg);
+  r.style.setProperty('--tag-bg',   theme.bg);
+  r.style.setProperty('--text-dim', '#888780');
+  currentTheme = themeId;
+}
+
+window.openThemeModal = function(ledger) {
+  themingLedgerId = ledger.id;
+  document.getElementById('theme-modal-title').textContent = `🎨 ${ledger.name} 配色`;
+  renderThemeGrid(ledger.theme || 'original');
+  document.getElementById('theme-modal').classList.add('show');
+};
+
+window.closeThemeModal = function() {
+  document.getElementById('theme-modal').classList.remove('show');
+  themingLedgerId = null;
+};
+
+function renderThemeGrid(activeThemeId) {
+  const container = document.getElementById('theme-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  THEMES.forEach(function(theme) {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (activeThemeId === theme.id ? ' active' : '');
+    card.innerHTML = `
+      <div class="theme-preview">
+        <div style="width:30%; background:${theme.sidebar};"></div>
+        <div style="flex:1; background:${theme.bg}; padding:4px; display:flex; flex-direction:column; gap:3px;">
+          <div style="flex:1; background:${theme.card}; border-radius:3px; border:1px solid ${theme.border};"></div>
+          <div style="height:8px; background:${theme.accent}; border-radius:3px; opacity:0.8;"></div>
+        </div>
+      </div>
+      <div class="theme-name">${theme.name}</div>
+    `;
+    card.onclick = async function() {
+      applyTheme(theme.id);
+      await updateDoc(doc(db,'ledgers',themingLedgerId), { theme: theme.id });
+      // 更新本地 ledger 資料
+      const l = ledgers.find(l => l.id === themingLedgerId);
+      if (l) l.theme = theme.id;
+      renderThemeGrid(theme.id);
+    };
+    container.appendChild(card);
+  });
+}
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
       const el = document.getElementById(modalId);
