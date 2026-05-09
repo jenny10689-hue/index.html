@@ -1176,18 +1176,42 @@ window.createLedger = async function(type) {
         <span style="font-size:0.75rem; color:#888780; margin-left:0.5rem;">${ledger.members.length} 人</span>`;
       const btnGroup = document.createElement('div');
       btnGroup.style.cssText = 'display:flex; gap:0.5rem;';
-      if (ledger.owner === currentEmail) {
-        const invBtn = document.createElement('button');
-        invBtn.textContent = '邀請成員';
-        invBtn.className = 'btn-sm';
-        invBtn.onclick = () => openInviteModal(ledger);
-        btnGroup.appendChild(invBtn);
-      }
+if (ledger.owner === currentEmail) {
+  const invBtn = document.createElement('button');
+  invBtn.textContent = '邀請成員';
+  invBtn.className = 'btn-sm';
+  invBtn.onclick = () => openInviteModal(ledger);
+  btnGroup.appendChild(invBtn);
+
+  // 個人帳本不能刪
+  if (ledger.type !== 'personal') {
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '刪除';
+    delBtn.className = 'btn-sm';
+    delBtn.style.color = '#c0392b';
+    delBtn.style.borderColor = '#e0b0ad';
+    delBtn.onclick = () => deleteLedger(ledger);
+    btnGroup.appendChild(delBtn);
+  }
+}
       row.appendChild(info);
       row.appendChild(btnGroup);
       container.appendChild(row);
     });
   }
+
+  async function deleteLedger(ledger) {
+  if (!confirm(`確定要刪除「${ledger.name}」？\n裡面的記錄也會一併刪除，無法復原！`)) return;
+  const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
+  for (const d of snap.docs) {
+    await deleteDoc(doc(db,'ledgers',ledger.id,'expenses',d.id));
+  }
+  await deleteDoc(doc(db,'ledgers',ledger.id));
+  if (currentLedgerId === ledger.id) {
+    currentLedgerId = null;
+    currentLedger = null;
+  }
+}
 
 
   // ===========================
