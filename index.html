@@ -1284,7 +1284,6 @@ if (ledger.type !== 'personal') {
       if (data.sharedExpenseCategories) sharedExpenseCategories = data.sharedExpenseCategories;
       if (data.presets)                 presets                 = data.presets;
       if (data.budgets)                 budgets                 = data.budgets;
-    if (data.theme) { currentTheme = data.theme; applyTheme(data.theme); }
     } else {
       await saveUserSettings();
     }
@@ -2751,9 +2750,6 @@ window.openCategoryModalFromRecord = function() {
       className: 'noto-emoji'
     });
   }
-  // ===========================
-// 🎨 配色主題
-// ===========================
 
 
 // ===========================
