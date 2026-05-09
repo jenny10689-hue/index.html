@@ -368,6 +368,42 @@
       .cc-summary-row { grid-template-columns: 1fr 1fr; }
       #fab { bottom: 1.25rem; right: 1.25rem; }
     }
+  /* 配色主題 */
+:root {
+  --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff;
+  --border: #d3d1c7; --text: #2c2c2a; --text-sub: #5f5e5a;
+  --text-dim: #888780; --hover: #f1efe8; --input-bg: #f1efe8;
+  --accent: #444441; --accent2: #2c2c2a;
+}
+body { background-color: var(--bg); color: var(--text); }
+#sidebar { background: var(--sidebar); border-color: var(--border); }
+.card, .summary-card { background: var(--card); border-color: var(--border); }
+.sidebar-item:hover { background-color: var(--hover); }
+.sidebar-item.active { background-color: var(--hover); border-color: var(--accent); }
+.input-sm { background: var(--input-bg); border-color: var(--border); color: var(--text); }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent2); }
+#fab { background: var(--accent); }
+#fab:hover { background: var(--accent2); }
+.budget-bar { background: var(--accent); }
+
+/* 主題預覽卡片 */
+.theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+.theme-card {
+  border-radius: 10px; border: 2px solid var(--border);
+  padding: 0.75rem; cursor: pointer; transition: all 0.15s;
+}
+.theme-card:hover { transform: scale(1.03); }
+.theme-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.theme-preview {
+  height: 56px; border-radius: 6px; margin-bottom: 0.5rem;
+  display: flex; overflow: hidden;
+}
+.theme-preview-sidebar { width: 30%; }
+.theme-preview-main { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px; }
+.theme-preview-card { flex: 1; border-radius: 3px; }
+.theme-name { font-size: 0.78rem; font-weight: 500; text-align: center; color: var(--text-sub); }
+@media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 </head>
 <body>
@@ -403,9 +439,16 @@
   <button class="sidebar-item" id="btn-budget" onclick="showPage('budget')">    <span class="sidebar-icon">🎯</span><span class="sidebar-label">預算管理</span></button>
   <button class="sidebar-item" id="btn-stocks" onclick="showPage('stocks')">    <span class="sidebar-icon">📈</span><span class="sidebar-label">存股記錄</span></button>
   <button class="sidebar-item" id="btn-manage" onclick="showPage('ledger-manage')"><span class="sidebar-icon">📒</span><span class="sidebar-label">帳本管理</span></button>  <div style="flex:1;"></div>
+ <button class="sidebar-item" id="btn-settings" onclick="showPage('settings')"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">設定</span></button>
   <button class="sidebar-item" onclick="logout()"><span class="sidebar-icon">🚪</span><span class="sidebar-label">登出</span></button>
 </div>
-
+<div id="page-settings" class="container" style="display:none;">
+  <h1>⚙️ 設定</h1>
+  <div class="card">
+    <h2>🎨 配色主題</h2>
+    <div class="theme-grid" id="theme-grid"></div>
+  </div>
+</div>
 <!-- 主畫面 -->
 <div id="main" style="display:none;">
 
@@ -1234,6 +1277,7 @@ if (ledger.type !== 'personal') {
       if (data.sharedExpenseCategories) sharedExpenseCategories = data.sharedExpenseCategories;
       if (data.presets)                 presets                 = data.presets;
       if (data.budgets)                 budgets                 = data.budgets;
+    if (data.theme) { currentTheme = data.theme; applyTheme(data.theme); }
     } else {
       await saveUserSettings();
     }
@@ -2700,6 +2744,88 @@ window.openCategoryModalFromRecord = function() {
       className: 'noto-emoji'
     });
   }
+  // ===========================
+// 🎨 配色主題
+// ===========================
+
+const THEMES = [
+  { id:'original',  name:'原色',    bg:'#f1efe8', sidebar:'#ffffff', accent:'#444441', card:'#ffffff', border:'#d3d1c7' },
+  { id:'cream',     name:'奶油粉',  bg:'#fdf6f0', sidebar:'#fff9f5', accent:'#c0845a', card:'#ffffff', border:'#e8d5c4' },
+  { id:'mist-blue', name:'霧藍',    bg:'#eef2f7', sidebar:'#f5f8fc', accent:'#4a7fb5', card:'#ffffff', border:'#c8d8eb' },
+  { id:'yellow',    name:'鵝黃',    bg:'#fdfbee', sidebar:'#fffef5', accent:'#b5960a', card:'#ffffff', border:'#e8e0b0' },
+  { id:'rose',      name:'玫瑰粉',  bg:'#fdf0f3', sidebar:'#fff5f7', accent:'#c0607a', card:'#ffffff', border:'#edc4cd' },
+  { id:'purple',    name:'霧紫',    bg:'#f3f0f8', sidebar:'#f8f5fc', accent:'#7a5faa', card:'#ffffff', border:'#d4c8eb' },
+  { id:'forest',    name:'森林綠',  bg:'#eef4ef', sidebar:'#f5faf5', accent:'#3d7a4a', card:'#ffffff', border:'#bdd8c0' },
+  { id:'dark',      name:'深色',    bg:'#1a1a18', sidebar:'#242422', accent:'#a0a09e', card:'#2c2c2a', border:'#3a3a38' },
+];
+
+let currentTheme = 'original';
+
+function applyTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+  const root = document.documentElement;
+  root.style.setProperty('--bg',      theme.bg);
+  root.style.setProperty('--sidebar', theme.sidebar);
+  root.style.setProperty('--card',    theme.card);
+  root.style.setProperty('--border',  theme.border);
+  root.style.setProperty('--accent',  theme.accent);
+  root.style.setProperty('--accent2', theme.accent);
+  // 深色主題特別處理文字顏色
+  if (themeId === 'dark') {
+    root.style.setProperty('--text',     '#e8e8e6');
+    root.style.setProperty('--text-sub', '#b0b0ae');
+    root.style.setProperty('--text-dim', '#888780');
+    root.style.setProperty('--hover',    '#323230');
+    root.style.setProperty('--input-bg', '#323230');
+    root.style.setProperty('--tag-bg',   '#323230');
+  } else {
+    root.style.setProperty('--text',     '#2c2c2a');
+    root.style.setProperty('--text-sub', '#5f5e5a');
+    root.style.setProperty('--text-dim', '#888780');
+    root.style.setProperty('--hover',    theme.bg);
+    root.style.setProperty('--input-bg', theme.bg);
+    root.style.setProperty('--tag-bg',   theme.bg);
+  }
+  currentTheme = themeId;
+  renderThemeGrid();
+}
+
+function renderThemeGrid() {
+  const container = document.getElementById('theme-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  THEMES.forEach(function(theme) {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (currentTheme === theme.id ? ' active' : '');
+    card.innerHTML = `
+      <div class="theme-preview">
+        <div class="theme-preview-sidebar" style="background:${theme.sidebar};"></div>
+        <div class="theme-preview-main" style="background:${theme.bg};">
+          <div class="theme-preview-card" style="background:${theme.card}; border:1px solid ${theme.border};"></div>
+          <div class="theme-preview-card" style="background:${theme.accent}; opacity:0.7;"></div>
+        </div>
+      </div>
+      <div class="theme-name">${theme.name}</div>
+    `;
+    card.onclick = async function() {
+      applyTheme(theme.id);
+      await setDoc(doc(db,'users',currentUid), { theme: theme.id }, { merge: true });
+    };
+    container.appendChild(card);
+  });
+}
+
+window.showPage = (function(original) {
+  return function(page) {
+    original(page);
+    if (page === 'settings') {
+      document.getElementById('page-settings').style.display = 'block';
+      document.getElementById('btn-settings').classList.add('active');
+      document.getElementById('fab').style.display = 'none';
+      renderThemeGrid();
+    }
+  };
+})(window.showPage);
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
       const el = document.getElementById(modalId);
