@@ -1184,7 +1184,7 @@ if (ledger.owner === currentEmail) {
   btnGroup.appendChild(invBtn);
 
   // 個人帳本不能刪
-  if (ledger.type !== 'personal') {
+if (ledger.type !== 'personal') {
     const delBtn = document.createElement('button');
     delBtn.textContent = '刪除';
     delBtn.className = 'btn-sm';
@@ -1192,6 +1192,13 @@ if (ledger.owner === currentEmail) {
     delBtn.style.borderColor = '#e0b0ad';
     delBtn.onclick = () => deleteLedger(ledger);
     btnGroup.appendChild(delBtn);
+  } else {
+    // 佔位，保持對齊
+    const placeholder = document.createElement('button');
+    placeholder.className = 'btn-sm';
+    placeholder.style.visibility = 'hidden';
+    placeholder.textContent = '刪除';
+    btnGroup.appendChild(placeholder);
   }
 }
       row.appendChild(info);
