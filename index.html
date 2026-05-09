@@ -1170,7 +1170,7 @@ window.createLedger = async function(type) {
     container.innerHTML = '';
     ledgers.forEach(function(ledger) {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid #f1efe8;';
+      row.style.cssText = 'display:grid; grid-template-columns:1fr auto; align-items:center; padding:0.6rem 0; border-bottom:1px solid #f1efe8;';
       const info = document.createElement('div');
       info.innerHTML = `<span style="font-size:0.9rem; font-weight:500;">${ledger.name}</span>
         <span style="font-size:0.75rem; color:#888780; margin-left:0.5rem;">${ledger.members.length} 人</span>`;
