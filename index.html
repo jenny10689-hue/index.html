@@ -1202,9 +1202,10 @@ async function updateLedgerUI() {
     }
 // 套用帳本配色
 applyTheme(currentLedger.theme || 'original');
-    renderCategories();
+renderCatPicker();
+    renderPayPicker();
     renderPresets();
-  }
+    }
 window.createLedger = async function(type) {
     const name = document.getElementById('new-ledger-name').value.trim();
     if (!name) { alert('請輸入帳本名稱！'); return; }
