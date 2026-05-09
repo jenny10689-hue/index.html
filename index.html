@@ -2757,16 +2757,15 @@ window.openCategoryModalFromRecord = function() {
 // ===========================
 
 const THEMES = [
-  { id:'original',  name:'原色',   bg:'#f1efe8', sidebar:'#ffffff', card:'#ffffff', border:'#d3d1c7', accent:'#444441', text:'#2c2c2a', textSub:'#5f5e5a', hover:'#f1efe8' },
-  { id:'cream',     name:'奶油粉', bg:'#fdf6f0', sidebar:'#fff9f5', card:'#ffffff', border:'#e8d5c4', accent:'#c0845a', text:'#2c2c2a', textSub:'#6b5244', hover:'#fdf0e8' },
-  { id:'mist-blue', name:'霧藍',   bg:'#eef2f7', sidebar:'#f5f8fc', card:'#ffffff', border:'#c8d8eb', accent:'#4a7fb5', text:'#2c2c2a', textSub:'#445566', hover:'#e4ecf5' },
-  { id:'yellow',    name:'鵝黃',   bg:'#fdfbee', sidebar:'#fffef5', card:'#ffffff', border:'#e8e0b0', accent:'#b5960a', text:'#2c2c2a', textSub:'#5a5020', hover:'#f5f0d0' },
-  { id:'rose',      name:'玫瑰粉', bg:'#fdf0f3', sidebar:'#fff5f7', card:'#ffffff', border:'#edc4cd', accent:'#c0607a', text:'#2c2c2a', textSub:'#6b3040', hover:'#fae0e6' },
-  { id:'purple',    name:'霧紫',   bg:'#f3f0f8', sidebar:'#f8f5fc', card:'#ffffff', border:'#d4c8eb', accent:'#7a5faa', text:'#2c2c2a', textSub:'#4a3866', hover:'#ece5f5' },
-  { id:'forest',    name:'森林綠', bg:'#eef4ef', sidebar:'#f5faf5', card:'#ffffff', border:'#bdd8c0', accent:'#3d7a4a', text:'#2c2c2a', textSub:'#2a4a30', hover:'#ddeedd' },
-  { id:'dark',      name:'深色',   bg:'#1a1a18', sidebar:'#242422', card:'#2c2c2a', border:'#3a3a38', accent:'#a0a09e', text:'#e8e8e6', textSub:'#b0b0ae', hover:'#323230' },
+  { id:'original',  name:'原色',    bg:'#f1efe8', sidebar:'#ffffff', card:'#ffffff', border:'#d3d1c7', accent:'#444441', text:'#2c2c2a', textSub:'#5f5e5a', hover:'#f1efe8' },
+  { id:'sakura',    name:'櫻花粉',  bg:'#fdf0f2', sidebar:'#fff5f7', card:'#ffffff', border:'#f7d5dc', accent:'#dd918f', text:'#3a2828', textSub:'#7a5050', hover:'#fae0e4' },
+  { id:'peach',     name:'水蜜桃',  bg:'#fdf5ee', sidebar:'#fffaf5', card:'#ffffff', border:'#f2d9c4', accent:'#eca85b', text:'#3a2c20', textSub:'#7a5c40', hover:'#faeade' },
+  { id:'lemon',     name:'檸檬黃',  bg:'#fdfbee', sidebar:'#fffef5', card:'#ffffff', border:'#eee9b0', accent:'#ecd55a', text:'#383010', textSub:'#6a5a20', hover:'#f5f0cc' },
+  { id:'mint',      name:'薄荷綠',  bg:'#f0f8f5', sidebar:'#f5fcf8', card:'#ffffff', border:'#bde0d4', accent:'#629aaa', text:'#1a3030', textSub:'#3a5a54', hover:'#daf0e8' },
+  { id:'sky',       name:'天空藍',  bg:'#eef4fb', sidebar:'#f5f8fd', card:'#ffffff', border:'#c8d8eb', accent:'#78bcd2', text:'#1a2838', textSub:'#3a5060', hover:'#dce8f5' },
+  { id:'lavender',  name:'薰衣草',  bg:'#f4f0f8', sidebar:'#f8f5fb', card:'#ffffff', border:'#d4c8e8', accent:'#9ecfc8', text:'#28203a', textSub:'#584870', hover:'#ece5f5' },
+  { id:'dark',      name:'深色',    bg:'#1a1a18', sidebar:'#242422', card:'#2c2c2a', border:'#3a3a38', accent:'#a0a09e', text:'#e8e8e6', textSub:'#b0b0ae', hover:'#323230' },
 ];
-
 let currentTheme = 'original';
 let themingLedgerId = null;
 
