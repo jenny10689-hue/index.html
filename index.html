@@ -245,7 +245,7 @@
 
     /* 信用卡統計 */
     .cc-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
-    .cc-stat { background: #f1efe8; border-radius: 8px; padding: 0.75rem 1rem; }
+.cc-stat { background: var(--hover); border-radius: 8px; padding: 0.75rem 1rem; }
     .cc-stat-label { font-size: 0.75rem; color: #888780; margin-bottom: 0.25rem; }
     .cc-stat-value { font-size: 1.05rem; font-weight: 500; }
     .cc-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f1efe8; font-size: 0.85rem; }
@@ -1221,7 +1221,7 @@ window.createLedger = async function(type) {
     container.innerHTML = '';
     ledgers.forEach(function(ledger) {
       const row = document.createElement('div');
-      row.style.cssText = 'display:grid; grid-template-columns:1fr auto; align-items:center; padding:0.6rem 0; border-bottom:1px solid #f1efe8;';
+row.style.cssText = 'display:grid; grid-template-columns:1fr auto; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border);';
       const info = document.createElement('div');
       info.innerHTML = `<span style="font-size:0.9rem; font-weight:500;">${ledger.name}</span>
         <span style="font-size:0.75rem; color:#888780; margin-left:0.5rem;">${ledger.members.length} 人</span>`;
