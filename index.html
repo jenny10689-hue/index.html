@@ -2823,6 +2823,7 @@ function renderThemeGrid(activeThemeId) {
       <div class="theme-name">${theme.name}</div>
     `;
     card.onclick = async function() {
+      console.log('themingLedgerId:', themingLedgerId);
       applyTheme(theme.id);
       await updateDoc(doc(db,'ledgers',themingLedgerId), { theme: theme.id });
       // 更新本地 ledger 資料
