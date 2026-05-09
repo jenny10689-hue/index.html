@@ -502,25 +502,21 @@ body { background-color: var(--bg); color: var(--text); }
     </div>
 
 <!-- 記錄清單 -->
-      <div class="card">
-        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-          <div id="filter-buttons" style="display:flex; flex-wrap:wrap; gap:0.4rem; flex:1;"></div>
-          <div class="emoji-option" onclick="openCategoryModalFromRecord()"
-               title="管理分類"
-<div class="emoji-option" onclick="openCategoryModalFromRecord()"
-     title="管理分類"
-     style="background:var(--hover); flex-shrink:0; font-size:0.75rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none;">
-  ⚙️ 管理
-</div>
-          </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+        <div id="filter-buttons" style="display:flex; flex-wrap:wrap; gap:0.4rem; flex:1;"></div>
+        <div class="emoji-option" onclick="openCategoryModalFromRecord()"
+             title="管理分類"
+             style="background:var(--hover); flex-shrink:0; font-size:0.75rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none;">
+          ⚙️ 管理
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-          <h2 style="margin-bottom:0;">📋 本月記錄</h2>
-        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <h2 style="margin-bottom:0;">📋 本月記錄</h2>
+      </div>
       <div id="record-list"></div>
     </div>
   </div>
-
   <!-- 信用卡統計頁 -->
   <div id="page-cc-summary" class="container" style="display:none;">
     <h1>
@@ -1067,13 +1063,14 @@ if (page === 'ledger') {
         if (b.dataset.id === currentLedgerId) b.classList.add('active');
       });
 
-      // 爸爸帳本用專屬頁面
+// 爸爸帳本用專屬頁面
       if (currentLedger && currentLedger.type === 'dad') {
+        document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
         document.getElementById('page-dad').style.display = 'block';
         listenDadRecords();
         return;
       }
-      document.getElementById('page-ledger').style.display = 'block';
+            document.getElementById('page-ledger').style.display = 'block';
       updateMonthLabel();
       listenRecords();
     } else if (page === 'cc-summary') {
