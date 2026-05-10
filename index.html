@@ -577,16 +577,23 @@ body { background-color: var(--bg); color: var(--text); }
 <!-- 爸爸帳本頁面 -->
     <div id="page-dad" class="container" style="display:none;">
       <h1>
-        <span id="dad-ledger-title">爸爸的帳</span>
+        <span id="dad-ledger-title">爸爸ㄉ波紋</span>
       </h1>
 
-      <!-- 總餘額 -->
+<!-- 總餘額 -->
       <div class="summary-grid" style="grid-template-columns:1fr;">
-        <div class="summary-card" style="text-align:center;">
-          <div class="summary-label">目前總餘額</div>
-          <div class="summary-value balance" style="font-size:1.8rem;">$<span id="dad-balance">0</span></div>
+        <div class="summary-card" style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="flex:1; text-align:center;">
+            <div class="summary-label">目前總餘額</div>
+            <div class="summary-value balance" style="font-size:1.8rem;">$<span id="dad-balance">0</span></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+            <button class="btn-sm" onclick="openDadStockAdd()">📈 新增存股</button>
+            <button class="btn-sm" onclick="openAddRecord()">📝 一般記帳</button>
+          </div>
         </div>
       </div>
+
 
       <!-- 圓餅圖 -->
       <div class="card">
@@ -744,7 +751,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     </div>
   </div>
 </div>
-<!-- 新增存股 modal -->
+<!-- 新增存股卡片 modal -->
 <div id="stock-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'stock-modal')">
   <div class="modal-box" style="width:440px;">
     <h2 id="stock-modal-title">新增存股記錄</h2>
@@ -766,9 +773,10 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       </div>
 
       <!-- 日期 -->
-      <div class="form-row-compact">
+<div class="form-row-compact">
         <span class="form-label">日期</span>
         <input type="date" class="input-sm" id="stock-date">
+        <input type="text" class="input-sm" id="stock-date-quick" placeholder="20260326" style="width:110px; flex:none;" maxlength="8">
       </div>
 
       <!-- 計算：股價 × 股數 = 成本 -->
@@ -778,10 +786,10 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
         <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">×</span>
         <input type="number" class="input-sm" id="stock-shares" placeholder="股數" style="width:80px; flex:none;">
         <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">=</span>
-        <div style="background:#f1efe8; border-radius:8px; padding:0.45rem 0.75rem; font-size:0.88rem; color:#5f5e5a; white-space:nowrap; flex:1; text-align:center;">
-          <strong style="color:#2c2c2a;">$<span id="stock-cost-display">0</span></strong>
+<div style="background:var(--input-bg); border-radius:8px; padding:0.45rem 0.75rem; font-size:0.88rem; color:var(--text-sub); white-space:nowrap; flex:1; text-align:center;">
+          <strong style="color:var(--text);">$<span id="stock-cost-display">0</span></strong>
         </div>
-      </div>
+            </div>
 
 <!-- 拿錢 -->
       <div class="form-row-compact">
@@ -2527,6 +2535,19 @@ window.openCategoryModalFromRecord = function() {
     // 監聽股價和股數變動，自動計算成本
     document.getElementById('stock-price').oninput  = calcStockCost;
     document.getElementById('stock-shares').oninput = calcStockCost;
+
+// 快速輸入日期
+    document.getElementById('stock-date-quick').value = '';
+    document.getElementById('stock-date-quick').oninput = function() {
+      const val = this.value.replace(/\D/g, '');
+      if (val.length === 8) {
+        const formatted = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
+        document.getElementById('stock-date').value = formatted;
+        this.style.borderColor = '#888780';
+      } else {
+        this.style.borderColor = '';
+      }
+    };
 
     document.getElementById('stock-modal').classList.add('show');
   };
