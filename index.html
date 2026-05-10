@@ -1124,8 +1124,10 @@ if (currentLedger && currentLedger.type === 'dad') {
       ledgers = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(l => l.members && l.members.includes(currentEmail))
-        .sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
-
+.sort((a,b) => {
+  const orderMap = { 'personal': 0, 'shared': 1, 'dad': 2 };
+  return (orderMap[a.type] ?? 99) - (orderMap[b.type] ?? 99);
+});
 const personalId = `personal_${currentUid}`;
         if (!ledgers.find(l => l.id === personalId)) {
           await setDoc(doc(db,'ledgers',personalId), {
@@ -1955,8 +1957,8 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     const total   = values.reduce((a,b) => a+b, 0);
     const emojis  = labels.map(n => cats.find(c => c.name === n)?.emoji || '');
 
-    const COLORS = ['#444441','#888780','#b4b2a9','#d3d1c7','#5f5e5a','#2c2c2a','#e8e4dc','#f1efe8'];
-
+//圓餅圖顏色
+const COLORS = ['#88AFB5','#EFB187','#ABD5A4','#FAC1B6','#BEC4E4','#F99895','#C1D1C4','#ECD55A'];
     // 更新圖例
     const legend = document.getElementById('pie-legend');
     legend.innerHTML = '';
