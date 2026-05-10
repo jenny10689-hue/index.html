@@ -2044,41 +2044,51 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
   }
   window.saveReconcile = saveReconcile;
 
-  function renderReconcile(reconcileId, appTotal) {
+  
+function renderReconcile(reconcileId, appTotal, showSaved) {
     const container = document.getElementById(reconcileId);
     if (!container) return;
 
-    const rd     = reconcileData[reconcileId] || {};
-    const actual = rd.actual !== undefined ? rd.actual : '';
-    const saved  = rd.saved  !== undefined ? rd.saved  : '';
+    if (showSaved === false) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const rd      = reconcileData[reconcileId] || {};
+    const actual  = rd.actual  !== undefined ? rd.actual  : '';
+    const bank    = rd.bank    !== undefined ? rd.bank    : '';
+    const cash    = rd.cash    !== undefined ? rd.cash    : '';
 
     let diffHtml = '';
-    if (actual !== '' && saved !== '') {
-      const diff = Number(saved) - Number(actual);
-      const cls  = diff >= 0 ? 'ok' : 'warn';
-      const msg  = diff >= 0 ? '✓ 預存充足，多了' : '⚠ 還差';
-      diffHtml = `
-        <div>
-          <div class="cc-recon-diff ${cls}">${msg} $${Math.abs(diff).toLocaleString()}</div>
-          <div class="cc-recon-note">帳單 $${Number(actual).toLocaleString()} ／已預存 $${Number(saved).toLocaleString()}</div>
-        </div>`;
-    } else if (actual !== '') {
-      const diff = appTotal - Number(actual);
-      const cls  = Math.abs(diff) < 10 ? 'exact' : 'warn';
-      const label = diff === 0 ? '✓ APP 與帳單吻合'
-                  : diff > 0  ? `APP 比帳單多 $${Math.abs(diff).toLocaleString()}（可能有漏記？）`
-                               : `APP 比帳單少 $${Math.abs(diff).toLocaleString()}（可能有漏記？）`;
-      diffHtml = `
-        <div>
-          <div class="cc-recon-diff ${cls}">${label}</div>
-          <div class="cc-recon-note">APP 統計 $${appTotal.toLocaleString()} ／帳單 $${Number(actual).toLocaleString()}</div>
-        </div>`;
+    if (actual !== '') {
+      const totalSaved = (Number(bank) || 0) + (Number(cash) || 0);
+      const diff = totalSaved - Number(actual);
+      if (bank !== '' || cash !== '') {
+        const cls = diff >= 0 ? 'ok' : 'warn';
+        const msg = diff >= 0 ? '✓ 預存充足，多了' : '⚠ 還差';
+        diffHtml = `
+          <div>
+            <div class="cc-recon-diff ${cls}">${msg} $${Math.abs(diff).toLocaleString()}</div>
+            <div class="cc-recon-note">帳單 $${Number(actual).toLocaleString()} ／帳戶 $${(Number(bank)||0).toLocaleString()} ＋ 現金 $${(Number(cash)||0).toLocaleString()} ＝ 已預存 $${totalSaved.toLocaleString()}</div>
+          </div>`;
+      } else {
+        const diff2 = appTotal - Number(actual);
+        const cls2  = Math.abs(diff2) < 10 ? 'exact' : 'warn';
+        const label = diff2 === 0 ? '✓ APP 與帳單吻合'
+                    : diff2 > 0  ? `APP 比帳單多 $${Math.abs(diff2).toLocaleString()}（可能有漏記？）`
+                                 : `APP 比帳單少 $${Math.abs(diff2).toLocaleString()}（可能有漏記？）`;
+        diffHtml = `
+          <div>
+            <div class="cc-recon-diff ${cls2}">${label}</div>
+            <div class="cc-recon-note">APP 統計 $${appTotal.toLocaleString()} ／帳單 $${Number(actual).toLocaleString()}</div>
+          </div>`;
+      }
     }
 
     container.innerHTML = `
       <div class="cc-reconcile">
         <h3>📋 對帳</h3>
-        <div class="cc-recon-grid">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.6rem; margin-bottom:0.75rem;">
           <div class="cc-recon-field">
             <label>帳單實際金額（銀行 APP）</label>
             <input type="number" placeholder="輸入帳單金額"
@@ -2086,15 +2096,21 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
               onchange="saveReconcile('${reconcileId}','actual',this.value)">
           </div>
           <div class="cc-recon-field">
-            <label>已預存金額</label>
-            <input type="number" placeholder="輸入已轉入金額"
-              value="${saved}"
-              onchange="saveReconcile('${reconcileId}','saved',this.value)">
+            <label>帳戶預存</label>
+            <input type="number" placeholder="輸入金額"
+              value="${bank}"
+              onchange="saveReconcile('${reconcileId}','bank',this.value)">
+          </div>
+          <div class="cc-recon-field">
+            <label>現金預存</label>
+            <input type="number" placeholder="輸入金額"
+              value="${cash}"
+              onchange="saveReconcile('${reconcileId}','cash',this.value)">
           </div>
         </div>
         ${diffHtml
           ? `<div class="cc-recon-result">${diffHtml}</div>`
-          : '<div class="cc-recon-note">填入帳單金額後自動比對，填入已預存金額後確認是否足夠</div>'}
+          : '<div class="cc-recon-note">填入帳單金額後自動比對</div>'}
       </div>
     `;
   }
@@ -2113,10 +2129,10 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
       snap.docs.forEach(d => allRecords.push({ ...d.data(), id:d.id, ledgerId:ledger.id, ledgerName:ledger.name }));
     }
 
-    renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QIAN, cathayStart, cathayEnd, 'recon-cathay');
-    renderCCSection('cc-fubon-summary', 'cc-fubon-detail',  allRecords, CC_FUBON,        fubonStart,  fubonEnd,  'recon-fubon');
-    renderCCSection('cc-teng-summary',  'cc-teng-detail',   allRecords, CC_TENG,         cathayStart, cathayEnd, 'recon-teng');
-  }
+renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QIAN, cathayStart, cathayEnd, 'recon-cathay', true);
+    renderCCSection('cc-fubon-summary', 'cc-fubon-detail',  allRecords, CC_FUBON,        fubonStart,  fubonEnd,  'recon-fubon',  true);
+    renderCCSection('cc-teng-summary',  'cc-teng-detail',   allRecords, CC_TENG,         cathayStart, cathayEnd, 'recon-teng',   false);
+    }
 
   function getCycleStart(year, month, day) {
     let y = year, m = month - 1;
@@ -2124,8 +2140,8 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
     return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   }
 
-  function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId) {
-    const filtered    = allRecords.filter(r => r.type==='expense' && paymentNames.includes(r.payment) && r.date>=startDate && r.date<=endDate);
+function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId, showSaved) {
+      const filtered    = allRecords.filter(r => r.type==='expense' && paymentNames.includes(r.payment) && r.date>=startDate && r.date<=endDate);
     const total       = filtered.reduce((s,r) => s+r.amount, 0);
     const prestored   = filtered.filter(r => r.prestored).reduce((s,r) => s+r.amount, 0);
     const unprestored = total - prestored;
@@ -2139,9 +2155,9 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
     const detailEl = document.getElementById(detailId);
     if (filtered.length === 0) {
       detailEl.innerHTML = '<div style="font-size:0.85rem; color:#888780; padding:0.5rem 0;">本期無記錄</div>';
-      renderReconcile(reconcileId, total);
+renderReconcile(reconcileId, total, showSaved);
       return;
-    }
+        }
     detailEl.innerHTML = filtered.map(r => `
       <div class="cc-detail-row">
         <span>${r.date}　${r.name} <span style="font-size:0.78rem; color:#888780;">（${r.ledgerName}）</span></span>
@@ -2155,7 +2171,7 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
     `).join('');
 
     // 對帳區塊
-    renderReconcile(reconcileId, total);
+renderReconcile(reconcileId, total, showSaved);
   }
 
   window.togglePrestoredCC = async function(recordId, ledgerId, current) {
@@ -2930,8 +2946,7 @@ window.handleStockDateInput = function(input) {
     }
   };
 
-
-
+        
 </script>
 </body>
 </html>
