@@ -839,7 +839,16 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     </div>
   </div>
 </div>
-
+<!-- 爸爸帳本新增選擇 -->
+<div id="dad-add-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'dad-add-modal')">
+  <div class="modal-box" style="width:280px; text-align:center;">
+    <h2 style="margin-bottom:1.25rem;">新增什麼？</h2>
+    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+      <button class="btn-primary btn-full" onclick="closeDadAddModal(); openAddRecord();">📝 一般記帳</button>
+      <button class="btn-full" onclick="closeDadAddModal(); openDadStockAdd();">📈 新增存股</button>
+    </div>
+  </div>
+</div>
 <!-- 配色主題 -->
 <div id="theme-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'theme-modal')">
   <div class="modal-box" style="width:400px;">
@@ -1042,10 +1051,11 @@ window.toggleSidebar = function() {
   // ===========================
 
 window.showPage = function(page) {
-    document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
-    document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
-    currentPage = page;
-    document.getElementById('fab').style.display = 'flex';
+  document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  currentPage = page;
+  document.getElementById('fab').style.display = 'flex';
+  document.getElementById('fab').onclick = openAddRecord;
 
     // 手機版選完頁面後自動收合選單
     if (window.innerWidth <= 600) {
@@ -1064,12 +1074,13 @@ if (page === 'ledger') {
       });
 
 // 爸爸帳本用專屬頁面
-      if (currentLedger && currentLedger.type === 'dad') {
-        document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
-        document.getElementById('page-dad').style.display = 'block';
-        listenDadRecords();
-        return;
-      }
+if (currentLedger && currentLedger.type === 'dad') {
+  document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
+  document.getElementById('page-dad').style.display = 'block';
+  document.getElementById('fab').onclick = openDadAddChoice;
+  listenDadRecords();
+  return;
+}
             document.getElementById('page-ledger').style.display = 'block';
       updateMonthLabel();
       listenRecords();
@@ -2548,7 +2559,7 @@ window.openCategoryModalFromRecord = function() {
     document.getElementById('stock-cost-display').textContent = cost.toLocaleString();
   }
 
-  window.submitStock = async function() {
+window.submitStock = async function() {
     const target = document.getElementById('stock-target').value;
     const date   = document.getElementById('stock-date').value;
     const price  = Number(document.getElementById('stock-price').value);
@@ -2567,6 +2578,26 @@ window.openCategoryModalFromRecord = function() {
       addedBy: currentEmail,
       createdAt: Date.now()
     });
+
+    // 如果是從爸爸帳本新增，同步寫一筆支出到爸爸帳本
+    const fromDad = document.getElementById('stock-modal').dataset.fromDad === 'true';
+    if (fromDad) {
+      const dadLedger = ledgers.find(l => l.type === 'dad');
+      if (dadLedger) {
+        await addDoc(collection(db,'ledgers',dadLedger.id,'expenses'), {
+          name: `買入 ${target}`,
+          amount: taken,
+          category: '股票',
+          payment: '現金',
+          date, note: `${shares}股 × $${price}`,
+          type: 'expense',
+          addedBy: currentName,
+          addedByEmail: currentEmail,
+          prestored: false, readyToPay: false
+        });
+      }
+      document.getElementById('stock-modal').dataset.fromDad = '';
+    }
 
     closeStockModal();
   };
@@ -2835,6 +2866,43 @@ function renderThemeGrid(activeThemeId) {
     container.appendChild(card);
   });
 }
+
+// ===========================
+// 👴 爸爸帳本新增選擇
+// ===========================
+
+window.openDadAddChoice = function() {
+  document.getElementById('dad-add-modal').classList.add('show');
+};
+
+window.closeDadAddModal = function() {
+  document.getElementById('dad-add-modal').classList.remove('show');
+};
+
+window.openDadStockAdd = function() {
+  // 預設歸屬為爸爸
+  setStockOwner('dad');
+
+  // 設定今天日期
+  const today = new Date();
+  document.getElementById('stock-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  // 清空欄位
+  document.getElementById('stock-price').value  = '';
+  document.getElementById('stock-shares').value = '';
+  document.getElementById('stock-taken').value  = '';
+  document.getElementById('stock-cost-display').textContent = '0';
+
+  renderTargetSelect();
+  document.getElementById('stock-price').oninput  = calcStockCost;
+  document.getElementById('stock-shares').oninput = calcStockCost;
+
+  // 覆寫 submitStock，完成後同步到爸爸帳本
+  document.getElementById('stock-modal').dataset.fromDad = 'true';
+  document.getElementById('stock-modal').classList.add('show');
+};
+
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
       const el = document.getElementById(modalId);
