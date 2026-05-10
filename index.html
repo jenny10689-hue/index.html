@@ -775,8 +775,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       <!-- 日期 -->
 <div class="form-row-compact">
         <span class="form-label">日期</span>
-        <input type="date" class="input-sm" id="stock-date">
-        <input type="text" class="input-sm" id="stock-date-quick" placeholder="20260326" style="width:110px; flex:none;" maxlength="8">
+        <input type="date" class="input-sm" id="stock-date" oninput="handleStockDateInput(this)">
       </div>
 
       <!-- 計算：股價 × 股數 = 成本 -->
@@ -2536,18 +2535,6 @@ window.openCategoryModalFromRecord = function() {
     document.getElementById('stock-price').oninput  = calcStockCost;
     document.getElementById('stock-shares').oninput = calcStockCost;
 
-// 快速輸入日期
-    document.getElementById('stock-date-quick').value = '';
-    document.getElementById('stock-date-quick').oninput = function() {
-      const val = this.value.replace(/\D/g, '');
-      if (val.length === 8) {
-        const formatted = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
-        document.getElementById('stock-date').value = formatted;
-        this.style.borderColor = '#888780';
-      } else {
-        this.style.borderColor = '';
-      }
-    };
 
     document.getElementById('stock-modal').classList.add('show');
   };
@@ -2923,6 +2910,14 @@ window.openDadStockAdd = function() {
   document.getElementById('stock-modal').dataset.fromDad = 'true';
   document.getElementById('stock-modal').classList.add('show');
 };
+
+window.handleStockDateInput = function(input) {
+  const val = input.value.replace(/\D/g, '');
+  if (val.length === 8) {
+    input.value = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
+  }
+};
+
 
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
