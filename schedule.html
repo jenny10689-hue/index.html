@@ -451,12 +451,14 @@ document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
 
   document.getElementById('prev').addEventListener('click', () => {
     month--; if (month < 0) { month = 11; year--; }
-    loadSchedule();
+
+  loadSchedule();
   });
 
   document.getElementById('next').addEventListener('click', () => {
     month++; if (month > 11) { month = 0; year++; }
-    loadSchedule();
+
+  loadSchedule();
   });
 
 
@@ -517,6 +519,11 @@ async function syncToCalendar(token) {
 document.getElementById('sync-btn').addEventListener('click', () => {
   tokenClient.requestAccessToken();
 });
+
+
+  window.addEventListener("load", () => {
+    if (window.google) initGoogleAuth();
+  });
 
   loadSchedule();
 </script>
