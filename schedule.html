@@ -509,7 +509,7 @@ function initGoogleAuth() {
       );
       const searchData = await searchRes.json();
       for (const event of (searchData.items || [])) {
-        if (event.summary === "早班" || event.summary === "晚班") {
+        if (event.summary === "早班" || event.summary === "晚班" || event.summary === "早7-15:30" || event.summary === "晚14:30-23") {
           await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events/" + event.id, {
             method: "DELETE",
             headers: { "Authorization": "Bearer " + token }
