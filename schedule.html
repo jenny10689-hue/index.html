@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+  :root {
+--bg: #FFF5E2;
+--surface: #fffaf4;
+--surface2: #fef6ec;
+--border: #e8d8c8;
+--text: #5a4535;
+--text2: #b09a86;
+--early: #7ab898;
+--early-bg: #b8deca;
+--early-border: #88c4a8;
+--late: #d4826a;
+--late-bg: #F9D3BE;
+--late-border: #e8b09a;
+--off: #a89888;
+--off-bg: #f0e8e0;
+--off-border: #d4c4b8;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .month-nav button {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .month-nav button:hover { background: var(--surface2); }
+
+  .month-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .weekday {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text2);
+    padding: 6px 0;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .weekday.sun { color: #f87171; }
+  .weekday.sat { color: #60a5fa; }
+
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 28px;
+  }
+
+  .day {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    position: relative;
+  }
+
+  .day:active { transform: scale(0.95); }
+
+  .day.empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .day.today .day-num {
+    background: var(--text);
+    color: var(--bg);
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+
+  .day-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .day.sun .day-num { color: #f87171; }
+  .day.sat .day-num { color: #60a5fa; }
+
+.shift-label {
+    font-size: 13px;
+    font-weight: 400;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+
+  .shift-time {
+    font-size: 9px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .day.early {
+    background: var(--early-bg);
+    border-color: var(--early-border);
+  }
+  .day.early .shift-label {
+    background: var(--early-border);
+    color: #ffffff;
+  }
+
+  .day.late {
+    background: var(--late-bg);
+    border-color: var(--late-border);
+  }
+  .day.late .shift-label {
+    background: var(--late-border);
+    color: #ffffff;
+  }
+
+  .day.off {
+    background: var(--off-bg);
+    border-color: var(--off-border);
+  }
+  .day.off .shift-label {
+    background: var(--off-border);
+    color: #ffffff;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .summary-num {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .summary-lbl {
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.04em;
+  }
+
+  .summary-card.early-card .summary-num { color: var(--early); }
+  .summary-card.late-card .summary-num { color: var(--late); }
+  .summary-card.off-card .summary-num { color: var(--off); }
+
+  .sync-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #D8E9AB, #B4D8BE);
+    color: #0a1a0f;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .sync-btn:hover { opacity: 0.9; }
+  .sync-btn:active { transform: scale(0.98); }
+  .sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  #status {
+    font-size: 12px;
+    color: var(--text2);
+    text-align: center;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="month-nav">
+    <button id="prev">‹</button>
+    <div class="month-title" id="month-title"></div>
+    <button id="next">›</button>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--early)"></div>早班</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--late)"></div>晚班</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--off)"></div>休</div>
+  </div>
+</header>
+
+<div class="weekdays">
+<div class="weekday">一</div>
+<div class="weekday">二</div>
+<div class="weekday">三</div>
+<div class="weekday">四</div>
+<div class="weekday">五</div>
+<div class="weekday sat">六</div>
+<div class="weekday sun">日</div>
+</div>
+
+<div class="calendar" id="calendar"></div>
+
+<div class="summary">
+  <div class="summary-card early-card">
+    <div class="summary-num" id="count-early">0</div>
+    <div class="summary-lbl">早班天數</div>
+  </div>
+  <div class="summary-card late-card">
+    <div class="summary-num" id="count-late">0</div>
+    <div class="summary-lbl">晚班天數</div>
+  </div>
+  <div class="summary-card off-card">
+    <div class="summary-num" id="count-off">0</div>
+    <div class="summary-lbl">休假天數</div>
+  </div>
+</div>
+<div class="summary-card" style="grid-column:span 3; margin-top:4px; background:var(--late-bg); border-color:var(--late-border)">
+  <div style="font-size:11px;color:var(--text2);letter-spacing:0.04em;margin-bottom:8px">💰 薪資試算</div>
+  <div style="display:flex;justify-content:space-around">
+    <div style="text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--late)" id="daily-wage">0</div>
+      <div style="font-size:11px;color:var(--text2)">日薪</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--early)" id="earned">0</div>
+      <div style="font-size:11px;color:var(--text2)">已賺到 🎉</div>
+    </div>
+  </div>
+</div>
+<button class="sync-btn" id="sync-btn">同步到 Google 日曆</button>
+<div id="status"></div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXNHHiH6-1hT-bEG5uy-Eyqa2dcMVX61s",
+    authDomain: "my-expense-app-c4e73.firebaseapp.com",
+    projectId: "my-expense-app-c4e73",
+    storageBucket: "my-expense-app-c4e73.firebasestorage.app",
+    messagingSenderId: "728977309080",
+    appId: "1:728977309080:web:2b836492afc9a996663fed"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+const SHIFTS = ['late', 'off', 'early'];
+  const LABELS = { early: '早班', late: '晚班', off: '休' };
+  const TIMES  = { early: '07:00', late: '14:30', off: '' };
+
+  let year, month, scheduleData = {};
+
+  const now = new Date();
+  year = now.getFullYear();
+  month = now.getMonth();
+
+  function monthKey() { return `${year}-${String(month+1).padStart(2,'0')}`; }
+
+  async function loadSchedule() {
+    const ref = doc(db, 'schedule', monthKey());
+    const snap = await getDoc(ref);
+    scheduleData = snap.exists() ? snap.data() : {};
+    render();
+  }
+
+  async function saveSchedule() {
+    const ref = doc(db, 'schedule', monthKey());
+    await setDoc(ref, scheduleData);
+  }
+
+  function render() {
+    const title = document.getElementById('month-title');
+    title.textContent = `${year} 年 ${month+1} 月`;
+
+    const cal = document.getElementById('calendar');
+    cal.innerHTML = '';
+
+const firstDayRaw = new Date(year, month, 1).getDay();
+const firstDay = (firstDayRaw === 0) ? 6 : firstDayRaw - 1;
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+    let early=0, late=0, off=0;
+
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement('div');
+      el.className = 'day empty';
+      cal.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dow = new Date(year, month, d).getDay();
+      const shift = scheduleData[dateStr] || null;
+
+      if (shift === 'early') early++;
+      else if (shift === 'late') late++;
+      else if (shift === 'off') off++;
+
+      const el = document.createElement('div');
+el.className = 'day' + (shift ? ` ${shift}` : ' late') + (dow===6 ? ' sat' : dow===0 ? ' sun' : '') + (dateStr===todayStr ? ' today' : '');
+
+      el.innerHTML = `
+        <div class="day-num">${d}</div>
+        ${shift ? `<div class="shift-label">${LABELS[shift]}</div><div class="shift-time">${TIMES[shift]}</div>` : '<div class="shift-label" style="opacity:0">－</div><div class="shift-time"></div>'}
+      `;
+
+      el.addEventListener('click', () => {
+        const cur = SHIFTS.indexOf(shift);
+        const next = SHIFTS[(cur + 1) % SHIFTS.length];
+        if (next === null) delete scheduleData[dateStr];
+        else scheduleData[dateStr] = next;
+        saveSchedule();
+        render();
+      });
+
+      cal.appendChild(el);
+    }
+
+    document.getElementById('count-early').textContent = early;
+    document.getElementById('count-late').textContent = late;
+    document.getElementById('count-off').textContent = off;
+const totalWorkDays = early + late;
+const dailyWage = totalWorkDays > 0 ? Math.round(34000 / totalWorkDays) : 0;
+
+const todayDate = new Date();
+let workedDays = 0;
+Object.entries(scheduleData).forEach(([dateStr, shift]) => {
+  if (shift !== 'off') {
+    const d = new Date(dateStr);
+    if (d.getFullYear() === year && d.getMonth() === month && d < todayDate) {
+      workedDays++;
+    }
+  }
+});
+const earned = Math.round(dailyWage * workedDays);
+
+document.getElementById('daily-wage').textContent = `$${dailyWage.toLocaleString()}`;
+document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
+  }
+
+  document.getElementById('prev').addEventListener('click', () => {
+    month--; if (month < 0) { month = 11; year--; }
+    loadSchedule();
+  });
+
+  document.getElementById('next').addEventListener('click', () => {
+    month++; if (month > 11) { month = 0; year++; }
+    loadSchedule();
+  });
+
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Google 日曆同步（需要 OAuth，這裡先顯示提示）
+  const CLIENT_ID = '728977309080-mb7vnvfuneeep41bpjggisbntgi3k1b3.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+let tokenClient;
+
+function initGoogleAuth() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (response) => {
+      if (response.error) { showToast('❌ 授權失敗'); return; }
+      syncToCalendar(response.access_token);
+    }
+  });
+}
+
+async function syncToCalendar(token) {
+  showToast('⏳ 同步中...');
+  const mk = monthKey();
+  const entries = Object.entries(scheduleData);
+  let count = 0;
+
+  for (const [dateStr, shift] of entries) {
+    if (shift === 'off') continue;
+    const time = shift === 'early' ? '07:00' : '14:30';
+    const endTime = shift === 'early' ? '16:00' : '23:30';
+    const title = shift === 'early' ? '早班' : '晚班';
+
+    const event = {
+      summary: title,
+      start: { dateTime: `${dateStr}T${time}:00`, timeZone: 'Asia/Taipei' },
+      end: { dateTime: `${dateStr}T${endTime}:00`, timeZone: 'Asia/Taipei' }
+    };
+
+    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(event)
+    });
+    count++;
+  }
+  showToast(`✅ 已同步 ${count} 筆班表到 Google 日曆！`);
+}
+
+document.getElementById('sync-btn').addEventListener('click', () => {
+  tokenClient.requestAccessToken();
+});
+
+  loadSchedule();
+</script>
+<script src="https://accounts.google.com/gsi/client" onload="initGoogleAuth()"></script>
+</body>
+</html>
