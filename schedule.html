@@ -525,7 +525,7 @@ document.getElementById('sync-btn').addEventListener('click', () => {
     if (window.google) initGoogleAuth();
   });
 
-  setTimeout(() => { if (window.google) initGoogleAuth(); }, 1000);
+  setTimeout(() => { if (window.google) initGoogleAuth(); else console.log("google not loaded"); }, 3000);
   loadSchedule();
 </script>
 <script src="https://accounts.google.com/gsi/client"></script>
