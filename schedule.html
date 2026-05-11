@@ -500,7 +500,7 @@ function initGoogleAuth() {
       const monthStart = String(year) + "-" + String(month+1).padStart(2,"0") + "-01";
       const monthEnd = String(year) + "-" + String(month+1).padStart(2,"0") + "-31";
       const searchRes = await fetch(
-        "https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=" + monthStart + "T00:00:00+08:00&timeMax=" + monthEnd + "T23:59:59+08:00&q=班&singleEvents=true",
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=" + monthStart + "T00:00:00%2B08:00&timeMax=" + monthEnd + "T23:59:59%2B08:00&q=班&singleEvents=true",
         { headers: { "Authorization": "Bearer " + token } }
       );
       const searchData = await searchRes.json();
