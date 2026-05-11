@@ -474,7 +474,7 @@ document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 let tokenClient;
 
-function initGoogleAuth() {
+window.initGoogleAuth = function() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
