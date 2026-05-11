@@ -527,7 +527,9 @@ function initGoogleAuth() {
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
           body: JSON.stringify({
             summary: shift === "early" ? "早" : "晚",
-            colorId: "5",
+            backgroundColor: "#fbd75b",
+            foregroundColor: "#1d1d1d",
+            
             start: { dateTime: dateStr + "T" + time + ":00", timeZone: "Asia/Taipei" },
             end: { dateTime: dateStr + "T" + endTime + ":00", timeZone: "Asia/Taipei" },
             reminders: {
