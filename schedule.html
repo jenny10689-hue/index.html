@@ -509,7 +509,7 @@ function initGoogleAuth() {
       );
       const searchData = await searchRes.json();
       for (const event of (searchData.items || [])) {
-        if (event.summary === "早班" || event.summary === "晚班" || event.summary === "早7-15:30" || event.summary === "晚14:30-23") {
+        if (event.summary === "早班" || event.summary === "晚班" || event.summary === "早7-15:30" || event.summary === "晚14:30-23" || event.summary === "早" || event.summary === "晚") {
           await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events/" + event.id, {
             method: "DELETE",
             headers: { "Authorization": "Bearer " + token }
@@ -525,7 +525,7 @@ function initGoogleAuth() {
           method: "POST",
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
           body: JSON.stringify({
-            summary: shift === "early" ? "早7-15:30" : "晚14:30-23",
+            summary: shift === "early" ? "早" : "晚",
             start: { dateTime: dateStr + "T" + time + ":00", timeZone: "Asia/Taipei" },
             end: { dateTime: dateStr + "T" + endTime + ":00", timeZone: "Asia/Taipei" },
             reminders: {
