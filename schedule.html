@@ -520,14 +520,21 @@ function initGoogleAuth() {
       for (const [dateStr, shift] of Object.entries(scheduleData)) {
         if (shift === "off") continue;
         const time = shift === "early" ? "07:00" : "14:30";
-        const endTime = shift === "early" ? "16:00" : "23:30";
+        const endTime = shift === "early" ? "15:30" : "23:00";
         await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
           method: "POST",
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
           body: JSON.stringify({
             summary: shift === "early" ? "早班" : "晚班",
+            colorId: "5",
             start: { dateTime: dateStr + "T" + time + ":00", timeZone: "Asia/Taipei" },
-            end: { dateTime: dateStr + "T" + endTime + ":00", timeZone: "Asia/Taipei" }
+            end: { dateTime: dateStr + "T" + endTime + ":00", timeZone: "Asia/Taipei" },
+            reminders: {
+              useDefault: false,
+              overrides: [
+                { method: "popup", minutes: shift === "early" ? 20 : 20 }
+              ]
+            }
           })
         });
         count++;
