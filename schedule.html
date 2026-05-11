@@ -508,6 +508,7 @@ function initGoogleAuth() {
         { headers: { "Authorization": "Bearer " + token } }
       );
       const searchData = await searchRes.json();
+      console.log("搜尋結果:", JSON.stringify(searchData.items));
       for (const event of (searchData.items || [])) {
         if (event.summary === "早班" || event.summary === "晚班" || event.summary === "早7-15:30" || event.summary === "晚14:30-23" || event.summary === "早" || event.summary === "晚") {
           await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events/" + event.id, {
