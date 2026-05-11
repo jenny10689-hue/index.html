@@ -373,6 +373,9 @@ const SHIFTS = ['late', 'off', 'early'];
     const ref = doc(db, 'schedule', monthKey());
     const snap = await getDoc(ref);
     scheduleData = snap.exists() ? snap.data() : {};
+    window._scheduleData = scheduleData;
+    window._year = year;
+    window._month = month;
     render();
   }
 
@@ -495,7 +498,7 @@ function initGoogleAuth() {
       if (response.error) { alert("授權失敗"); return; }
       const year = window._year;
       const month = window._month;
-      const scheduleData = window._scheduleData;
+      const scheduleData = window._scheduleData || {};
       const token = response.access_token;
       const monthStart = String(year) + "-" + String(month+1).padStart(2,"0") + "-01";
       const lastDay = new Date(year, month+1, 0).getDate();
