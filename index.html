@@ -2642,9 +2642,9 @@ window.submitStock = async function() {
       createdAt: Date.now()
     });
 
-    // 如果是從爸爸帳本新增，同步寫一筆支出到爸爸帳本
+    // 爸爸的存股，同步寫一筆支出到爸爸帳本
     const fromDad = document.getElementById('stock-modal').dataset.fromDad === 'true';
-    if (fromDad) {
+    if (fromDad || stockOwner === 'dad') {
       const dadLedger = ledgers.find(l => l.type === 'dad');
       if (dadLedger) {
         await addDoc(collection(db,'ledgers',dadLedger.id,'expenses'), {
