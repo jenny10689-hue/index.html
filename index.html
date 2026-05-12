@@ -92,8 +92,8 @@
        =========================== */
     #pie-card { padding: 1rem 1.25rem; }
     #pie-wrapper { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-    #pie-canvas-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
-    #pie-legend { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 160px; }
+    #pie-canvas-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+    #pie-legend { display: flex; flex-direction: column; gap: 0.3rem; }
     .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .legend-label { color: #5f5e5a; flex: 1; }
@@ -410,6 +410,11 @@ body { background-color: var(--bg); color: var(--text); }
 .theme-preview-card { flex: 1; border-radius: 3px; }
 .theme-name { font-size: 0.78rem; font-weight: 500; text-align: center; color: var(--text-sub); }
 @media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* 快速輸入 toggle */
+.preset-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.preset-toggle-icon { font-size: 0.75rem; color: #888780; transition: transform 0.2s; }
+.preset-toggle-icon.open { transform: rotate(180deg); }
   </style>
 </head>
 <body>
@@ -461,19 +466,26 @@ body { background-color: var(--bg); color: var(--text); }
       </span>
     </h1>
 
-    <!-- 結餘 -->
-    <div class="summary-grid">
-      <div class="summary-card"><div class="summary-label">本月收入</div><div class="summary-value income">$<span id="total-income">0</span></div></div>
-      <div class="summary-card"><div class="summary-label">本月支出</div><div class="summary-value expense">$<span id="total-expense">0</span></div></div>
-      <div class="summary-card"><div class="summary-label">結餘</div><div class="summary-value balance">$<span id="total-balance">0</span></div></div>
-    </div>
-
-    <!-- 圓餅圖 -->
+    <!-- 圓餅圖 + 統計合併 -->
     <div class="card" id="pie-card">
       <h2 style="margin-bottom:0.75rem;">📊 支出分佈</h2>
       <div id="pie-wrapper">
-        <div id="pie-canvas-wrap"><canvas id="pie-canvas" width="140" height="140"></canvas></div>
-        <div id="pie-legend"></div>
+        <div id="pie-canvas-wrap"><canvas id="pie-canvas" width="100" height="100"></canvas></div>
+        <div style="display:flex; flex-direction:column; flex:1; min-width:0; gap:0.4rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">本月收入</span>
+            <span class="summary-value income" style="font-size:0.9rem;">$<span id="total-income">0</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">本月支出</span>
+            <span class="summary-value expense" style="font-size:0.9rem;">$<span id="total-expense">0</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">結餘</span>
+            <span class="summary-value balance" style="font-size:0.9rem;">$<span id="total-balance">0</span></span>
+          </div>
+          <div id="pie-legend" style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px solid var(--border);"></div>
+        </div>
       </div>
     </div>
 
@@ -496,9 +508,14 @@ body { background-color: var(--bg); color: var(--text); }
 
     <!-- 快速輸入 -->
     <div class="card" id="preset-card">
-      <h2>⚡ 快速輸入</h2>
-      <div class="quick-presets" id="preset-buttons"></div>
-      <button class="btn-sm" onclick="openAddPreset()" style="margin-top:0.25rem;">＋ 新增常用</button>
+      <div class="preset-toggle-header" onclick="togglePresetCard()">
+        <h2 style="margin-bottom:0;">⚡ 快速輸入</h2>
+        <span class="preset-toggle-icon" id="preset-toggle-icon">▼</span>
+      </div>
+      <div id="preset-body" style="margin-top:0.75rem;">
+        <div class="quick-presets" id="preset-buttons"></div>
+        <button class="btn-sm" onclick="openAddPreset()" style="margin-top:0.25rem;">＋ 新增常用</button>
+      </div>
     </div>
 
 <!-- 記錄清單 -->
@@ -2937,6 +2954,14 @@ window.handleStockDateInput = function(input) {
   }
 };
 
+
+window.togglePresetCard = function() {
+  const body = document.getElementById('preset-body');
+  const icon = document.getElementById('preset-toggle-icon');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  icon.classList.toggle('open', !isOpen);
+};
 
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
