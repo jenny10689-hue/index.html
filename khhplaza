@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客務部排班系統</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#FAF8F4;color:#2a2820;font-size:13px}
+button,select,input{font-family:inherit}
+
+/* ===== LAYOUT ===== */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px}
+#login-screen h1{font-size:20px;font-weight:500;color:#3a3830}
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+#app.visible{display:flex}
+
+/* ===== TOPBAR ===== */
+#topbar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#F0EDE5;border-bottom:0.5px solid #DDD8CE;flex-shrink:0;flex-wrap:wrap}
+#topbar-title{font-weight:500;font-size:14px;color:#3a3830}
+.month-sel{padding:3px 7px;border-radius:6px;border:0.5px solid #C8C4BA;font-size:12px;background:#FAF8F4;color:#3a3830;cursor:pointer}
+.top-badge{font-size:10px;color:#7a7060;background:#E8E4DA;border-radius:4px;padding:2px 6px;white-space:nowrap}
+#warn-area{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.warn-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:#F7C1C1;border:0.5px solid #E24B4A;border-radius:4px;color:#791F1F;font-size:10px;cursor:pointer}
+
+/* ===== TOOLBAR ===== */
+#toolbar{display:flex;align-items:center;gap:3px;padding:5px 10px;background:#F5F2EA;border-bottom:0.5px solid #DDD8CE;flex-shrink:0;overflow-x:auto;white-space:nowrap}
+.tlabel{font-size:10px;color:#9a9080;flex-shrink:0}
+.tsep{width:0.5px;height:16px;background:#C8C4BA;margin:0 3px;flex-shrink:0}
+.tbtn{padding:3px 7px;border-radius:5px;border:0.5px solid #C8C4BA;background:#FAF8F4;color:#3a3830;cursor:pointer;font-size:11px;font-weight:500;flex-shrink:0;line-height:1.2;min-width:28px;text-align:center;transition:background .1s}
+.tbtn:hover{background:#EDE9DF}
+.tbtn.act{border-color:#5a5040;background:#3a3830;color:#FAF8F4}
+.tbtn-time{font-size:9px;padding:2px 5px;line-height:1.25}
+#mode-pill{font-size:10px;color:#5a5040;padding:2px 8px;border-radius:4px;background:#E8E4DA;border:0.5px solid #C8C4BA;white-space:nowrap;flex-shrink:0}
+
+/* ===== INFOBAR ===== */
+#infobar{display:flex;align-items:center;gap:10px;padding:4px 10px;background:#F0EDE5;border-bottom:0.5px solid #DDD8CE;flex-shrink:0;overflow-x:auto}
+.istat{font-size:10px;color:#7a7060;white-space:nowrap}
+.istat b{color:#3a3830}
+.istat.warn-stat b{color:#A32D2D}
+#infobar-btns{display:flex;gap:5px;margin-left:auto;flex-shrink:0}
+.ibtn{padding:3px 8px;border-radius:5px;border:0.5px solid #C8C4BA;background:#FAF8F4;cursor:pointer;font-size:10px;display:inline-flex;align-items:center;gap:3px;color:#3a3830;white-space:nowrap}
+.ibtn:hover{background:#EDE9DF}
+.ibtn-primary{background:#3a3830;color:#FAF8F4;border-color:#3a3830}
+.ibtn-primary:hover{background:#5a5040}
+
+/* ===== TABLE ===== */
+#table-wrap{overflow:auto;flex:1}
+table{border-collapse:collapse;width:max-content;min-width:100%}
+thead{position:sticky;top:0;z-index:10}
+th{background:#F0EDE5;border:0.5px solid #DDD8CE;padding:3px 2px;text-align:center;font-weight:500;font-size:10px;white-space:nowrap;color:#3a3830}
+td{border:0.5px solid #DDD8CE;padding:1px;text-align:center;font-size:10px;white-space:nowrap;color:#2a2820;background:#ffffff}
+.th-fix1{text-align:left;padding:3px 6px;min-width:54px;position:sticky;left:0;z-index:11;background:#F0EDE5}
+.th-fix2{text-align:left;padding:3px 6px;min-width:54px;position:sticky;left:54px;z-index:11;background:#F0EDE5}
+.th-fix3{min-width:38px;position:sticky;left:108px;z-index:11;background:#F0EDE5;font-size:9px}
+.td-fix1{text-align:left;padding:2px 5px;font-size:10px;position:sticky;left:0;z-index:5;background:#F5F2EA;color:#7a7060}
+.td-fix2{text-align:left;padding:2px 5px;font-weight:500;position:sticky;left:54px;z-index:5;background:#F5F2EA}
+.td-fix3{position:sticky;left:108px;z-index:5;background:#EDE9DF;font-size:9px;color:#7a7060;text-align:center;padding:1px 3px}
+.th-wend{background:#E8E4DA !important;color:#5a5040}
+.td-wend{background:#F5F2EA}
+.th-day{min-width:26px;width:26px}
+.cell{width:26px;min-width:26px;height:30px;cursor:pointer;background:#ffffff;transition:background .1s}
+.cell:hover{background:#F0EDE5 !important}
+.c-off{background:#D8D5CC !important;color:#3a3830;font-weight:500}
+.c-sick{background:#C8C5BC !important;color:#3a3830;font-weight:500}
+.c-edited{outline:2px solid #EDAABE;outline-offset:-2px}
+.c-warn{outline:2px solid #E24B4A !important;outline-offset:-2px}
+.time-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;height:100%;font-size:9px;font-weight:500}
+.sum-row td{background:#F0EDE5 !important;font-weight:500;border-color:#DDD8CE}
+.sum-row .td-fix1,.sum-row .td-fix2,.sum-row .td-fix3{background:#DDD8CE !important}
+.del-staff-btn{font-size:9px;color:#C8C4BA;cursor:pointer;padding:0 2px;background:none;border:none;display:none}
+tr:hover .del-staff-btn{display:inline}
+
+/* ===== BOTTOMBAR ===== */
+#bottombar{display:flex;gap:10px;padding:5px 10px;background:#F0EDE5;border-top:0.5px solid #DDD8CE;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.legend{display:flex;align-items:center;gap:3px;font-size:10px;color:#7a7060}
+.lswatch{width:10px;height:10px;border-radius:2px;border:0.5px solid #C8C4BA;flex-shrink:0}
+
+/* ===== MODALS ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal{background:#FAF8F4;border-radius:10px;border:0.5px solid #DDD8CE;padding:20px;min-width:280px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:14px;font-weight:500;margin-bottom:14px;color:#3a3830}
+.modal label{font-size:11px;color:#7a7060;display:block;margin-bottom:3px;margin-top:10px}
+.modal input,.modal select{width:100%;padding:6px 8px;border-radius:6px;border:0.5px solid #C8C4BA;font-size:12px;background:#FAF8F4;color:#2a2820}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal-btns button{padding:5px 14px;border-radius:6px;border:0.5px solid #C8C4BA;cursor:pointer;font-size:12px;background:#FAF8F4;color:#3a3830}
+.modal-btns .btn-confirm{background:#3a3830;color:#FAF8F4;border-color:#3a3830}
+.modal-btns .btn-danger{background:#F7C1C1;color:#791F1F;border-color:#E24B4A}
+.shift-check-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.shift-check-group label{display:flex;align-items:center;gap:4px;font-size:12px;color:#3a3830;cursor:pointer;margin:0}
+.shift-check-group input[type=checkbox]{width:auto}
+.preset-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.preset-item{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#F0EDE5;border-radius:6px;border:0.5px solid #DDD8CE}
+.preset-item span{flex:1;font-size:12px}
+.preset-item button{padding:2px 7px;border-radius:4px;border:0.5px solid #C8C4BA;background:#FAF8F4;font-size:11px;cursor:pointer}
+.preset-item .del-preset{color:#A32D2D;border-color:#E24B4A}
+.month-config-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.month-config-item label{font-size:11px;color:#7a7060;display:block;margin-bottom:3px}
+.month-config-item input{width:100%;padding:5px 6px;border-radius:5px;border:0.5px solid #C8C4BA;font-size:13px;text-align:center;background:#FAF8F4;color:#2a2820}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3a3830;color:#FAF8F4;padding:8px 16px;border-radius:8px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="font-size:28px">📋</div>
+  <h1>客務部排班系統</h1>
+  <p style="font-size:12px;color:#9a9080">KHH Plaza</p>
+  <button class="ibtn ibtn-primary" id="login-btn" style="padding:8px 20px;font-size:13px">使用 Google 帳號登入</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <span id="topbar-title">客務部排班系統</span>
+    <select class="month-sel" id="year-sel"></select>
+    <select class="month-sel" id="month-sel"></select>
+    <span class="top-badge" id="quota-badge">載入中...</span>
+    <button class="ibtn" id="config-btn">⚙ 月份設定</button>
+    <button class="ibtn" id="add-staff-btn">＋ 新增員工</button>
+    <div id="warn-area"></div>
+    <button class="ibtn" id="logout-btn" style="margin-left:4px;color:#9a9080">登出</button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <span class="tlabel">班別</span>
+    <button class="tbtn act" data-val="AE" data-mode="AE 早班">AE</button>
+    <button class="tbtn" data-val="AT" data-mode="AT 晚班">AT</button>
+    <button class="tbtn" data-val="EA" data-mode="EA 大夜">EA</button>
+    <div class="tsep"></div>
+    <span class="tlabel">休假</span>
+    <button class="tbtn" data-val="例" data-mode="例假">例</button>
+    <button class="tbtn" data-val="休" data-mode="休息日">休</button>
+    <button class="tbtn" data-val="國" data-mode="國定假">國</button>
+    <div class="tsep"></div>
+    <span class="tlabel">假別</span>
+    <button class="tbtn" data-val="事" data-mode="事假">事</button>
+    <button class="tbtn" data-val="年" data-mode="年假">年</button>
+    <button class="tbtn" data-val="病" data-mode="病假">病</button>
+    <div class="tsep"></div>
+    <span class="tlabel">常用時段</span>
+    <div id="preset-btns"></div>
+    <button class="tbtn" id="manage-preset-btn" title="管理常用時段" style="padding:2px 6px;font-size:12px">⚙</button>
+    <div class="tsep"></div>
+    <button class="tbtn" data-val="" data-mode="清除">清除</button>
+    <div class="tsep"></div>
+    <div id="mode-pill">模式：AE 早班</div>
+  </div>
+
+  <!-- INFOBAR -->
+  <div id="infobar">
+    <div id="stats-area" style="display:flex;gap:10px;overflow-x:auto"></div>
+    <div id="infobar-btns">
+      <button class="ibtn" id="export-btn">⬇ 匯出 Excel</button>
+      <button class="ibtn ibtn-primary" id="save-btn">💾 儲存</button>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div id="table-wrap">
+    <table id="schedule-table">
+      <thead id="table-head"></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- BOTTOMBAR -->
+  <div id="bottombar">
+    <div class="legend"><div class="lswatch" style="background:#fff"></div>上班（白底）</div>
+    <div class="legend"><div class="lswatch" style="background:#D8D5CC"></div>例／休／國</div>
+    <div class="legend"><div class="lswatch" style="background:#C8C5BC"></div>事／年／病</div>
+    <div class="legend"><div class="lswatch" style="background:#fff;outline:2px solid #EDAABE;outline-offset:-1px"></div>手動改班</div>
+    <div class="legend"><div class="lswatch" style="background:#fff;outline:2px solid #E24B4A;outline-offset:-1px"></div>違規警示</div>
+    <span style="font-size:10px;color:#C8C4BA;margin-left:auto" id="save-status"></span>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL: 新增員工 -->
+<div class="modal-overlay" id="modal-add-staff" style="display:none">
+  <div class="modal">
+    <h3>新增員工</h3>
+    <label>員工類型</label>
+    <select id="new-staff-type">
+      <option value="PT">PT（兼職）</option>
+      <option value="正職">正職</option>
+      <option value="主管">主管</option>
+    </select>
+    <label>員編</label>
+    <input id="new-staff-id" placeholder="例：K260101">
+    <label>姓名</label>
+    <input id="new-staff-name" placeholder="例：王小明">
+    <label>可上班別</label>
+    <div class="shift-check-group">
+      <label><input type="checkbox" value="AE" checked> AE 早班</label>
+      <label><input type="checkbox" value="AT" checked> AT 晚班</label>
+      <label><input type="checkbox" value="EA"> EA 大夜</label>
+    </div>
+    <div class="modal-btns">
+      <button onclick="closeModal('modal-add-staff')">取消</button>
+      <button class="btn-confirm" onclick="confirmAddStaff()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 常用時段管理 -->
+<div class="modal-overlay" id="modal-presets" style="display:none">
+  <div class="modal">
+    <h3>常用時段管理</h3>
+    <div id="preset-list-ui"></div>
+    <div style="display:flex;gap:6px;margin-top:12px">
+      <input id="new-preset-input" placeholder="例：0700-1500" style="flex:1;padding:5px 8px;border-radius:5px;border:0.5px solid #C8C4BA;font-size:12px;background:#FAF8F4">
+      <button class="ibtn ibtn-primary" onclick="addPreset()">新增</button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-confirm" onclick="closeModal('modal-presets')">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 月份設定 -->
+<div class="modal-overlay" id="modal-config" style="display:none">
+  <div class="modal">
+    <h3 id="config-modal-title">月份設定</h3>
+    <p style="font-size:11px;color:#9a9080;margin-bottom:8px">設定本月各員工的應休天數</p>
+    <div id="config-staff-list"></div>
+    <div class="modal-btns">
+      <button onclick="closeModal('modal-config')">取消</button>
+      <button class="btn-confirm" onclick="saveConfig()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: 確認刪除員工 -->
+<div class="modal-overlay" id="modal-del-staff" style="display:none">
+  <div class="modal">
+    <h3>刪除員工</h3>
+    <p style="font-size:12px;margin-bottom:8px">確定要刪除 <b id="del-staff-name"></b> 嗎？<br>該員工本月班表資料也會一併刪除。</p>
+    <div class="modal-btns">
+      <button onclick="closeModal('modal-del-staff')">取消</button>
+      <button class="btn-danger" onclick="confirmDelStaff()">確定刪除</button>
+    </div>
+  </div>
+</div>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXNHHiH6-1hT-bEG5uy-Eyqa2dcMVX61s",
+  authDomain: "my-expense-app-c4e73.firebaseapp.com",
+  projectId: "my-expense-app-c4e73",
+  storageBucket: "my-expense-app-c4e73.firebasestorage.app",
+  messagingSenderId: "728977309080",
+  appId: "1:728977309080:web:2b836492afc9a996663fed"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ===== STATE =====
+let state = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1,
+  staff: [],       // [{id, name, type, canShifts:[]}]
+  cells: {},       // {"staffId-day": "AE"|"AT"|...}
+  edited: new Set(), // "staffId-day" 手動改過
+  presets: [],     // [{id, label}]  label="0700-1500"
+  config: {},      // {"staffId": {li:5, xi:5, guo:1}}
+  currentMode: 'AE',
+  unsaved: false
+};
+
+function docId() { return `${state.year}-${String(state.month).padStart(2,'0')}`; }
+
+// ===== FIRESTORE 讀寫 =====
+async function loadData() {
+  const ref = doc(db, 'khhplaza', docId());
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const d = snap.data();
+    state.staff   = d.staff   || getDefaultStaff();
+    state.cells   = d.cells   || {};
+    state.presets = d.presets || getDefaultPresets();
+    state.config  = d.config  || {};
+    state.edited  = new Set(d.edited || []);
+  } else {
+    state.staff   = getDefaultStaff();
+    state.cells   = {};
+    state.presets = getDefaultPresets();
+    state.config  = {};
+    state.edited  = new Set();
+  }
+  renderAll();
+}
+
+async function saveData() {
+  const ref = doc(db, 'khhplaza', docId());
+  await setDoc(ref, {
+    staff:   state.staff,
+    cells:   state.cells,
+    presets: state.presets,
+    config:  state.config,
+    edited:  [...state.edited],
+    updatedAt: new Date().toISOString()
+  });
+  state.unsaved = false;
+  setSaveStatus('已儲存 ✓');
+  showToast('班表已儲存');
+}
+
+function getDefaultStaff() {
+  return [
+    {id:'P150802', name:'吳維萍', type:'PT',  canShifts:['AE','AT']},
+    {id:'P260201', name:'蕭宏儒', type:'PT',  canShifts:['AE','AT','EA']},
+    {id:'K250901', name:'李苡禎', type:'正職', canShifts:['EA']},
+    {id:'K250601', name:'蘇芸樂', type:'正職', canShifts:['AE','AT']},
+    {id:'K250603', name:'周辰倩', type:'正職', canShifts:['AE','AT']},
+    {id:'K230101', name:'鎮安',   type:'主管', canShifts:['AE','AT','EA']},
+  ];
+}
+
+function getDefaultPresets() {
+  return [
+    {id:'p1', label:'0700-1500'},
+    {id:'p2', label:'1600-2230'},
+    {id:'p3', label:'1030-1430'},
+    {id:'p4', label:'0700-1600'},
+    {id:'p5', label:'1530-2230'},
+  ];
+}
+// ===== RENDER =====
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function dayOfWeek(y, m, d) { return new Date(y, m-1, d).getDay(); } // 0=日
+const WD = ['日','一','二','三','四','五','六'];
+const SHIFTS = ['AE','AT','EA'];
+const OFF = ['例','休','國'];
+const SICK = ['事','年','病'];
+const ALL_OFF = [...OFF, ...SICK];
+
+function isWork(v) { return v && !ALL_OFF.includes(v); }
+function isSick(v) { return SICK.includes(v); }
+function isOff(v)  { return OFF.includes(v); }
+
+function cellKey(staffId, day) { return `${staffId}-${day}`; }
+
+function renderAll() {
+  renderYearMonth();
+  renderPresetBtns();
+  renderTable();
+  renderStats();
+  renderWarnings();
+  updateQuotaBadge();
+}
+
+function renderYearMonth() {
+  const ySel = document.getElementById('year-sel');
+  const mSel = document.getElementById('month-sel');
+  const curY = new Date().getFullYear();
+  if (!ySel.options.length) {
+    for (let y = curY - 1; y <= curY + 1; y++) {
+      ySel.add(new Option(`${y-1911}年 (${y})`, y));
+    }
+  }
+  ySel.value = state.year;
+  if (!mSel.options.length) {
+    for (let m = 1; m <= 12; m++) mSel.add(new Option(`${m}月`, m));
+  }
+  mSel.value = state.month;
+}
+
+function renderPresetBtns() {
+  const container = document.getElementById('preset-btns');
+  container.innerHTML = '';
+  state.presets.forEach(p => {
+    const [s, e] = p.label.split('-');
+    const btn = document.createElement('button');
+    btn.className = 'tbtn tbtn-time';
+    btn.dataset.val = p.label;
+    btn.dataset.mode = p.label;
+    btn.innerHTML = `${s}<br>${e}`;
+    btn.addEventListener('click', () => setMode(p.label, p.label));
+    container.appendChild(btn);
+  });
+}
+
+function renderTable() {
+  const days = daysInMonth(state.year, state.month);
+  const head = document.getElementById('table-head');
+  const body = document.getElementById('table-body');
+
+  // Header
+  let hRow = '<tr><th class="th-fix1">員編</th><th class="th-fix2">姓名</th><th class="th-fix3">班別</th>';
+  for (let d = 1; d <= days; d++) {
+    const dow = dayOfWeek(state.year, state.month, d);
+    const isW = dow === 0 || dow === 6;
+    hRow += `<th class="th-day${isW?' th-wend':''}">${d}<br><span style="font-size:8px">${WD[dow]}</span></th>`;
+  }
+  hRow += '</tr>';
+  head.innerHTML = hRow;
+
+  // Body
+  body.innerHTML = '';
+  state.staff.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-fix1" style="font-size:9px">${s.id}
+        <button class="del-staff-btn" onclick="openDelStaff('${s.id}')">✕</button>
+      </td>
+      <td class="td-fix2">${s.name}</td>
+      <td class="td-fix3" style="font-size:9px">${s.type}</td>`;
+    for (let d = 1; d <= days; d++) {
+      const dow = dayOfWeek(state.year, state.month, d);
+      const isW = dow === 0 || dow === 6;
+      const key = cellKey(s.id, d);
+      const val = state.cells[key] || '';
+      const td = document.createElement('td');
+      td.className = buildCellClass(val, isW, key);
+      td.dataset.staff = s.id;
+      td.dataset.day = d;
+      setCellContent(td, val);
+      td.addEventListener('click', () => onCellClick(td, s.id, d));
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  });
+
+  // Sum row
+  const sumTr = document.createElement('tr');
+  sumTr.className = 'sum-row';
+  sumTr.innerHTML = `<td class="td-fix1"></td><td class="td-fix2" style="font-weight:500">合計人力</td><td class="td-fix3"></td>`;
+  for (let d = 1; d <= days; d++) {
+    const dow = dayOfWeek(state.year, state.month, d);
+    const isW = dow === 0 || dow === 6;
+    const cnt = state.staff.filter(s => isWork(state.cells[cellKey(s.id, d)])).length;
+    const td = document.createElement('td');
+    td.textContent = cnt || '';
+    if (isW) td.style.background = '#E8E4DA';
+    sumTr.appendChild(td);
+  }
+  body.appendChild(sumTr);
+}
+
+function buildCellClass(val, isWend, key) {
+  let cls = 'cell';
+  if (isWend) cls += ' td-wend';
+  if (OFF.includes(val)) cls += ' c-off';
+  else if (SICK.includes(val)) cls += ' c-sick';
+  if (state.edited.has(key)) cls += ' c-edited';
+  return cls;
+}
+
+function setCellContent(td, val) {
+  if (!val) { td.textContent = ''; return; }
+  if (SHIFTS.includes(val) || ALL_OFF.includes(val)) {
+    td.textContent = val; return;
+  }
+  // custom time e.g. "0700-1500"
+  const parts = val.split('-');
+  if (parts.length === 2) {
+    td.innerHTML = `<div class="time-cell"><span>${parts[0]}</span><span>${parts[1]}</span></div>`;
+  } else {
+    td.textContent = val;
+  }
+}
+// ===== CELL INTERACTION =====
+function onCellClick(td, staffId, day) {
+  const key = cellKey(staffId, day);
+  const oldVal = state.cells[key] || '';
+  const newVal = state.currentMode;
+  if (oldVal === newVal) return;
+  state.cells[key] = newVal || undefined;
+  if (!newVal) delete state.cells[key];
+  state.edited.add(key);
+  td.className = buildCellClass(newVal, td.classList.contains('td-wend'), key);
+  setCellContent(td, newVal);
+  state.unsaved = true;
+  setSaveStatus('有未儲存的變更');
+  updateSumCell(day);
+  renderStats();
+  renderWarnings();
+}
+
+function updateSumCell(day) {
+  const cnt = state.staff.filter(s => isWork(state.cells[cellKey(s.id, day)])).length;
+  const sumRow = document.querySelector('.sum-row');
+  if (!sumRow) return;
+  // fixed cols = 3, so day col index = day+2 (0-indexed)
+  const cells = sumRow.querySelectorAll('td');
+  if (cells[day + 2]) cells[day + 2].textContent = cnt || '';
+}
+
+// ===== STATS (infobar) =====
+function renderStats() {
+  const area = document.getElementById('stats-area');
+  const days = daysInMonth(state.year, state.month);
+  area.innerHTML = '';
+  state.staff.filter(s => s.type !== 'PT' && s.type !== '主管').forEach(s => {
+    const cfg = state.config[s.id] || {li:5, xi:5, guo:1};
+    let liUsed=0, xiUsed=0, guoUsed=0, sickUsed=0;
+    for (let d = 1; d <= days; d++) {
+      const v = state.cells[cellKey(s.id, d)] || '';
+      if (v==='例') liUsed++;
+      else if (v==='休') xiUsed++;
+      else if (v==='國') guoUsed++;
+      else if (SICK.includes(v)) sickUsed++;
+    }
+    const liWarn = liUsed > cfg.li, xiWarn = xiUsed > cfg.xi, guoWarn = guoUsed > cfg.guo;
+    const div = document.createElement('div');
+    div.className = 'istat' + (liWarn||xiWarn||guoWarn?' warn-stat':'');
+    div.innerHTML = `${s.name} 例<b>${liUsed}</b>/${cfg.li} 休<b>${xiUsed}</b>/${cfg.xi} 國<b>${guoUsed}</b>/${cfg.guo}${sickUsed?` 假<b>${sickUsed}</b>`:''}`;
+    area.appendChild(div);
+  });
+}
+
+function updateQuotaBadge() {
+  // show global quota from first staff's config or default
+  const first = state.staff.find(s => s.type==='正職');
+  if (!first) return;
+  const cfg = state.config[first.id] || {li:5, xi:5, guo:1};
+  document.getElementById('quota-badge').textContent = `${cfg.li}例 ${cfg.xi}休 ${cfg.guo}國`;
+}
+
+// ===== LABOUR LAW VALIDATION =====
+function renderWarnings() {
+  const warns = [];
+  const days = daysInMonth(state.year, state.month);
+  const table = document.getElementById('table-body');
+  // clear old warn outlines
+  table.querySelectorAll('.c-warn').forEach(td => td.classList.remove('c-warn'));
+
+  state.staff.forEach(s => {
+    // 1. 連續上班 > 5天
+    let streak = 0, streakStart = 0;
+    for (let d = 1; d <= days; d++) {
+      const v = state.cells[cellKey(s.id, d)] || '';
+      if (isWork(v)) {
+        if (streak === 0) streakStart = d;
+        streak++;
+        if (streak > 5) {
+          warns.push({msg:`${s.name} 連續上班第${streak}天（${streakStart}日～${d}日）`, staffId:s.id, days:range(streakStart,d)});
+          markWarn(s.id, d);
+        }
+      } else if (OFF.includes(v) || !v) {
+        streak = 0;
+      }
+      // 病/事/年不中斷連續計算
+    }
+
+    // 2. 晚班(AT)或結束>=23:00 隔天接早班(AE)或開始07:00
+    for (let d = 1; d < days; d++) {
+      const v1 = state.cells[cellKey(s.id, d)] || '';
+      const v2 = state.cells[cellKey(s.id, d+1)] || '';
+      if (endsLate(v1) && startsEarly(v2)) {
+        warns.push({msg:`${s.name} ${d}日晚班→${d+1}日早班（間隔不足11小時）`});
+        markWarn(s.id, d); markWarn(s.id, d+1);
+      }
+    }
+
+    // 3. 兩週內例+休 < 4天
+    for (let w = 0; w < Math.ceil(days/14); w++) {
+      const start = w*14+1, end = Math.min(start+13, days);
+      let offCount = 0;
+      for (let d = start; d <= end; d++) {
+        const v = state.cells[cellKey(s.id, d)] || '';
+        if (OFF.includes(v)) offCount++;
+      }
+      if (offCount < 4 && end - start >= 13) {
+        warns.push({msg:`${s.name} 第${w+1}個兩週期例休不足4天（僅${offCount}天）`});
+      }
+    }
+  });
+
+  // render warn badges
+  const area = document.getElementById('warn-area');
+  area.innerHTML = '';
+  warns.slice(0, 5).forEach(w => {
+    const badge = document.createElement('div');
+    badge.className = 'warn-badge';
+    badge.textContent = '⚠ ' + w.msg;
+    area.appendChild(badge);
+  });
+  if (warns.length > 5) {
+    const more = document.createElement('div');
+    more.className = 'warn-badge';
+    more.textContent = `+${warns.length-5} 項警示`;
+    area.appendChild(more);
+  }
+}
+
+function range(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r;}
+
+function markWarn(staffId, day) {
+  const td = document.querySelector(`[data-staff="${staffId}"][data-day="${day}"]`);
+  if (td) td.classList.add('c-warn');
+}
+
+function endsLate(v) {
+  if (v === 'AT') return true;
+  if (!v) return false;
+  const parts = v.split('-');
+  if (parts.length === 2) {
+    const end = parseInt(parts[1]);
+    return end >= 2300 || end <= 200; // 跨午夜
+  }
+  return false;
+}
+
+function startsEarly(v) {
+  if (v === 'AE') return true;
+  if (!v) return false;
+  const parts = v.split('-');
+  if (parts.length === 2) {
+    const start = parseInt(parts[0]);
+    return start <= 900;
+  }
+  return false;
+}
+// ===== MODE =====
+function setMode(val, label) {
+  state.currentMode = val;
+  document.getElementById('mode-pill').textContent = '模式：' + label;
+  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('act'));
+  document.querySelectorAll(`.tbtn[data-val="${val}"]`).forEach(b => b.classList.add('act'));
+}
+
+// ===== TOOLBAR BUTTONS =====
+document.querySelectorAll('.tbtn[data-val]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setMode(btn.dataset.val, btn.dataset.mode);
+  });
+});
+
+// ===== YEAR/MONTH CHANGE =====
+document.getElementById('year-sel').addEventListener('change', e => {
+  state.year = parseInt(e.target.value); loadData();
+});
+document.getElementById('month-sel').addEventListener('change', e => {
+  state.month = parseInt(e.target.value); loadData();
+});
+
+// ===== MODALS =====
+function openModal(id) { document.getElementById(id).style.display='flex'; }
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+document.getElementById('add-staff-btn').addEventListener('click', () => openModal('modal-add-staff'));
+document.getElementById('manage-preset-btn').addEventListener('click', () => {
+  renderPresetListUI();
+  openModal('modal-presets');
+});
+document.getElementById('config-btn').addEventListener('click', () => {
+  renderConfigModal();
+  openModal('modal-config');
+});
+
+// close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.style.display='none'; });
+});
+
+// ADD STAFF
+window.confirmAddStaff = function() {
+  const id = document.getElementById('new-staff-id').value.trim();
+  const name = document.getElementById('new-staff-name').value.trim();
+  const type = document.getElementById('new-staff-type').value;
+  const canShifts = [...document.querySelectorAll('#modal-add-staff input[type=checkbox]:checked')].map(c=>c.value);
+  if (!id || !name) { showToast('請填寫員編和姓名'); return; }
+  if (state.staff.find(s=>s.id===id)) { showToast('員編已存在'); return; }
+  state.staff.push({id, name, type, canShifts});
+  closeModal('modal-add-staff');
+  document.getElementById('new-staff-id').value='';
+  document.getElementById('new-staff-name').value='';
+  renderTable(); renderStats(); renderWarnings();
+  state.unsaved = true; setSaveStatus('有未儲存的變更');
+};
+
+// DEL STAFF
+let pendingDelId = null;
+window.openDelStaff = function(id) {
+  pendingDelId = id;
+  const s = state.staff.find(x=>x.id===id);
+  document.getElementById('del-staff-name').textContent = s ? s.name : id;
+  openModal('modal-del-staff');
+};
+window.confirmDelStaff = function() {
+  if (!pendingDelId) return;
+  state.staff = state.staff.filter(s=>s.id!==pendingDelId);
+  // remove cells
+  Object.keys(state.cells).forEach(k => { if(k.startsWith(pendingDelId+'-')) delete state.cells[k]; });
+  closeModal('modal-del-staff');
+  renderTable(); renderStats(); renderWarnings();
+  state.unsaved = true; setSaveStatus('有未儲存的變更');
+};
+
+// PRESETS
+function renderPresetListUI() {
+  const ul = document.getElementById('preset-list-ui');
+  ul.innerHTML = '';
+  state.presets.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    item.innerHTML = `<span>${p.label}</span>
+      <button onclick="delPreset('${p.id}')">刪除</button>`;
+    ul.appendChild(item);
+  });
+}
+window.addPreset = function() {
+  const input = document.getElementById('new-preset-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const id = 'p' + Date.now();
+  state.presets.push({id, label: val});
+  input.value = '';
+  renderPresetListUI();
+  renderPresetBtns();
+};
+window.delPreset = function(id) {
+  state.presets = state.presets.filter(p=>p.id!==id);
+  renderPresetListUI();
+  renderPresetBtns();
+};
+
+// CONFIG MODAL
+function renderConfigModal() {
+  const days = daysInMonth(state.year, state.month);
+  document.getElementById('config-modal-title').textContent =
+    `${state.year-1911}年${state.month}月 月份設定`;
+  const container = document.getElementById('config-staff-list');
+  container.innerHTML = '';
+  state.staff.filter(s => s.type!=='PT' && s.type!=='主管').forEach(s => {
+    const cfg = state.config[s.id] || {li:5, xi:5, guo:1};
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid #DDD8CE';
+    div.innerHTML = `<div style="font-size:12px;font-weight:500;margin-bottom:6px">${s.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div><label style="font-size:10px;color:#9a9080">例假</label>
+          <input type="number" min="0" max="${days}" value="${cfg.li}" id="cfg-li-${s.id}"
+            style="width:100%;padding:4px;border-radius:4px;border:0.5px solid #C8C4BA;text-align:center;font-size:13px;background:#FAF8F4"></div>
+        <div><label style="font-size:10px;color:#9a9080">休息日</label>
+          <input type="number" min="0" max="${days}" value="${cfg.xi}" id="cfg-xi-${s.id}"
+            style="width:100%;padding:4px;border-radius:4px;border:0.5px solid #C8C4BA;text-align:center;font-size:13px;background:#FAF8F4"></div>
+        <div><label style="font-size:10px;color:#9a9080">國定假</label>
+          <input type="number" min="0" max="${days}" value="${cfg.guo}" id="cfg-guo-${s.id}"
+            style="width:100%;padding:4px;border-radius:4px;border:0.5px solid #C8C4BA;text-align:center;font-size:13px;background:#FAF8F4"></div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+window.saveConfig = function() {
+  state.staff.filter(s=>s.type!=='PT'&&s.type!=='主管').forEach(s => {
+    state.config[s.id] = {
+      li:  parseInt(document.getElementById(`cfg-li-${s.id}`)?.value)||0,
+      xi:  parseInt(document.getElementById(`cfg-xi-${s.id}`)?.value)||0,
+      guo: parseInt(document.getElementById(`cfg-guo-${s.id}`)?.value)||0,
+    };
+  });
+  closeModal('modal-config');
+  updateQuotaBadge(); renderStats();
+  state.unsaved = true; setSaveStatus('有未儲存的變更');
+};
+
+// SAVE
+document.getElementById('save-btn').addEventListener('click', saveData);
+function setSaveStatus(msg) { document.getElementById('save-status').textContent = msg; }
+
+// EXPORT EXCEL
+document.getElementById('export-btn').addEventListener('click', exportExcel);
+function exportExcel() {
+  const days = daysInMonth(state.year, state.month);
+  const rows = [];
+  // header row 1
+  const h1 = [`客務部 ${state.year-1911}年${state.month}月班表`,'',''];
+  for(let d=1;d<=days;d++) h1.push(d);
+  rows.push(h1);
+  // header row 2 weekday
+  const h2 = ['員編','姓名','班別'];
+  for(let d=1;d<=days;d++) h2.push(WD[dayOfWeek(state.year,state.month,d)]);
+  rows.push(h2);
+  // staff rows
+  state.staff.forEach(s => {
+    const row = [s.id, s.name, s.type];
+    for(let d=1;d<=days;d++) row.push(state.cells[cellKey(s.id,d)]||'');
+    rows.push(row);
+  });
+  // sum row
+  const sumRow = ['','合計人力',''];
+  for(let d=1;d<=days;d++) {
+    sumRow.push(state.staff.filter(s=>isWork(state.cells[cellKey(s.id,d)])).length||'');
+  }
+  rows.push(sumRow);
+
+  // Build CSV (BOM for Excel UTF-8)
+  const csv = '\uFEFF' + rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `班表_${state.year-1911}年${state.month}月.csv`;
+  a.click();
+  showToast('已匯出 CSV（可用 Excel 開啟）');
+}
+
+// TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== AUTH =====
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, new GoogleAuthProvider()).catch(console.error);
+});
+document.getElementById('logout-btn').addEventListener('click', () => {
+  if (state.unsaved && !confirm('有未儲存的班表，確定要登出？')) return;
+  signOut(auth);
+});
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    loadData();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+</script>
+</body>
+</html>
