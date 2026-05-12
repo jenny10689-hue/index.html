@@ -2815,8 +2815,8 @@ window.submitStock = async function() {
             ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
           </div>
           <div class="record-actions">
-            <button class="tag-btn" onclick="openEditRecord('${item.id}')">編輯</button>
-            <button class="tag-btn danger" onclick="deleteRecord('${item.id}')">刪除</button>
+            <button class="tag-btn" onclick="item.stockId ? openEditStock('${item.id}','${item.stockId}') : openEditRecord('${item.id}')">編輯</button>
+            <button class="tag-btn danger" onclick="deleteDadRecord('${item.id}','${item.stockId||''}')">刪除</button>
           </div>
         </div>
       `;
