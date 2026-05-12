@@ -2815,7 +2815,7 @@ window.submitStock = async function() {
             ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
           </div>
           <div class="record-actions">
-            <button class="tag-btn" onclick="item.stockId ? openEditStock('${item.id}','${item.stockId}') : openEditRecord('${item.id}')">編輯</button>
+            <button class="tag-btn" onclick="${item.stockId ? `openEditStock('${item.id}','${item.stockId}')` : `openEditRecord('${item.id}')`}">編輯</button>
             <button class="tag-btn danger" onclick="deleteDadRecord('${item.id}','${item.stockId||''}')">刪除</button>
           </div>
         </div>
@@ -2966,6 +2966,14 @@ window.closeDadAddModal = function() {
 };
 
 // 編輯存股
+window.handleDadEdit = function(expenseId, stockId) {
+  if (stockId) {
+    openEditStock(expenseId, stockId);
+  } else {
+    openEditRecord(expenseId);
+  }
+};
+
 window.deleteDadRecord = function(expenseId, stockId) {
   pendingDeleteId = expenseId;
   if (stockId) {
