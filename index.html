@@ -1664,7 +1664,7 @@ window.openAddRecord = function() {
   };
 
   window.openEditRecord = function(id) {
-    const record = records.find(r => r.id === id);
+    const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id);
     if (!record) return;
     editingRecordId = id;
 
