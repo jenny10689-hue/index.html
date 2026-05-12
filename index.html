@@ -2716,14 +2716,12 @@ window.submitStock = async function() {
 
     if (total > 0) {
       labels.forEach(function(label, i) {
-        const pct = Math.round(values[i] / total * 100);
         const item = document.createElement('div');
-        item.className = 'legend-item';
+        item.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-sub);';
         item.innerHTML = `
-          <div class="legend-dot" style="background:${COLORS[i]};"></div>
-          <span class="legend-label">${emojis[i]} ${label}</span>
-          <span class="legend-amount">$${values[i].toLocaleString()}</span>
-          <span class="legend-pct">${pct}%</span>
+          <div style="width:7px; height:7px; border-radius:50%; background:${COLORS[i]}; flex-shrink:0;"></div>
+          <span>${label}</span>
+          <span style="color:var(--text); font-weight:500; margin-left:2px;">$${values[i].toLocaleString()}</span>
         `;
         legend.appendChild(item);
       });
