@@ -1867,25 +1867,32 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
   function renderFilterButtons() {
     const container = document.getElementById('filter-buttons');
     container.innerHTML = '';
-    const allBtn = document.createElement('button');
-    allBtn.style.cssText = 'padding:0.3rem 0.75rem; font-size:0.8rem; border-radius:20px;';
-    allBtn.textContent = '全部';
-    if (activeFilter === null) { allBtn.style.background = '#444441'; allBtn.style.color = '#fff'; allBtn.style.borderColor = '#444441'; }
-    allBtn.onclick = function() { activeFilter = null; render(); };
-    container.appendChild(allBtn);
 
     const cats = currentLedger && currentLedger.type === 'shared'
       ? sharedExpenseCategories : expenseCategories;
 
+    const select = document.createElement('select');
+    select.style.cssText = 'flex:1; padding:0.35rem 0.6rem; font-size:0.88rem; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text); outline:none;';
+
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = '全部分類';
+    select.appendChild(allOpt);
+
     cats.forEach(function(cat) {
-      const btn = document.createElement('button');
-      btn.style.cssText = 'padding:0.3rem 0.6rem; font-size:0.85rem; border-radius:20px;';
-      btn.textContent = cat.emoji;
-      btn.title = cat.name;
-      if (activeFilter === cat.name) { btn.style.background = '#444441'; btn.style.color = '#fff'; btn.style.borderColor = '#444441'; }
-      btn.onclick = function() { activeFilter = cat.name; render(); };
-      container.appendChild(btn);
+      const opt = document.createElement('option');
+      opt.value = cat.name;
+      opt.textContent = cat.emoji + ' ' + cat.name;
+      if (activeFilter === cat.name) opt.selected = true;
+      select.appendChild(opt);
     });
+
+    select.onchange = function() {
+      activeFilter = this.value || null;
+      render();
+    };
+
+    container.appendChild(select);
   }
 
   function render() {
