@@ -1740,11 +1740,31 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     if (pendingDeleteId) {
       const deleteType = document.getElementById('confirm-delete-btn').dataset.deleteType;
       if (deleteType === 'stock') {
-        // 刪除存股記錄
+        // 刪除存股記錄，同步刪爸爸帳本
+        const stockSnap = await getDoc(doc(db,'users',currentUid,'stocks',pendingDeleteId));
         await deleteDoc(doc(db,'users',currentUid,'stocks',pendingDeleteId));
+        // 找爸爸帳本中有 stockId 對應的記錄並刪除
+        const dadLedger = ledgers.find(l => l.type === 'dad');
+        if (dadLedger) {
+          const expSnap = await getDocs(collection(db,'ledgers',dadLedger.id,'expenses'));
+          for (const d of expSnap.docs) {
+            if (d.data().stockId === pendingDeleteId) {
+              await deleteDoc(doc(db,'ledgers',dadLedger.id,'expenses',d.id));
+              break;
+            }
+          }
+        }
+        document.getElementById('confirm-delete-btn').dataset.deleteType = '';
+      } else if (deleteType === 'dadExpense') {
+        // 刪除爸爸帳本記錄，如果有 stockId 也同步刪存股
+        const expSnap = await getDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        if (expSnap.exists() && expSnap.data().stockId) {
+          await deleteDoc(doc(db,'users',currentUid,'stocks',expSnap.data().stockId));
+        }
+        await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
         document.getElementById('confirm-delete-btn').dataset.deleteType = '';
       } else {
-        // 刪除支出記錄
+        // 一般刪除支出記錄
         await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
       }
     }
@@ -1923,7 +1943,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
            </span>` : '';
 
       const noteHtml = item.note
-        ? `<span title="${item.note}">📝</span>` : '';
+        ? `<span style="cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'inline':''; this.textContent=this.nextElementSibling.style.display==='none'?'📝':'📝'">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : '';
 
       div.innerHTML = `
         <div class="record-icon" title="${item.category || ''}">${catEmoji}</div>
@@ -2615,7 +2635,7 @@ window.submitStock = async function() {
 
     const cost = price * shares + 1;
 
-    await addDoc(collection(db, 'users', currentUid, 'stocks'), {
+    const stockRef = await addDoc(collection(db, 'users', currentUid, 'stocks'), {
       owner: stockOwner,
       target, date, price, shares, cost, taken,
       addedBy: currentEmail,
@@ -2636,10 +2656,35 @@ window.submitStock = async function() {
           type: 'expense',
           addedBy: currentName,
           addedByEmail: currentEmail,
-          prestored: false, readyToPay: false
+          prestored: false, readyToPay: false,
+          stockId: stockRef.id
         });
       }
       document.getElementById('stock-modal').dataset.fromDad = '';
+    }
+
+    // 如果是編輯模式，更新既有記錄
+    const editStockId   = document.getElementById('stock-modal').dataset.editStockId;
+    const editExpenseId = document.getElementById('stock-modal').dataset.editExpenseId;
+
+    if (editStockId) {
+      // 更新 stocks 集合
+      await updateDoc(doc(db, 'users', currentUid, 'stocks', editStockId), {
+        target, date, price, shares, cost, taken
+      });
+      // 同步更新爸爸帳本記錄
+      const dadLedger = ledgers.find(l => l.type === 'dad');
+      if (dadLedger && editExpenseId) {
+        await updateDoc(doc(db,'ledgers',dadLedger.id,'expenses',editExpenseId), {
+          name: `買入 ${target}`,
+          amount: taken,
+          date,
+          note: `${shares}股 × $${price}`
+        });
+      }
+      document.getElementById('stock-modal').dataset.editStockId   = '';
+      document.getElementById('stock-modal').dataset.editExpenseId = '';
+      document.getElementById('stock-modal-title').textContent = '新增存股記錄';
     }
 
     closeStockModal();
@@ -2762,7 +2807,7 @@ window.submitStock = async function() {
           <div class="record-name">${item.name}</div>
           <div class="record-meta">
             <span>${item.date}</span>
-            ${item.note ? `<span title="${item.note}">📝</span>` : ''}
+            ${item.note ? `<span style="cursor:pointer;" onclick="var s=this.nextElementSibling; s.style.display=s.style.display==='none'?'inline':'none';">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : ''}
           </div>
         </div>
         <div class="record-right">
@@ -2918,6 +2963,61 @@ window.openDadAddChoice = function() {
 
 window.closeDadAddModal = function() {
   document.getElementById('dad-add-modal').classList.remove('show');
+};
+
+// 編輯存股
+window.deleteDadRecord = function(expenseId, stockId) {
+  pendingDeleteId = expenseId;
+  if (stockId) {
+    document.getElementById('confirm-delete-btn').dataset.deleteType = 'dadExpense';
+  } else {
+    document.getElementById('confirm-delete-btn').dataset.deleteType = '';
+  }
+  document.getElementById('confirm-modal').classList.add('show');
+};
+
+window.openEditStock = async function(expenseId, stockId) {
+  if (!stockId) {
+    // 沒有 stockId，開一般編輯
+    openEditRecord(expenseId);
+    return;
+  }
+
+  // 載入存股資料
+  const stockSnap = await getDoc(doc(db, 'users', currentUid, 'stocks', stockId));
+  if (!stockSnap.exists()) {
+    alert('找不到存股記錄，可能已刪除');
+    openEditRecord(expenseId);
+    return;
+  }
+
+  const r = stockSnap.data();
+
+  // 設定存股 modal 為編輯模式
+  document.getElementById('stock-modal-title').textContent = '編輯存股記錄';
+  document.getElementById('stock-modal').dataset.editStockId = stockId;
+  document.getElementById('stock-modal').dataset.editExpenseId = expenseId;
+  document.getElementById('stock-modal').dataset.fromDad = '';
+
+  setStockOwner(r.owner || 'dad');
+  renderTargetSelect();
+
+  // 選到對應的標的
+  const sel = document.getElementById('stock-target');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === r.target) { sel.selectedIndex = i; break; }
+  }
+
+  document.getElementById('stock-date').value   = r.date;
+  document.getElementById('stock-price').value  = r.price;
+  document.getElementById('stock-shares').value = r.shares;
+  document.getElementById('stock-taken').value  = r.taken;
+  document.getElementById('stock-cost-display').textContent = Math.ceil(r.cost).toLocaleString();
+
+  document.getElementById('stock-price').oninput  = calcStockCost;
+  document.getElementById('stock-shares').oninput = calcStockCost;
+
+  document.getElementById('stock-modal').classList.add('show');
 };
 
 window.openDadStockAdd = function() {
