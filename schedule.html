@@ -415,7 +415,7 @@ el.className = 'day' + (shift ? ` ${shift}` : ' late') + (dow===6 ? ' sat' : dow
 
       el.innerHTML = `
         <div class="day-num">${d}</div>
-        ${shift ? `<div class="shift-label">${LABELS[shift]}</div><div class="shift-time">${TIMES[shift]}</div>` : '<div class="shift-label" style="opacity:0">－</div><div class="shift-time"></div>'}
+        ${shift ? `<div class="shift-label">${LABELS[shift]}</div>` : '<div class="shift-label" style="opacity:0">－</div><div class="shift-time"></div>'}
       `;
 
       el.addEventListener('click', () => {
@@ -524,6 +524,7 @@ function initGoogleAuth() {
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
           body: JSON.stringify({
             summary: shift === "early" ? "早" : "晚",
+            colorId: "5",
             backgroundColor: "#fbd75b",
             foregroundColor: "#1d1d1d",
             
