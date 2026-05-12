@@ -597,29 +597,21 @@ body { background-color: var(--bg); color: var(--text); }
         <span id="dad-ledger-title">爸爸ㄉ波紋</span>
       </h1>
 
-<!-- 總餘額 -->
-      <div class="summary-grid" style="grid-template-columns:1fr;">
-        <div class="summary-card" style="display:flex; align-items:center; justify-content:space-between;">
+<!-- 總餘額 + 圓餅圖合併 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex-shrink:0;">
+            <canvas id="dad-pie-canvas" width="64" height="64"></canvas>
+            <div id="dad-pie-legend" style="display:flex; flex-direction:column; gap:3px;"></div>
+          </div>
           <div style="flex:1; text-align:center;">
             <div class="summary-label">目前總餘額</div>
-            <div class="summary-value balance" style="font-size:1.8rem;">$<span id="dad-balance">0</span></div>
+            <div class="summary-value balance" style="font-size:1.4rem;">$<span id="dad-balance">0</span></div>
           </div>
           <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
             <button class="btn-sm" onclick="openDadStockAdd()">📈 新增存股</button>
             <button class="btn-sm" onclick="openAddRecord()">📝 一般記帳</button>
           </div>
-        </div>
-      </div>
-
-
-      <!-- 圓餅圖 -->
-      <div class="card">
-        <h2>💰 支出分佈</h2>
-        <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
-          <div style="position:relative; width:140px; height:140px; flex-shrink:0;">
-            <canvas id="dad-pie-canvas" width="140" height="140"></canvas>
-          </div>
-          <div id="dad-pie-legend" style="display:flex; flex-direction:column; gap:0.4rem; flex:1; min-width:160px;"></div>
         </div>
       </div>
 
