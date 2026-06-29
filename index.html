@@ -492,18 +492,24 @@ body { background-color: var(--bg); color: var(--text); }
     <!-- 課金（共同帳本才顯示） -->
     <div id="topup-card" class="card" style="display:none;">
       <div id="topup-inline">
-        <h3>💰 錢櫃課金　<span id="wallet-balance-label" style="font-weight:400; color:#2c2c2a;">餘額：$<input type="number" id="wallet-balance-display" value="0" onchange="saveWalletBalance(this.value)" style="width:90px; padding:0.2rem 0.4rem; border:1px solid #d3d1c7; border-radius:6px; background:#fff; font-size:0.9rem; outline:none;"></span>　<span id="wallet-warning" style="display:none;">⚠ 餘額偏低！</span></h3>
-          <div id="wallet-updated-at" style="font-size:0.72rem; color:#888780; margin-bottom:0.4rem;"></div>
-        <div id="topup-row">
-          <span style="font-size:0.85rem; color:#5f5e5a;">倩存入</span>
-          <input type="number" id="topup-qian" placeholder="2000" style="width:100px; padding:0.4rem 0.6rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;" oninput="calcTopup()">
-          <div id="topup-result" style="font-size:0.82rem; color:#5f5e5a; line-height:1.9;">
-            騰：<strong>$<span id="topup-teng">0</span></strong>　
-            總計：<strong>$<span id="topup-total">0</span></strong>　
-            課金後：<strong>$<span id="topup-after">0</span></strong>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.4rem;">
+            <h3 style="margin-bottom:0;">💰 錢櫃課金</h3>
+            <div id="wallet-updated-at" style="font-size:0.72rem; color:#888780; flex-shrink:0;"></div>
           </div>
-          <button class="btn-income-color btn-sm" onclick="doTopup()">課金</button>
-        </div>
+          <div style="font-size:0.85rem; color:#5f5e5a; margin-bottom:0.6rem;">
+            <span id="wallet-balance-label">餘額：$<input type="number" class="input-sm" id="wallet-balance-display" value="0" onchange="saveWalletBalance(this.value)" style="width:90px; flex:none; display:inline-block;"></span>　<span id="wallet-warning" style="display:none;">⚠ 餘額偏低！</span>
+          </div>
+          <div id="topup-row">
+            <span style="font-size:0.85rem; color:#5f5e5a;">倩</span>
+            <input type="number" class="input-sm" id="topup-qian" placeholder="2000" style="width:100px; flex:none;" oninput="calcTopup('qian')">
+            <span style="font-size:0.85rem; color:#5f5e5a;">騰</span>
+            <input type="number" class="input-sm" id="topup-teng-input" placeholder="0" style="width:100px; flex:none;" oninput="calcTopup('teng')">
+            <div id="topup-result" style="font-size:0.82rem; color:#5f5e5a; line-height:1.9;">
+              總計：<strong>$<span id="topup-total">0</span></strong>　
+              課金後：<strong>$<span id="topup-after">0</span></strong>
+            </div>
+            <button class="btn-income-color btn-sm" onclick="doTopup()">課金</button>
+          </div>
       </div>
     </div>
 
@@ -1542,12 +1548,22 @@ async function saveUserSettings() {
   // 💰 錢櫃課金
   // ===========================
 
-  window.calcTopup = function() {
-    const qian    = Number(document.getElementById('topup-qian').value) || 0;
-    const teng    = Math.round(qian * 1.5);
+  window.calcTopup = function(source) {
+    const qianInput = document.getElementById('topup-qian');
+    const tengInput  = document.getElementById('topup-teng-input');
+
+    if (source === 'teng') {
+      const tengVal = Number(tengInput.value) || 0;
+      qianInput.value = tengVal ? Math.round(tengVal / 1.5) : '';
+    } else {
+      const qianVal = Number(qianInput.value) || 0;
+      tengInput.value = qianVal ? Math.round(qianVal * 1.5) : '';
+    }
+
+    const qian    = Number(qianInput.value) || 0;
+    const teng    = Number(tengInput.value) || 0;
     const total   = qian + teng;
     const current = Number(document.getElementById('wallet-balance-display').value) || 0;
-    document.getElementById('topup-teng').textContent  = teng.toLocaleString();
     document.getElementById('topup-total').textContent = total.toLocaleString();
     document.getElementById('topup-after').textContent = (current + total).toLocaleString();
   };
@@ -1600,6 +1616,7 @@ async function saveUserSettings() {
       renderWalletUpdatedAt();
 
       document.getElementById('topup-qian').value = '';
+        document.getElementById('topup-teng-input').value = '';
     calcTopup();
     alert(`課金完成！\n個人帳本：-$${qian.toLocaleString()}\n共同帳本收入：+$${(qian+teng).toLocaleString()}`);
   };
