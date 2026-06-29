@@ -421,6 +421,167 @@
     font-weight: 700;
     color: #0a1a0f;
   }
+
+  .ot-summary {
+    display: flex;
+    justify-content: space-around;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 8px;
+    margin-bottom: 14px;
+  }
+
+  .ot-summary-item {
+    text-align: center;
+  }
+
+  .ot-summary-num {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .ot-summary-lbl {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .ot-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .ot-entry-date {
+    font-size: 13px;
+    width: 76px;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+
+  .ot-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ot-badge.overtime { background: var(--early-bg); color: var(--early); }
+  .ot-badge.compensatory { background: var(--late-bg); color: var(--late); }
+
+  .ot-hours {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .ot-hours span { min-width: 32px; text-align: center; }
+
+  .ot-hours button {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .ot-delete {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .ot-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 4px 4px;
+    flex-wrap: wrap;
+  }
+
+  .ot-add-row input[type="date"] {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    background: var(--surface2);
+    color: var(--text);
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .ot-type-toggle {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ot-type-toggle.overtime { background: var(--early-bg); color: var(--early); }
+  .ot-type-toggle.compensatory { background: var(--late-bg); color: var(--late); }
+
+  .ot-add-hours {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .ot-add-hours span { font-size: 14px; font-weight: 700; min-width: 32px; text-align: center; }
+
+  .ot-add-hours button {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .ot-add-btn {
+    background: linear-gradient(135deg, #D8E9AB, #B4D8BE);
+    border: none;
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    color: #0a1a0f;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
@@ -433,9 +594,44 @@
     
   </div>
   </div>
+<button id="overtime-btn" style="position:absolute;right:206px;top:16px;background:var(--surface2);border:0.5px solid var(--border);color:var(--text);border-radius:20px;padding:10px 16px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;transition:opacity 0.15s,transform 0.1s;">加班補休</button>
 <button id="custom-time-btn" style="position:absolute;right:118px;top:16px;background:var(--surface2);border:0.5px solid var(--border);color:var(--text);border-radius:20px;padding:10px 16px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;transition:opacity 0.15s,transform 0.1s;">自訂時間</button>
 <button id="sync-btn" style="position:absolute;right:16px;top:16px;background:linear-gradient(135deg,#c0d6a6,#86b6a3);border:none;color:#fff9f2;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;transition:opacity 0.15s,transform 0.1s;">傳送班表</button>
 </header>
+
+<div class="modal-overlay" id="overtime-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">加班補休</div>
+      <button class="modal-close" id="overtime-close">×</button>
+    </div>
+    <div class="ot-summary">
+      <div class="ot-summary-item">
+        <div class="ot-summary-num" id="ot-total" style="color:var(--early)">0</div>
+        <div class="ot-summary-lbl">加班累積（小時）</div>
+      </div>
+      <div class="ot-summary-item">
+        <div class="ot-summary-num" id="ot-used" style="color:var(--late)">0</div>
+        <div class="ot-summary-lbl">已補休（小時）</div>
+      </div>
+      <div class="ot-summary-item">
+        <div class="ot-summary-num" id="ot-remain" style="color:var(--text)">0</div>
+        <div class="ot-summary-lbl">餘（小時）</div>
+      </div>
+    </div>
+    <div id="ot-list"></div>
+    <div class="ot-add-row">
+      <input type="date" id="ot-new-date">
+      <button class="ot-type-toggle overtime" id="ot-type-btn">加班</button>
+      <div class="ot-add-hours">
+        <button id="ot-hours-minus">−</button>
+        <span id="ot-hours-val">1</span>
+        <button id="ot-hours-plus">＋</button>
+      </div>
+      <button class="ot-add-btn" id="ot-add-btn">新增</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="custom-time-modal">
   <div class="modal-box">
@@ -761,6 +957,119 @@ document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
     render();
     showToast('時間已儲存');
   }
+
+  // ===== 加班補休 =====
+  let overtimeData = { entries: [] };
+  let newEntryType = 'overtime';
+  let newEntryHours = 1;
+
+  async function loadOvertime() {
+    const ref = doc(db, 'overtime', 'balance');
+    const snap = await getDoc(ref);
+    overtimeData = snap.exists() ? snap.data() : { entries: [] };
+    if (!overtimeData.entries) overtimeData.entries = [];
+  }
+
+  async function saveOvertime() {
+    const ref = doc(db, 'overtime', 'balance');
+    await setDoc(ref, overtimeData);
+  }
+
+  function renderOvertimeModal() {
+    const list = document.getElementById('ot-list');
+    list.innerHTML = '';
+    let totalOT = 0, totalComp = 0;
+
+    const sorted = [...overtimeData.entries].sort((a, b) => a.date.localeCompare(b.date));
+
+    sorted.forEach((entry, idx) => {
+      const origIdx = overtimeData.entries.indexOf(entry);
+      if (entry.type === 'overtime') totalOT += entry.hours;
+      else totalComp += entry.hours;
+
+      const row = document.createElement('div');
+      row.className = 'ot-entry';
+      row.innerHTML = `
+        <span class="ot-entry-date">${entry.date}</span>
+        <span class="ot-badge ${entry.type}">${entry.type === 'overtime' ? '加班' : '補休'}</span>
+        <div class="ot-hours">
+          <button class="ot-h-minus" data-i="${origIdx}">−</button>
+          <span>${entry.hours}</span>
+          <button class="ot-h-plus" data-i="${origIdx}">＋</button>
+        </div>
+        <button class="ot-delete" data-i="${origIdx}">×</button>
+      `;
+      row.querySelector('.ot-h-minus').addEventListener('click', async (e) => {
+        const i = +e.target.dataset.i;
+        if (overtimeData.entries[i].hours > 0.5) {
+          overtimeData.entries[i].hours -= 0.5;
+          await saveOvertime();
+          renderOvertimeModal();
+        }
+      });
+      row.querySelector('.ot-h-plus').addEventListener('click', async (e) => {
+        const i = +e.target.dataset.i;
+        overtimeData.entries[i].hours += 0.5;
+        await saveOvertime();
+        renderOvertimeModal();
+      });
+      row.querySelector('.ot-delete').addEventListener('click', async (e) => {
+        const i = +e.target.dataset.i;
+        overtimeData.entries.splice(i, 1);
+        await saveOvertime();
+        renderOvertimeModal();
+      });
+      list.appendChild(row);
+    });
+
+    document.getElementById('ot-total').textContent = totalOT;
+    document.getElementById('ot-used').textContent = totalComp;
+    document.getElementById('ot-remain').textContent = totalOT - totalComp;
+  }
+
+  async function openOvertimeModal() {
+    await loadOvertime();
+    // 預設日期為今天
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    document.getElementById('ot-new-date').value = todayStr;
+    newEntryType = 'overtime';
+    newEntryHours = 1;
+    document.getElementById('ot-type-btn').className = 'ot-type-toggle overtime';
+    document.getElementById('ot-type-btn').textContent = '加班';
+    document.getElementById('ot-hours-val').textContent = '1';
+    renderOvertimeModal();
+    document.getElementById('overtime-modal').classList.add('show');
+  }
+
+  document.getElementById('overtime-btn').addEventListener('click', openOvertimeModal);
+  document.getElementById('overtime-close').addEventListener('click', () => {
+    document.getElementById('overtime-modal').classList.remove('show');
+  });
+
+  document.getElementById('ot-type-btn').addEventListener('click', () => {
+    newEntryType = newEntryType === 'overtime' ? 'compensatory' : 'overtime';
+    const btn = document.getElementById('ot-type-btn');
+    btn.className = `ot-type-toggle ${newEntryType}`;
+    btn.textContent = newEntryType === 'overtime' ? '加班' : '補休';
+  });
+
+  document.getElementById('ot-hours-minus').addEventListener('click', () => {
+    if (newEntryHours > 0.5) { newEntryHours -= 0.5; document.getElementById('ot-hours-val').textContent = newEntryHours; }
+  });
+  document.getElementById('ot-hours-plus').addEventListener('click', () => {
+    newEntryHours += 0.5;
+    document.getElementById('ot-hours-val').textContent = newEntryHours;
+  });
+
+  document.getElementById('ot-add-btn').addEventListener('click', async () => {
+    const date = document.getElementById('ot-new-date').value;
+    if (!date) { showToast('請選擇日期'); return; }
+    overtimeData.entries.push({ date, type: newEntryType, hours: newEntryHours });
+    await saveOvertime();
+    renderOvertimeModal();
+    showToast('已新增');
+  });
 
   document.getElementById('custom-time-btn').addEventListener('click', openCustomTimeModal);
   document.getElementById('custom-time-close').addEventListener('click', closeCustomTimeModal);
