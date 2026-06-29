@@ -492,7 +492,8 @@ body { background-color: var(--bg); color: var(--text); }
     <!-- 課金（共同帳本才顯示） -->
     <div id="topup-card" class="card" style="display:none;">
       <div id="topup-inline">
-        <h3>💰 錢櫃課金　<span id="wallet-balance-label" style="font-weight:400; color:#2c2c2a;">餘額：$<span id="wallet-balance-display">0</span></span>　<span id="wallet-warning" style="display:none;">⚠ 餘額偏低！</span></h3>
+        <h3>💰 錢櫃課金　<span id="wallet-balance-label" style="font-weight:400; color:#2c2c2a;">餘額：$<input type="number" id="wallet-balance-display" value="0" onchange="saveWalletBalance(this.value)" style="width:90px; padding:0.2rem 0.4rem; border:1px solid #d3d1c7; border-radius:6px; background:#fff; font-size:0.9rem; outline:none;"></span>　<span id="wallet-warning" style="display:none;">⚠ 餘額偏低！</span></h3>
+          <div id="wallet-updated-at" style="font-size:0.72rem; color:#888780; margin-bottom:0.4rem;"></div>
         <div id="topup-row">
           <span style="font-size:0.85rem; color:#5f5e5a;">倩存入</span>
           <input type="number" id="topup-qian" placeholder="2000" style="width:100px; padding:0.4rem 0.6rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;" oninput="calcTopup()">
@@ -1545,7 +1546,7 @@ async function saveUserSettings() {
     const qian    = Number(document.getElementById('topup-qian').value) || 0;
     const teng    = Math.round(qian * 1.5);
     const total   = qian + teng;
-    const current = Number(document.getElementById('wallet-balance-display').textContent.replace(/,/g,'')) || 0;
+    const current = Number(document.getElementById('wallet-balance-display').value) || 0;
     document.getElementById('topup-teng').textContent  = teng.toLocaleString();
     document.getElementById('topup-total').textContent = total.toLocaleString();
     document.getElementById('topup-after').textContent = (current + total).toLocaleString();
@@ -1589,20 +1590,68 @@ async function saveUserSettings() {
       prestored: false, readyToPay: false
     });
 
-    document.getElementById('topup-qian').value = '';
+    const newBalance = (Number(document.getElementById('wallet-balance-display').value) || 0) + qian + teng;
+      await updateDoc(doc(db,'ledgers',sharedLedger.id), { walletBalance: newBalance, walletUpdatedAt: Date.now() });
+      if (currentLedger && currentLedger.id === sharedLedger.id) {
+        currentLedger.walletBalance   = newBalance;
+        currentLedger.walletUpdatedAt = Date.now();
+      }
+      document.getElementById('wallet-balance-display').value = newBalance;
+      renderWalletUpdatedAt();
+
+      document.getElementById('topup-qian').value = '';
     calcTopup();
     alert(`課金完成！\n個人帳本：-$${qian.toLocaleString()}\n共同帳本收入：+$${(qian+teng).toLocaleString()}`);
   };
 
-  function updateWalletDisplay(allRecords) {
-    const income  = allRecords.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
-    const expense = allRecords.filter(r => r.type === 'expense' && r.payment === '錢櫃').reduce((s,r) => s + r.amount, 0);
-    const balance = income - expense;
-    document.getElementById('wallet-balance-display').textContent = balance.toLocaleString();
+  async function updateWalletDisplay(allRecords) {
+    let balance;
+
+    if (currentLedger && currentLedger.walletBalance !== undefined && currentLedger.walletBalance !== null) {
+      balance = currentLedger.walletBalance;
+    } else {
+      const income  = allRecords.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+      const expense = allRecords.filter(r => r.type === 'expense' && r.payment === '錢櫃').reduce((s,r) => s + r.amount, 0);
+      balance = income - expense;
+      try {
+        await updateDoc(doc(db,'ledgers',currentLedgerId), { walletBalance: balance, walletUpdatedAt: Date.now() });
+        if (currentLedger) currentLedger.walletBalance = balance;
+      } catch(e) {
+        console.warn('初始化錢櫃餘額失敗', e);
+      }
+    }
+
+    document.getElementById('wallet-balance-display').value = balance;
+    const warning = document.getElementById('wallet-warning');
+    warning.style.display = balance < 2000 ? 'inline' : 'none';
+    renderWalletUpdatedAt();
+    calcTopup();
+  }
+
+  function renderWalletUpdatedAt() {
+    const el = document.getElementById('wallet-updated-at');
+    if (!el) return;
+    if (currentLedger && currentLedger.walletUpdatedAt) {
+      const d = new Date(currentLedger.walletUpdatedAt);
+      el.textContent = `上次更新：${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    } else {
+      el.textContent = '';
+    }
+  }
+
+  window.saveWalletBalance = async function(value) {
+    const balance = Number(value) || 0;
+    if (!currentLedgerId) return;
+    await updateDoc(doc(db,'ledgers',currentLedgerId), { walletBalance: balance, walletUpdatedAt: Date.now() });
+    if (currentLedger) {
+      currentLedger.walletBalance   = balance;
+      currentLedger.walletUpdatedAt = Date.now();
+    }
+    renderWalletUpdatedAt();
     const warning = document.getElementById('wallet-warning');
     warning.style.display = balance < 2000 ? 'inline' : 'none';
     calcTopup();
-  }
+  };
 
 
   // ===========================
