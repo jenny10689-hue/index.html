@@ -277,6 +277,150 @@
     text-align: center;
     margin-top: 12px;
   }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal-box {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+  }
+
+  .modal-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 14px;
+  }
+
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    border-bottom: 0.5px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .time-row.custom {
+    background: #FFF5E2;
+  }
+
+  .time-row-date {
+    width: 54px;
+    font-size: 13px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .time-row-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .time-row-dot.early { background: var(--early-border); }
+  .time-row-dot.late { background: var(--late-border); }
+
+  .time-adjust {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .time-adjust span {
+    font-size: 14px;
+    min-width: 44px;
+    text-align: center;
+  }
+
+  .time-adjust-arrows {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .time-adjust-arrows button {
+    background: none;
+    border: none;
+    color: var(--text2);
+    height: 14px;
+    width: 20px;
+    font-size: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .time-sep {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .modal-actions button.primary {
+    background: linear-gradient(135deg, #D8E9AB, #B4D8BE);
+    border: none;
+    font-weight: 700;
+    color: #0a1a0f;
+  }
 </style>
 </head>
 <body>
@@ -289,8 +433,24 @@
     
   </div>
   </div>
+<button id="custom-time-btn" style="position:absolute;right:118px;top:16px;background:var(--surface2);border:0.5px solid var(--border);color:var(--text);border-radius:20px;padding:10px 16px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;transition:opacity 0.15s,transform 0.1s;">自訂時間</button>
 <button id="sync-btn" style="position:absolute;right:16px;top:16px;background:linear-gradient(135deg,#c0d6a6,#86b6a3);border:none;color:#fff9f2;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:400;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;transition:opacity 0.15s,transform 0.1s;">傳送班表</button>
 </header>
+
+<div class="modal-overlay" id="custom-time-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">自訂上下班時間</div>
+      <button class="modal-close" id="custom-time-close">×</button>
+    </div>
+    <div class="modal-sub" id="custom-time-sub"></div>
+    <div id="custom-time-list"></div>
+    <div class="modal-actions">
+      <button id="custom-time-cancel">取消</button>
+      <button class="primary" id="custom-time-save">儲存</button>
+    </div>
+  </div>
+</div>
 
 <div class="weekdays">
 <div class="weekday">一</div>
@@ -354,6 +514,25 @@
 const SHIFTS = ['late', 'off', 'early'];
   const LABELS = { early: '早', late: '晚', off: '休' };
   const TIMES  = { early: '', late: '', off: '' };
+  const DEFAULT_TIMES = { early: { start: '07:00', end: '15:30' }, late: { start: '14:30', end: '23:00' } };
+
+  // 取得某天的班別字串（相容舊資料的純字串格式與新資料的物件格式）
+  function getShift(dateStr) {
+    const v = scheduleData[dateStr];
+    if (!v) return null;
+    return typeof v === 'string' ? v : v.shift;
+  }
+
+  // 取得某天的上下班時間（若無自訂時間，回傳該班別預設值）
+  function getTimes(dateStr) {
+    const v = scheduleData[dateStr];
+    const shift = getShift(dateStr);
+    if (!shift || shift === 'off') return null;
+    if (v && typeof v === 'object' && v.start && v.end) {
+      return { start: v.start, end: v.end };
+    }
+    return DEFAULT_TIMES[shift];
+  }
 
   let year, month, scheduleData = {};
   window._year = year;
@@ -404,7 +583,7 @@ const firstDay = (firstDayRaw === 0) ? 6 : firstDayRaw - 1;
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dow = new Date(year, month, d).getDay();
-      const shift = scheduleData[dateStr] || null;
+      const shift = getShift(dateStr);
 
       if (shift === 'early') early++;
       else if (shift === 'late') late++;
@@ -438,8 +617,9 @@ const dailyWage = totalWorkDays > 0 ? Math.round(34000 / totalWorkDays) : 0;
 
 const todayDate = new Date();
 let workedDays = 0;
-Object.entries(scheduleData).forEach(([dateStr, shift]) => {
-  if (shift !== 'off') {
+Object.keys(scheduleData).forEach((dateStr) => {
+  const shift = getShift(dateStr);
+  if (shift && shift !== 'off') {
     const d = new Date(dateStr);
     if (d.getFullYear() === year && d.getMonth() === month && d < todayDate) {
       workedDays++;
@@ -474,6 +654,118 @@ document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
   }
+
+  // ===== 自訂上下班時間 Modal =====
+  let modalDraft = {}; // 編輯中的暫存資料，按「儲存」才寫回 scheduleData
+
+  function minutesToStr(mins) {
+    mins = ((mins % 1440) + 1440) % 1440;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  function strToMinutes(str) {
+    const [h, m] = str.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function renderCustomTimeModal() {
+    const list = document.getElementById('custom-time-list');
+    const sub = document.getElementById('custom-time-sub');
+    list.innerHTML = '';
+
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const weekdayNames = ['日','一','二','三','四','五','六'];
+    let workDayCount = 0;
+    modalDraft = {};
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const shift = getShift(dateStr);
+      if (shift !== 'early' && shift !== 'late') continue;
+
+      workDayCount++;
+      const times = getTimes(dateStr);
+      modalDraft[dateStr] = { shift, start: times.start, end: times.end };
+
+      const dow = new Date(year, month, d).getDay();
+      const row = document.createElement('div');
+      const isCustom = times.start !== DEFAULT_TIMES[shift].start || times.end !== DEFAULT_TIMES[shift].end;
+      row.className = 'time-row' + (isCustom ? ' custom' : '');
+      row.dataset.date = dateStr;
+      row.innerHTML = `
+        <span class="time-row-date">${month+1}/${d}（${weekdayNames[dow]}）</span>
+        <span class="time-row-dot ${shift}"></span>
+        <div class="time-adjust">
+          <span class="time-start">${times.start}</span>
+          <div class="time-adjust-arrows">
+            <button class="start-up" aria-label="上班時間加30分鐘">▲</button>
+            <button class="start-down" aria-label="上班時間減30分鐘">▼</button>
+          </div>
+        </div>
+        <span class="time-sep">–</span>
+        <div class="time-adjust">
+          <span class="time-end">${times.end}</span>
+          <div class="time-adjust-arrows">
+            <button class="end-up" aria-label="下班時間加30分鐘">▲</button>
+            <button class="end-down" aria-label="下班時間減30分鐘">▼</button>
+          </div>
+        </div>
+      `;
+
+      row.querySelector('.start-up').addEventListener('click', () => adjustTime(dateStr, 'start', 30, row));
+      row.querySelector('.start-down').addEventListener('click', () => adjustTime(dateStr, 'start', -30, row));
+      row.querySelector('.end-up').addEventListener('click', () => adjustTime(dateStr, 'end', 30, row));
+      row.querySelector('.end-down').addEventListener('click', () => adjustTime(dateStr, 'end', -30, row));
+
+      list.appendChild(row);
+    }
+
+    sub.textContent = `${month+1} 月份，共 ${workDayCount} 個上班日`;
+  }
+
+  function adjustTime(dateStr, field, deltaMinutes, row) {
+    const draft = modalDraft[dateStr];
+    const newMinutes = strToMinutes(draft[field]) + deltaMinutes;
+    draft[field] = minutesToStr(newMinutes);
+
+    row.querySelector(field === 'start' ? '.time-start' : '.time-end').textContent = draft[field];
+
+    const def = DEFAULT_TIMES[draft.shift];
+    const isCustom = draft.start !== def.start || draft.end !== def.end;
+    row.classList.toggle('custom', isCustom);
+  }
+
+  function openCustomTimeModal() {
+    renderCustomTimeModal();
+    document.getElementById('custom-time-modal').classList.add('show');
+  }
+
+  function closeCustomTimeModal() {
+    document.getElementById('custom-time-modal').classList.remove('show');
+  }
+
+  async function saveCustomTimeModal() {
+    for (const [dateStr, draft] of Object.entries(modalDraft)) {
+      const def = DEFAULT_TIMES[draft.shift];
+      if (draft.start === def.start && draft.end === def.end) {
+        // 時間等於預設值，存回純字串格式（無自訂時間）
+        scheduleData[dateStr] = draft.shift;
+      } else {
+        scheduleData[dateStr] = { shift: draft.shift, start: draft.start, end: draft.end };
+      }
+    }
+    await saveSchedule();
+    closeCustomTimeModal();
+    render();
+    showToast('時間已儲存');
+  }
+
+  document.getElementById('custom-time-btn').addEventListener('click', openCustomTimeModal);
+  document.getElementById('custom-time-close').addEventListener('click', closeCustomTimeModal);
+  document.getElementById('custom-time-cancel').addEventListener('click', closeCustomTimeModal);
+  document.getElementById('custom-time-save').addEventListener('click', saveCustomTimeModal);
 
   // Google 日曆同步（需要 OAuth，這裡先顯示提示）
 
@@ -516,10 +808,12 @@ function initGoogleAuth() {
         }
       }
       let count = 0;
-      for (const [dateStr, shift] of Object.entries(scheduleData)) {
-        if (shift === "off") continue;
-        const time = shift === "early" ? "07:00" : "14:30";
-        const endTime = shift === "early" ? "15:30" : "23:00";
+      for (const [dateStr, value] of Object.entries(scheduleData)) {
+        const shift = typeof value === 'string' ? value : value.shift;
+        if (shift === "off" || !shift) continue;
+        const hasCustom = typeof value === 'object' && value.start && value.end;
+        const time = hasCustom ? value.start : (shift === "early" ? "07:00" : "14:30");
+        const endTime = hasCustom ? value.end : (shift === "early" ? "15:30" : "23:00");
         const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
           method: "POST",
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
@@ -551,5 +845,4 @@ window.addEventListener("load", () => {
 });
 </script>
 </body>
-</html>
 </html>
