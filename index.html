@@ -374,25 +374,6 @@ button:hover { background: var(--hover); }
       .cc-summary-row { grid-template-columns: 1fr 1fr; }
       #fab { bottom: 1.25rem; right: 1.25rem; }
     }
-
-  /* ====== 首頁卡片 ====== */
-  #page-home { padding: 1.5rem; max-width: 600px; margin: 0 auto; }
-  #page-home h1 { font-size: 1.3rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
-  #page-home .greeting-sub { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.5rem; }
-  .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .home-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 1.25rem 1rem 1rem;
-    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-    display: flex; flex-direction: column; gap: 0.5rem;
-    text-align: left; min-height: 110px;
-  }
-  .home-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-  .home-card:active { transform: scale(0.97); }
-  .home-card-icon { font-size: 2rem; line-height: 1; }
-  .home-card-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-  .home-card-desc { font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
-
   /* 配色主題 */
 :root {
   --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff;
@@ -458,7 +439,7 @@ body { background-color: var(--bg); color: var(--text); }
 <!-- 側邊欄 -->
 <div id="sidebar" style="display:none;">
   <div id="sidebar-top">
-    <div id="sidebar-logo" onclick="showPage('home')" style="cursor:pointer;">💰 <span id="sidebar-logo-text">記帳本</span></div>
+    <div id="sidebar-logo">💰 <span id="sidebar-logo-text">記帳本</span></div>
     <button id="toggle-sidebar" onclick="toggleSidebar()">☰</button>
   </div>
   <div id="sidebar-user"></div>
@@ -473,40 +454,6 @@ body { background-color: var(--bg); color: var(--text); }
 </div>
 <!-- 主畫面 -->
 <div id="main" style="display:none;">
-
-
-  <!-- 首頁 -->
-  <div id="page-home" class="container" style="display:none;">
-    <h1>👋 嗨，歡迎回來！</h1>
-    <p class="greeting-sub">選擇你要使用的功能</p>
-    <div class="home-grid">
-      <button class="home-card" onclick="showPage('ledger')">
-        <div class="home-card-icon">💰</div>
-        <div class="home-card-title">記帳</div>
-        <div class="home-card-desc">新增收支、查看明細</div>
-      </button>
-      <button class="home-card" onclick="showPage('cc-summary')">
-        <div class="home-card-icon">💳</div>
-        <div class="home-card-title">信用卡統計</div>
-        <div class="home-card-desc">刷卡消費總覽</div>
-      </button>
-      <button class="home-card" onclick="showPage('budget')">
-        <div class="home-card-icon">🎯</div>
-        <div class="home-card-title">預算管理</div>
-        <div class="home-card-desc">設定與追蹤每月預算</div>
-      </button>
-      <button class="home-card" onclick="showPage('stocks')">
-        <div class="home-card-icon">📈</div>
-        <div class="home-card-title">存股記錄</div>
-        <div class="home-card-desc">投資組合與庫存</div>
-      </button>
-      <button class="home-card" onclick="showPage('ledger-manage')">
-        <div class="home-card-icon">📒</div>
-        <div class="home-card-title">帳本管理</div>
-        <div class="home-card-desc">新增、切換帳本</div>
-      </button>
-    </div>
-  </div>
 
   <!-- 記帳頁 -->
   <div id="page-ledger" class="container" style="display:none;">
@@ -1136,11 +1083,6 @@ window.showPage = function(page) {
       document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => b.classList.remove('active'));
     }
 
-if (page === 'home') {
-    document.getElementById('page-home').style.display = 'block';
-    document.getElementById('fab').style.display = 'none';
-    return;
-  }
 if (page === 'ledger') {
       // 標記左側選單 active
       document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => {
