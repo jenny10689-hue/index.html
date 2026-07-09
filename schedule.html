@@ -694,6 +694,7 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
   import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyCXNHHiH6-1hT-bEG5uy-Eyqa2dcMVX61s",
@@ -706,6 +707,7 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
 const SHIFTS = ['late', 'off', 'early'];
   const LABELS = { early: '早', late: '晚', off: '休' };
@@ -1083,7 +1085,16 @@ document.getElementById('earned').textContent = `$${earned.toLocaleString()}`;
   });
 
   setTimeout(() => { if (window.google) initGoogleAuth(); else console.log("google not loaded"); }, 3000);
-  loadSchedule();
+  // 登入檢查
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadSchedule();
+    } else {
+      signInWithPopup(auth, new GoogleAuthProvider()).catch((e) => {
+        alert("登入失敗，請重新整理頁面");
+      });
+    }
+  });
 </script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
