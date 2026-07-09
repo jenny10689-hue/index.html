@@ -121,6 +121,26 @@
     #topup-result { font-size: 0.85rem; color: #5f5e5a; line-height: 1.8; }
     #topup-result strong { color: #2c2c2a; }
     #wallet-warning { color: #c0392b; font-size: 0.8rem; font-weight: 500; }
+
+    /* 底部頁籤 */
+    #bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      z-index: 40;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .bottom-nav-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; flex: 1; height: 100%; border: none; background: transparent;
+      color: var(--text-dim); cursor: pointer; font-size: 10px; padding: 0;
+    }
+    .bottom-nav-btn.active { color: var(--accent); }
+    .bottom-nav-btn i { font-size: 20px; line-height: 1; }
     .topup-field { display: flex; align-items: center; gap: 0.75rem; }
  
     /* ===========================
