@@ -2593,7 +2593,7 @@ renderReconcile(reconcileId, total, showSaved);
       <!-- 手機 Tab -->
       <div class="cc-ledger-tabs">
         <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <button class="cc-tab-btn active" onclick="switchCCTab(this,'cc-tab-p-${summaryId}','cc-tab-s-${summaryId}')'">${pName}</button>
+          <button class="cc-tab-btn active" onclick="switchCCTab(this,'cc-tab-p-${summaryId}','cc-tab-s-${summaryId}')">${pName}</button>
           <button class="cc-tab-btn" onclick="switchCCTab(this,'cc-tab-s-${summaryId}','cc-tab-p-${summaryId}')">${sName}</button>
         </div>
         <div id="cc-tab-p-${summaryId}">${renderRecRows(personalRecs)}</div>
