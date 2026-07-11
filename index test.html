@@ -1,0 +1,3684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <title>我的記帳本</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+    body {
+      font-family: sans-serif;
+      background-color: #f1efe8;
+      color: #2c2c2a;
+      min-height: 100vh;
+      display: flex;
+    }
+ 
+    /* ===========================
+       側邊欄
+       =========================== */
+    #sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: #ffffff;
+      border-right: 1px solid #d3d1c7;
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-height: 100vh;
+      transition: width 0.2s;
+      overflow: hidden;
+    }
+ 
+    #sidebar.collapsed { width: 56px; padding: 1rem 0.5rem; }
+    #sidebar.collapsed #sidebar-logo-text,
+    #sidebar.collapsed #sidebar-user,
+    #sidebar.collapsed .sidebar-label,
+    #sidebar.collapsed h2 { display: none; }
+    #sidebar.collapsed .sidebar-item { padding: 0.6rem; justify-content: center; }
+ 
+    #sidebar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    #sidebar-logo { font-size: 1.1rem; font-weight: 500; color: #2c2c2a; white-space: nowrap; }
+    #toggle-sidebar { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #888780; padding: 0.2rem 0.4rem; flex-shrink: 0; }
+    #toggle-sidebar:hover { color: #2c2c2a; background: none; }
+    #sidebar-user { font-size: 0.8rem; color: #888780; padding: 0.25rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #sidebar h2 { font-size: 0.72rem; color: #b4b2a9; letter-spacing: 0.05em; margin: 0.75rem 0 0.3rem; padding-left: 0.5rem; white-space: nowrap; }
+ 
+    .sidebar-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.55rem 0.75rem; border-radius: 8px; cursor: pointer;
+      font-size: 0.88rem; color: #5f5e5a; border: none; background: transparent;
+      text-align: left; width: 100%; white-space: nowrap; transition: background 0.15s;
+    }
+    .sidebar-item:hover { background-color: #f1efe8; }
+    .sidebar-item.active { background-color: #f1efe8; color: #2c2c2a; font-weight: 500; border-left: 3px solid #444441; padding-left: calc(0.75rem - 3px); }
+    .sidebar-icon { font-size: 1rem; flex-shrink: 0; }
+ 
+    /* ===========================
+       主畫面
+       =========================== */
+    #main { flex: 1; padding: 1.5rem; overflow-y: auto; min-width: 0; position: relative; }
+    .container { max-width: 720px; margin: 0 auto; }
+ 
+    h1 { font-size: 1.3rem; font-weight: 500; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #d3d1c7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    h2 { font-size: 0.95rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.75rem; }
+ 
+    .card { background: #ffffff; border: 1px solid #d3d1c7; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+ 
+    /* ===========================
+       月份選擇器
+       =========================== */
+    .month-picker { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .month-picker button { padding: 0.25rem 0.5rem; font-size: 1rem; border: 1px solid #d3d1c7; border-radius: 6px; background: #fff; cursor: pointer; }
+.month-picker button:hover { background: var(--hover); }
+    .month-label { font-size: 0.88rem; font-weight: 500; min-width: 70px; text-align: center; }
+ 
+    /* ===========================
+       結餘摘要
+       =========================== */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .summary-card { background: #fff; border: 1px solid #d3d1c7; border-radius: 10px; padding: 0.875rem 1rem; }
+    .summary-label { font-size: 0.75rem; color: #888780; margin-bottom: 0.3rem; }
+    .summary-value { font-size: 1.2rem; font-weight: 500; }
+    .summary-value.income  { color: #2e7d32; }
+    .summary-value.expense { color: #c0392b; }
+    .summary-value.balance { color: #2c2c2a; }
+ 
+    /* ===========================
+       圓餅圖
+       =========================== */
+    #pie-card { padding: 1rem 1.25rem; }
+    #pie-wrapper { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    #pie-canvas-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+    #pie-legend { display: flex; flex-direction: column; gap: 0.3rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { color: #5f5e5a; flex: 1; }
+    .legend-amount { font-weight: 500; color: #2c2c2a; }
+    .legend-pct { font-size: 0.75rem; color: #888780; }
+ 
+    /* ===========================
+       快速輸入區
+       =========================== */
+    .quick-presets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .preset-chip {
+      display: flex; align-items: center; gap: 0; border: 1px solid #d3d1c7;
+      border-radius: 8px; overflow: hidden; background: #fff;
+    }
+    .preset-chip-btn { border: none; background: transparent; padding: 0.4rem 0.75rem; cursor: pointer; font-size: 0.85rem; color: #2c2c2a; }
+    .preset-chip-btn:hover { background: #f1efe8; }
+    .preset-chip-del { border: none; border-left: 1px solid #d3d1c7; background: transparent; padding: 0.4rem 0.5rem; cursor: pointer; font-size: 0.75rem; color: #b4b2a9; }
+    .preset-chip-del:hover { background: #f1efe8; color: #5f5e5a; }
+ 
+    /* 課金快速輸入 */
+#topup-inline { background: var(--hover); border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); }
+    #topup-inline h3 { font-size: 0.85rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.6rem; }
+    #topup-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    #topup-result { font-size: 0.85rem; color: #5f5e5a; line-height: 1.8; }
+    #topup-result strong { color: #2c2c2a; }
+    #wallet-warning { color: #c0392b; font-size: 0.8rem; font-weight: 500; }
+
+    /* 底部頁籤 */
+    #bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      z-index: 40;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .bottom-nav-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; flex: 1; height: 100%; border: none; background: transparent;
+      color: var(--text-dim); cursor: pointer; font-size: 10px; padding: 0;
+    }
+    .bottom-nav-btn.active { color: var(--accent); }
+    .bottom-nav-btn i { font-size: 20px; line-height: 1; }
+    .topup-field { display: flex; align-items: center; gap: 0.75rem; }
+ 
+    /* ===========================
+       記錄清單
+       =========================== */
+    .record-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 0; border-bottom: 1px solid #f1efe8;
+    }
+    .record-item:last-child { border-bottom: none; }
+    .record-icon { font-size: 1.3rem; flex-shrink: 0; width: 32px; text-align: center; }
+    .record-body { flex: 1; min-width: 0; }
+    .record-name { font-size: 0.9rem; color: #2c2c2a; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .record-meta { font-size: 0.75rem; color: #888780; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .record-right { text-align: right; flex-shrink: 0; }
+    .record-amount { font-size: 0.95rem; font-weight: 500; }
+    .record-actions { display: flex; gap: 0.3rem; margin-top: 0.25rem; justify-content: flex-end; }
+ 
+    .pay-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 50%;
+      font-size: 0.8rem; cursor: default;
+    }
+ 
+    .amount-expense { color: #c0392b; }
+    .amount-income  { color: #2e7d32; }
+ 
+    .tag { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.45rem; border-radius: 999px; border: 1px solid #d3d1c7; color: #5f5e5a; background: #f1efe8; cursor: pointer; user-select: none; white-space: nowrap; }
+    .tag-prestored { background: #e8f5e9; border-color: #c8e6c9; color: #2e7d32; }
+    .tag-btn { font-size: 0.75rem; padding: 0.2rem 0.5rem; border: 1px solid #d3d1c7; border-radius: 6px; background: #fff; cursor: pointer; color: #5f5e5a; }
+    .tag-btn:hover { background: #f1efe8; }
+    .tag-btn.danger { color: #c0392b; border-color: #e0b0ad; }
+    .tag-btn.danger:hover { background: #fdf0ef; }
+ 
+    /* ===========================
+       浮動新增按鈕
+       =========================== */
+    #fab {
+      position: fixed; bottom: 2rem; right: 2rem;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #444441; color: #fff; border: none;
+      font-size: 1.6rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.15s; z-index: 50;
+    }
+    #fab:hover { background: #2c2c2a; transform: scale(1.05); }
+ 
+    /* ===========================
+       新增/編輯 彈出視窗
+       =========================== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal-overlay.show { display: flex; }
+ 
+    /* 從底部滑入 */
+    .modal-sheet {
+      background: #fff; border-radius: 16px 16px 0 0;
+      padding: 1.25rem 1.25rem 2rem; width: 100%; max-width: 600px;
+      max-height: 90vh; overflow-y: auto;
+      animation: slideUp 0.2s ease;
+    }
+ 
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+ 
+    .modal-handle { width: 36px; height: 4px; background: #d3d1c7; border-radius: 2px; margin: 0 auto 1rem; }
+    .modal-title { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
+ 
+    /* 表單緊湊版 */
+    .form-compact { display: flex; flex-direction: column; gap: 0.75rem; }
+    .form-row-compact { display: flex; align-items: center; gap: 0.75rem; }
+    .form-label { font-size: 0.8rem; color: #888780; width: 56px; flex-shrink: 0; }
+ 
+    .input-sm {
+      flex: 1; padding: 0.45rem 0.65rem; font-size: 0.9rem;
+      border: 1px solid #d3d1c7; border-radius: 8px;
+      background: #f1efe8; color: #2c2c2a; outline: none; font-family: sans-serif;
+    }
+    .input-sm:focus { border-color: #888780; background: #fff; }
+    textarea.input-sm { resize: vertical; min-height: 56px; }
+ 
+    /* 類型切換 */
+    .type-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.25rem; }
+    .type-tab { padding: 0.35rem 1rem; border-radius: 20px; border: 1px solid #d3d1c7; background: #fff; font-size: 0.85rem; cursor: pointer; color: #5f5e5a; transition: all 0.15s; }
+    .type-tab.active-expense { background: #444441; color: #fff; border-color: #444441; }
+    .type-tab.active-income  { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+ 
+    /* emoji 選擇器 */
+    .emoji-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .emoji-option {
+      width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid transparent;
+      background: #f1efe8; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; cursor: pointer; transition: all 0.12s;
+      position: relative;
+    }
+.emoji-option {
+  width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid transparent;
+  background: var(--input-bg); display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; cursor: pointer; transition: all 0.12s;
+  position: relative;
+}
+.emoji-option:hover { background: var(--hover); }
+    .emoji-option.selected { border-color: #444441; background: #fff; }
+    .emoji-option .emoji-tooltip {
+      display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+      transform: translateX(-50%); background: #2c2c2a; color: #fff;
+      font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; white-space: nowrap; z-index: 10;
+    }
+    .emoji-option:hover .emoji-tooltip { display: block; }
+ 
+    /* 通用 modal box */
+    .modal-box-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); align-items: center; justify-content: center; z-index: 110; }
+    .modal-box-overlay.show { display: flex; }
+    .modal-box { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #d3d1c7; width: 340px; max-width: 92vw; max-height: 85vh; overflow-y: auto; }
+    .modal-box h2 { margin-bottom: 1rem; font-size: 1rem; font-weight: 500; }
+ 
+    /* 按鈕 */
+    button { padding: 0.45rem 1rem; font-size: 0.85rem; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; color: #2c2c2a; cursor: pointer; transition: background 0.15s; }
+button:hover { background: var(--hover); }
+    .btn-primary { background: #444441; color: #fff; border-color: #444441; }
+    .btn-primary:hover { background: #2c2c2a; }
+    .btn-income-color { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+    .btn-income-color:hover { background: #c8e6c9; }
+    .btn-full { width: 100%; }
+    .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.78rem; }
+ 
+    /* 信用卡統計 */
+    .cc-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+.cc-stat { background: var(--hover); border-radius: 8px; padding: 0.75rem 1rem; }
+@media (max-width: 600px) {
+  .cc-stat { padding: 0.5rem 0.6rem; }
+  .cc-stat-label { font-size: 0.68rem; }
+  .cc-stat-value { font-size: 0.9rem; }
+}
+    .cc-stat-label { font-size: 0.75rem; color: #888780; margin-bottom: 0.25rem; }
+    .cc-stat-value { font-size: 1.05rem; font-weight: 500; }
+    .cc-detail-row { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f1efe8; font-size: 0.85rem; }
+    .cc-detail-row:last-child { border-bottom: none; }
+ 
+    /* 預算頁面 */
+    .budget-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1efe8; }
+    .budget-item:last-child { border-bottom: none; }
+    .budget-icon { font-size: 1.3rem; width: 32px; text-align: center; flex-shrink: 0; }
+    .budget-body { flex: 1; min-width: 0; }
+    .budget-label { font-size: 0.88rem; font-weight: 500; color: #2c2c2a; }
+    .budget-bar-wrap { height: 6px; background: #f1efe8; border-radius: 3px; margin-top: 0.35rem; overflow: hidden; }
+    .budget-bar { height: 100%; border-radius: 3px; transition: width 0.3s; background: #444441; }
+    .budget-bar.over { background: #c0392b; }
+    .budget-nums { font-size: 0.75rem; color: #888780; margin-top: 0.2rem; }
+    .budget-right { text-align: right; flex-shrink: 0; }
+    .budget-remaining { font-size: 0.88rem; font-weight: 500; }
+    .budget-remaining.over { color: #c0392b; }
+ 
+    /* 信用卡對帳區塊 */
+    .cc-reconcile {
+      background: #f9f6f0;
+      border: 1px solid #e8e4dc;
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      margin-top: 1rem;
+    }
+    .cc-reconcile h3 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #5f5e5a;
+      margin-bottom: 0.75rem;
+    }
+    .cc-recon-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .cc-recon-field label {
+      display: block;
+      font-size: 0.72rem;
+      color: #888780;
+      margin-bottom: 0.25rem;
+    }
+    .cc-recon-field input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #d3d1c7;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      color: #2c2c2a;
+    }
+    .cc-recon-field input:focus { border-color: #888780; }
+    .cc-recon-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #e8e4dc;
+    }
+    .cc-recon-diff { font-size: 1rem; font-weight: 500; }
+    .cc-recon-diff.ok   { color: #2e7d32; }
+    .cc-recon-diff.warn { color: #c0392b; }
+    .cc-recon-diff.exact{ color: #444441; }
+    .cc-recon-note { font-size: 0.75rem; color: #888780; }
+ 
+    /* 登入 */
+    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%; gap: 1rem; }
+    #login-screen h1 { border: none; font-size: 1.6rem; display: block; }
+    #login-screen p { color: #5f5e5a; }
+    .btn-google { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; font-size: 1rem; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; cursor: pointer; }
+    .btn-google:hover { background: #f1efe8; }
+    #loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; color: #888780; }
+ 
+@media (max-width: 600px) {
+      body { flex-direction: column; }
+ 
+      /* 手機版 sidebar 變成底部滑出選單 */
+      #sidebar {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        width: 100% !important;
+        min-height: auto;
+        max-height: 0;
+        flex-direction: column;
+        padding: 0 1rem;
+        gap: 0;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        overflow: hidden;
+        z-index: 45;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+      }
+
+      #sidebar.mobile-open {
+        max-height: 80vh;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+        overflow-y: auto;
+      }
+ 
+      /* 頂部列永遠顯示 */
+      #sidebar-top {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 36px;
+      }
+ 
+      /* 使用者名稱和選單項目預設隱藏，展開才顯示 */
+      #sidebar-user { width: 100%; padding: 0.5rem 0.25rem 0.25rem; }
+      #sidebar h2 { padding-left: 0.25rem; }
+ 
+      .sidebar-item {
+        width: 100%;
+        padding: 0.6rem 0.5rem;
+        border-radius: 8px;
+      }
+ 
+      /* 登出按鈕不要撐到底 */
+      #sidebar > div[style*="flex:1"] { display: none; }
+ 
+      #main { padding: 1rem; padding-bottom: 72px; }
+      #bottom-nav { display: flex; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .cc-summary-row { grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+      #fab { bottom: calc(56px + 16px + env(safe-area-inset-bottom)); right: 1.25rem; }
+      #topup-row { flex-direction: column; align-items: stretch; }
+      .topup-field { width: 100%; }
+    }
+  /* 配色主題 */
+:root {
+  --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff;
+  --border: #d3d1c7; --text: #2c2c2a; --text-sub: #5f5e5a;
+  --text-dim: #888780; --hover: #f1efe8; --input-bg: #f1efe8;
+  --accent: #444441; --accent2: #2c2c2a;
+}
+body { background-color: var(--bg); color: var(--text); }
+#sidebar { background: var(--sidebar); border-color: var(--border); }
+.card, .summary-card { background: var(--card); border-color: var(--border); }
+.sidebar-item:hover { background-color: var(--hover); }
+.sidebar-item.active { background-color: var(--hover); border-color: var(--accent); }
+.input-sm { background: var(--input-bg); border-color: var(--border); color: var(--text); }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent2); }
+#fab { background: rgba(68, 68, 65, 0.55); }
+#fab:hover { background: var(--accent2); }
+.budget-bar { background: var(--accent); }
+ 
+/* 主題預覽卡片 */
+.theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+.theme-card {
+  border-radius: 10px; border: 2px solid var(--border);
+  padding: 0.75rem; cursor: pointer; transition: all 0.15s;
+}
+.theme-card:hover { transform: scale(1.03); }
+.theme-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.theme-preview {
+  height: 56px; border-radius: 6px; margin-bottom: 0.5rem;
+  display: flex; overflow: hidden;
+}
+.theme-preview-sidebar { width: 30%; }
+.theme-preview-main { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px; }
+.theme-preview-card { flex: 1; border-radius: 3px; }
+.theme-name { font-size: 0.78rem; font-weight: 500; text-align: center; color: var(--text-sub); }
+@media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
+ 
+/* 信用卡帳本分欄 */
+.cc-ledger-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.cc-col-title { font-size: 0.75rem; font-weight: 500; color: var(--text-dim); margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 0.5px solid var(--border); }
+.cc-ledger-tabs { display: none; }
+.cc-tab-btn { font-size: 0.78rem; padding: 3px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: var(--card); color: var(--text-sub); cursor: pointer; }
+.cc-tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (max-width: 600px) {
+  .cc-ledger-cols { display: none; }
+  .cc-ledger-tabs { display: block; }
+}
+
+/* 快速輸入 toggle */
+.preset-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.preset-toggle-icon { font-size: 0.75rem; color: #888780; transition: transform 0.2s; }
+.preset-toggle-icon.open { transform: rotate(180deg); }
+
+
+  </style>
+</head>
+<body>
+ 
+<div id="loading">載入中...</div>
+ 
+<!-- 登入 -->
+<div id="login-screen" style="display:none;">
+  <h1>💰 我的記帳本</h1>
+  <p>請登入以開始使用</p>
+  <button class="btn-google" id="google-login-btn">
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    使用 Google 帳號登入
+  </button>
+</div>
+ 
+<!-- 側邊欄 -->
+<div id="sidebar" style="display:none;">
+  <div id="sidebar-top">
+    <div id="sidebar-logo">💰 <span id="sidebar-logo-text">記帳本</span></div>
+    <button id="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+  </div>
+  <div id="sidebar-user"></div>
+  <h2>帳本</h2>
+  <button class="sidebar-item" id="btn-home" onclick="showPage('home')"><span class="sidebar-icon">🏠</span><span class="sidebar-label">首頁</span></button>
+  <div id="ledger-menu"></div>
+  <h2>工具</h2>
+<button class="sidebar-item" id="btn-cc"     onclick="showPage('cc-summary')"><span class="sidebar-icon">💳</span><span class="sidebar-label">信用卡統計</span></button>
+  <button class="sidebar-item" id="btn-budget" onclick="showPage('budget')">    <span class="sidebar-icon">🎯</span><span class="sidebar-label">預算管理</span></button>
+  <button class="sidebar-item" id="btn-stocks" onclick="showPage('stocks')">    <span class="sidebar-icon">📈</span><span class="sidebar-label">存股記錄</span></button>
+  <button class="sidebar-item" id="btn-manage" onclick="showPage('ledger-manage')"><span class="sidebar-icon">📒</span><span class="sidebar-label">帳本管理</span></button>  <div style="flex:1;"></div>
+  <div style="border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.5rem;">
+    <div id="sidebar-user-bottom" style="font-size:0.78rem; color:var(--text-dim); padding:0.25rem 0.5rem; margin-bottom:0.25rem;"></div>
+    <button class="sidebar-item" onclick="logout()"><span class="sidebar-icon">🚪</span><span class="sidebar-label">登出</span></button>
+    <div style="font-size:0.72rem; color:var(--text-dim); padding:0.25rem 0.5rem;" id="version-label">v1.0.0</div>
+  </div>
+</div>
+<!-- 主畫面 -->
+<div id="main" style="display:none;">
+ 
+  <!-- 首頁 -->
+  <div id="page-home" class="container" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:1.2rem; font-weight:500; color:var(--text);" id="home-greeting">你好 👋</div>
+        <div style="font-size:0.82rem; color:var(--text-dim);" id="home-month"></div>
+      </div>
+      <button onclick="showPage('ledger-manage')" style="background:none; border:none; font-size:1.3rem; color:var(--text-dim); cursor:pointer; padding:4px;">
+        <i class="ti ti-settings" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="card" id="home-wallet-card" style="display:none;">
+      <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">💰 錢櫃餘額（手動更新）</div>
+      <div style="font-size:1.6rem; font-weight:500; color:var(--text);" id="home-wallet-balance">$0</div>
+      <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;" id="home-wallet-updated"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="font-size:0.72rem; font-weight:500; color:var(--text-dim); letter-spacing:0.06em;">本月支出</div>
+      <div style="display:flex; gap:6px;">
+        <button id="home-tab-personal" onclick="setHomeTab('personal')"
+          style="font-size:11px; padding:3px 10px; border-radius:20px; border:0.5px solid var(--border); background:var(--accent); color:#fff; cursor:pointer;">個人</button>
+        <button id="home-tab-shared" onclick="setHomeTab('shared')"
+          style="font-size:11px; padding:3px 10px; border-radius:20px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); cursor:pointer;">共同</button>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+      <div class="card" style="padding:10px 12px;">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">本月支出</div>
+        <div style="font-size:1.2rem; font-weight:500; color:#c0392b;" id="home-expense">$0</div>
+      </div>
+      <div class="card" style="padding:10px 12px;">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:4px;">剩餘預算</div>
+        <div style="font-size:1.2rem; font-weight:500; color:#2e7d32;" id="home-budget-remain">—</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:13px; font-weight:500; color:var(--text);">支出分佈</div>
+        <button onclick="showPage('ledger')" style="font-size:11px; color:var(--text-dim); border:none; background:none; cursor:pointer;">→ 查看詳細</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <canvas id="home-pie-canvas" width="80" height="80" style="flex-shrink:0;"></canvas>
+        <div id="home-pie-legend" style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:80px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-size:13px; font-weight:500; color:var(--text);">本期信用卡</div>
+        <button onclick="showPage('cc-summary')" style="font-size:11px; color:var(--text-dim); border:none; background:none; cursor:pointer;">→ 查看詳細</button>
+      </div>
+      <div id="home-cc-list"></div>
+    </div>
+  </div>
+
+  <!-- 記帳頁 -->
+  <div id="page-ledger" class="container" style="display:none;">
+    <h1>
+      <span id="ledger-title">記帳本</span>
+      <span class="month-picker">
+        <button onclick="changeMonth(-1)">&#8249;</button>
+        <span class="month-label" id="month-label"></span>
+        <button onclick="changeMonth(1)">&#8250;</button>
+      </span>
+    </h1>
+ 
+    <!-- 圓餅圖 + 統計合併 -->
+    <div class="card" id="pie-card">
+      <h2 style="margin-bottom:0.75rem;">📊 支出分佈</h2>
+      <div id="pie-wrapper">
+        <div id="pie-canvas-wrap"><canvas id="pie-canvas" width="100" height="100"></canvas></div>
+        <div style="display:flex; flex-direction:column; flex:1; min-width:0; gap:0.4rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">本月收入</span>
+            <span class="summary-value income" style="font-size:0.9rem;">$<span id="total-income">0</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">本月支出</span>
+            <span class="summary-value expense" style="font-size:0.9rem;">$<span id="total-expense">0</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+            <span style="color:var(--text-dim);">結餘</span>
+            <span class="summary-value balance" style="font-size:0.9rem;">$<span id="total-balance">0</span></span>
+          </div>
+          <div id="pie-legend" style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px solid var(--border);"></div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- 課金（共同帳本才顯示） -->
+    <div id="topup-card" class="card" style="display:none;">
+      <div id="topup-inline">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.4rem;">
+            <h3 style="margin-bottom:0;">💰 錢櫃課金</h3>
+            <div id="wallet-updated-at" style="font-size:0.72rem; color:#888780; flex-shrink:0;"></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.75rem; font-size:0.85rem; color:#5f5e5a; margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem; color:#5f5e5a; display:inline-block; width:48px; flex-shrink:0;">餘額：</span><input type="number" class="input-sm" id="wallet-balance-display" value="0" onchange="saveWalletBalance(this.value)" style="width:100px; flex:none; text-align:right;">
+            <span id="wallet-warning" style="display:none;">⚠ 餘額偏低！</span>
+          </div>
+          <div id="topup-row">
+            <div class="topup-field">
+              <span style="font-size:0.85rem; color:#5f5e5a; display:inline-block; width:48px; flex-shrink:0;">倩：</span>
+              <input type="number" class="input-sm" id="topup-qian" placeholder="2000" style="width:100px; flex:none; text-align:right;" oninput="calcTopup('qian')">
+            </div>
+            <div class="topup-field">
+              <span style="font-size:0.85rem; color:#5f5e5a; display:inline-block; width:48px; flex-shrink:0;">騰：</span>
+              <input type="number" class="input-sm" id="topup-teng-input" placeholder="0" style="width:100px; flex:none; text-align:right;" oninput="calcTopup('teng')">
+            </div>
+            <div id="topup-result" style="font-size:0.82rem; color:#5f5e5a; line-height:1.9;">
+              總計：<strong>$<span id="topup-total">0</span></strong>　
+              課金後：<strong>$<span id="topup-after">0</span></strong>
+            </div>
+            <button class="btn-income-color btn-sm" onclick="doTopup()">課金</button>
+          </div>
+      </div>
+    </div>
+ 
+    <!-- 快速輸入 -->
+    <div class="card" id="preset-card">
+      <div class="preset-toggle-header" onclick="togglePresetCard()">
+        <h2 style="margin-bottom:0;">⚡ 快速輸入</h2>
+        <span class="preset-toggle-icon" id="preset-toggle-icon">▼</span>
+      </div>
+      <div id="preset-body" style="margin-top:0.75rem; display:none;">
+        <div class="quick-presets" id="preset-buttons"></div>
+        <button class="btn-sm" onclick="openAddPreset()" style="margin-top:0.25rem;">＋ 新增常用</button>
+      </div>
+    </div>
+ 
+<!-- 記錄清單 -->
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+        <div id="filter-buttons" style="display:flex; flex-wrap:wrap; gap:0.4rem; flex:1;"></div>
+        <div class="emoji-option" onclick="openCategoryModalFromRecord()"
+             title="管理分類"
+             style="background:var(--hover); flex-shrink:0; font-size:0.75rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none;">
+          ⚙️ 管理
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <h2 style="margin-bottom:0;">📋 本月記錄</h2>
+      </div>
+      <div id="record-list"></div>
+    </div>
+  </div>
+  <!-- 信用卡統計頁 -->
+  <div id="page-cc-summary" class="container" style="display:none;">
+    <h1>
+      💳 信用卡統計
+      <span class="month-picker">
+        <button onclick="changeCCMonth(-1)">&#8249;</button>
+        <span class="month-label" id="cc-month-label"></span>
+        <button onclick="changeCCMonth(1)">&#8250;</button>
+      </span>
+    </h1>
+    <div class="card">
+      <h2>國泰世華（倩cube 🌳）</h2>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月4日 ～ 本月3日</p>
+      <div class="cc-summary-row" id="cc-cathay-summary"></div>
+      <div id="cc-cathay-detail"></div>
+      <div id="recon-cathay"></div>
+    </div>
+    <div class="card">
+      <h2>富邦好市多（倩Costco ©️）</h2>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月3日 ～ 本月2日</p>
+      <div class="cc-summary-row" id="cc-fubon-summary"></div>
+      <div id="cc-fubon-detail"></div>
+      <div id="recon-fubon"></div>
+    </div>
+    <div class="card">
+      <h2>騰cube 🌳 追蹤（從錢櫃拿給騰）</h2>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月4日 ～ 本月3日</p>
+      <div class="cc-summary-row" id="cc-teng-summary"></div>
+      <div id="cc-teng-detail"></div>
+      <div id="recon-teng"></div>
+    </div>
+  </div>
+ 
+  <!-- 預算頁 -->
+  <div id="page-budget" class="container" style="display:none;">
+    <h1>
+      🎯 預算管理
+      <span class="month-picker">
+        <button onclick="changeBudgetMonth(-1)">&#8249;</button>
+        <span class="month-label" id="budget-month-label"></span>
+        <button onclick="changeBudgetMonth(1)">&#8250;</button>
+      </span>
+    </h1>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2 style="margin-bottom:0;" id="budget-ledger-label">個人記帳</h2>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-sm" id="budget-tab-personal" onclick="setBudgetLedger('personal')" class="btn-primary">個人</button>
+          <button class="btn-sm" id="budget-tab-shared"   onclick="setBudgetLedger('shared')">共同</button>
+        </div>
+      </div>
+      <div id="budget-list"></div>
+      <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #f1efe8;">
+        <p style="font-size:0.8rem; color:#888780; margin-bottom:0.5rem;">點擊分類旁的金額可以編輯預算</p>
+      </div>
+    </div>
+  </div>
+<!-- 爸爸帳本頁面 -->
+    <div id="page-dad" class="container" style="display:none;">
+      <h1>
+        <span id="dad-ledger-title">爸爸ㄉ波紋</span>
+      </h1>
+ 
+<!-- 總餘額 + 圓餅圖合併 -->
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.4rem; flex-shrink:0;">
+            <canvas id="dad-pie-canvas" width="64" height="64"></canvas>
+            <div id="dad-pie-legend" style="display:flex; flex-direction:column; gap:3px;"></div>
+          </div>
+          <div style="flex:1; text-align:center;">
+            <div class="summary-label">目前總餘額</div>
+            <div class="summary-value balance" style="font-size:1.4rem;">$<span id="dad-balance">0</span></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+            <button class="btn-sm" onclick="openDadStockAdd()">📈 新增存股</button>
+            <button class="btn-sm" onclick="openAddRecord()">📝 一般記帳</button>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 記錄清單 -->
+      <div class="card">
+<div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+          <h2 style="margin-bottom:0; flex:1;">📋 所有記錄</h2>
+          <div class="emoji-option" onclick="openCategoryModalFromRecord()"
+               title="管理分類"
+style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; padding:0 0.6rem; border-radius:8px; white-space:nowrap; border:none;">
+            ⚙️ 管理
+                    </div>
+        </div>
+        <div id="dad-record-list"></div>      </div>
+    </div>
+<!-- 存股頁面 -->
+    <div id="page-stocks" class="container" style="display:none;">
+      <h1>📈 存股記錄</h1>
+ 
+      <!-- 視角切換 -->
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
+        <button id="stock-tab-qian"     class="btn-primary btn-sm" onclick="setStockView('qian')">我的</button>
+        <button id="stock-tab-dad"      class="btn-sm"             onclick="setStockView('dad')">爸爸的</button>
+        <button id="stock-tab-combined" class="btn-sm"             onclick="setStockView('combined')">合計</button>
+        <div style="flex:1;"></div>
+        <button class="btn-sm" onclick="openAddStock()">＋ 新增存股</button>
+        <button class="btn-sm" onclick="openManageTargets()">管理標的</button>
+      </div>
+ 
+      <!-- 圓餅圖（各標的佔比） -->
+      <div class="card" id="stock-pie-card">
+        <h2>各標的佔比</h2>
+        <div id="stock-pie-wrapper" style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+          <div style="position:relative; width:140px; height:140px; flex-shrink:0;">
+            <canvas id="stock-pie-canvas" width="140" height="140"></canvas>
+          </div>
+          <div id="stock-pie-legend" style="display:flex; flex-direction:column; gap:0.4rem; flex:1; min-width:160px;"></div>
+        </div>
+      </div>
+ 
+      <!-- 每個標的的明細 -->
+      <div id="stock-targets-area"></div>
+    </div>
+  <!-- 帳本管理頁 -->
+  <div id="page-ledger-manage" class="container" style="display:none;">
+    <h1>📒 帳本管理</h1>
+    <div class="card">
+      <h2>我的帳本</h2>
+      <div id="ledger-manage-list"></div>
+<div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #f1efe8;">
+          <p style="font-size:0.82rem; color:#5f5e5a; margin-bottom:0.6rem;">建立新帳本</p>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+            <input type="text" id="new-ledger-name" placeholder="帳本名稱" style="flex:1; min-width:160px; padding:0.45rem 0.65rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;">
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button onclick="createLedger('personal')">＋ 個人</button>
+            <button onclick="createLedger('shared')">＋ 共同</button>
+            <button onclick="createLedger('dad')">＋ 爸爸</button>
+          </div>
+        </div>
+    </div>
+  </div>
+ 
+</div>
+ 
+<!-- 底部頁籤（手機版） -->
+<div id="bottom-nav">
+  <button class="bottom-nav-btn" id="nav-home" onclick="showPage('home')">
+    <i class="ti ti-home" aria-hidden="true"></i>
+    <span>首頁</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-personal" onclick="switchToLedgerType('personal')">
+    <i class="ti ti-wallet" aria-hidden="true"></i>
+    <span>個人</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-shared" onclick="switchToLedgerType('shared')">
+    <i class="ti ti-users" aria-hidden="true"></i>
+    <span>共同</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-cc" onclick="showPage('cc-summary')">
+    <i class="ti ti-credit-card" aria-hidden="true"></i>
+    <span>信用卡</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-more" onclick="toggleSidebar()">
+    <i class="ti ti-menu-2" aria-hidden="true"></i>
+    <span>更多</span>
+  </button>
+</div>
+
+<!-- 手機版側邊欄遮罩 -->
+<div id="sidebar-overlay" onclick="closeMobileSidebar()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:44;"></div>
+
+<!-- 浮動新增按鈕 -->
+<button id="fab" onclick="openAddRecord()" title="新增記錄">＋</button>
+ 
+<!-- 新增/編輯記錄 sheet -->
+<div id="record-modal" class="modal-overlay" onclick="handleOverlayClick(event,'record-modal')">
+  <div class="modal-sheet" id="record-modal-sheet" ontouchstart="recordModalTouchStart(event)" ontouchend="recordModalTouchEnd(event)">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+      <span id="record-modal-title">新增記錄</span>
+      <span id="ledger-switch-arrows" style="display:none; align-items:center; gap:0.4rem; font-size:0.85rem; font-weight:400; color:var(--text-sub);">
+        <button onclick="switchModalLedger(-1)" style="padding:0.15rem 0.5rem; font-size:0.85rem;">&#8249;</button>
+        <span id="record-modal-ledger-name" style="min-width:60px; text-align:center;"></span>
+        <button onclick="switchModalLedger(1)" style="padding:0.15rem 0.5rem; font-size:0.85rem;">&#8250;</button>
+      </span>
+    </div>
+ 
+    <div class="form-compact">
+      <!-- 類型 -->
+      <div class="type-tabs">
+        <button class="type-tab active-expense" id="tab-expense" onclick="setType('expense')">支出</button>
+        <button class="type-tab" id="tab-income" onclick="setType('income')">收入</button>
+      </div>
+ 
+      <!-- 日期 + 名稱 + 金額 三欄均寬 -->
+      <div class="form-row-compact">
+        <input type="date"   class="input-sm rec-date-field" id="rec-date">
+        <input type="text"   class="input-sm" id="rec-name"   placeholder="名稱" style="flex:2;">
+        <input type="number" class="input-sm" id="rec-amount" placeholder="金額" style="flex:1;">
+      </div>
+ 
+      <!-- 常用支出（左側 label 對齊分類/支付/備註） -->
+      <div class="form-row-compact" style="align-items:flex-start;">
+        <div class="form-label" style="margin-top:0.5rem;">常用支出</div>
+        <div class="quick-presets" id="modal-preset-buttons" style="flex:1;"></div>
+      </div>
+ 
+      <!-- 分類 emoji（左側 label 對齊備註/支付） -->
+      <div class="form-row-compact" style="align-items:flex-start;">
+        <div class="form-label" style="margin-top:0.5rem;">分類</div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; align-items:center; flex:1;">
+          <div class="emoji-picker" id="cat-picker" style="display:contents;"></div>
+          <div style="flex:1;"></div>
+          <div class="emoji-option" onclick="openCategoryModalFromRecord()" title="管理分類"
+style="background:var(--hover); border:1.5px dashed var(--border); color:var(--text-sub); font-size:0.75rem; width:auto; padding:0 0.5rem; border-radius:8px; white-space:nowrap;">
+            ⚙️
+          </div>
+        </div>
+      </div>
+ 
+      <!-- 支付別 emoji（支出才顯示，左側 label 對齊分類/備註） -->
+      <div id="pay-row" class="form-row-compact" style="align-items:flex-start;">
+        <div class="form-label" style="margin-top:0.5rem;">支付</div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; flex:1;">
+          <div class="emoji-picker" id="pay-picker" style="display:contents;"></div>
+        </div>
+      </div>
+ 
+      <!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
+      <div id="note-row" class="form-row-compact" style="display:none; align-items:flex-start;">
+        <div class="form-label" style="margin-top:0.5rem;">備註</div>
+        <textarea class="input-sm" id="rec-note" placeholder="選填" style="flex:1;"></textarea>
+      </div>
+ 
+<div style="display:flex; gap:0.5rem; margin-top:0.25rem; flex-wrap:wrap;">
+          <button class="btn-primary" id="record-submit-btn" onclick="submitRecord()" style="flex:1;">新增</button>
+          <button onclick="closeRecordModal()" style="flex:1;">取消</button>
+          <button id="record-delete-btn" onclick="deleteRecordFromModal()" style="flex:1; display:none; color:#c0392b; border-color:#e0b0ad;">刪除</button>
+        </div>
+ 
+    </div>
+  </div>
+</div>
+ 
+<!-- 新增常用支出 sheet -->
+<div id="preset-modal" class="modal-overlay" onclick="handleOverlayClick(event,'preset-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增常用支出</div>
+    <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:0.75rem;">儲存到：<span id="preset-ledger-name"></span></div>
+    <div class="form-compact">
+      <div class="form-row-compact">
+        <input type="text"   class="input-sm" id="p-name"   placeholder="名稱" style="flex:1;">
+        <input type="number" class="input-sm" id="p-amount" placeholder="金額" style="flex:1;">
+      </div>
+      <div>
+        <div class="form-label" style="width:auto; margin-bottom:0.4rem;">分類</div>
+        <div class="emoji-picker" id="p-cat-picker"></div>
+      </div>
+      <div>
+        <div class="form-label" style="width:auto; margin-bottom:0.4rem;">支付</div>
+        <div class="emoji-picker" id="p-pay-picker"></div>
+      </div>
+      <div style="display:flex; gap:0.5rem; margin-top:0.25rem;">
+        <button class="btn-primary" onclick="submitPreset()" style="flex:1;">新增</button>
+        <button onclick="closePresetModal()" style="flex:1;">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 新增存股卡片 modal -->
+<div id="stock-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'stock-modal')">
+  <div class="modal-box" style="width:440px;">
+    <h2 id="stock-modal-title">新增存股記錄</h2>
+    <div class="form-compact" style="gap:0.65rem;">
+ 
+<!-- 誰的 -->
+      <div>
+        <div style="font-size:0.8rem; color:#888780; margin-bottom:0.4rem;">誰的</div>
+        <div style="display:flex; gap:0.5rem;">
+          <button id="stock-owner-qian" class="btn-sm btn-primary" onclick="setStockOwner('qian')">周辰倩</button>
+          <button id="stock-owner-dad"  class="btn-sm"             onclick="setStockOwner('dad')">周有忠</button>
+        </div>
+      </div>
+ 
+      <!-- 股票 -->
+      <div>
+        <div style="font-size:0.8rem; color:#888780; margin-bottom:0.4rem;">股票</div>
+        <select id="stock-target" class="input-sm" style="width:100%;"></select>
+      </div>
+ 
+      <!-- 日期 -->
+<div class="form-row-compact">
+        <span class="form-label">日期</span>
+        <input type="date" class="input-sm" id="stock-date" oninput="handleStockDateInput(this)">
+      </div>
+ 
+      <!-- 計算：股價 × 股數 = 成本 -->
+      <div class="form-row-compact">
+        <span class="form-label">計算</span>
+        <input type="number" class="input-sm" id="stock-price"  placeholder="股價" step="0.01" style="width:80px; flex:none;">
+        <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">×</span>
+        <input type="number" class="input-sm" id="stock-shares" placeholder="股數" style="width:80px; flex:none;">
+        <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">=</span>
+<div style="background:var(--input-bg); border-radius:8px; padding:0.45rem 0.75rem; font-size:0.88rem; color:var(--text-sub); white-space:nowrap; flex:1; text-align:center;">
+          <strong style="color:var(--text);">$<span id="stock-cost-display">0</span></strong>
+        </div>
+            </div>
+ 
+<!-- 拿錢 -->
+      <div class="form-row-compact">
+        <span class="form-label">拿錢</span>
+        <input type="number" class="input-sm" id="stock-taken" placeholder="例如：4000">
+      </div>
+ 
+      <div style="display:flex; gap:0.5rem; margin-top:0.25rem;">
+        <button class="btn-primary" onclick="submitStock()" style="flex:1;" id="stock-submit-btn">新增</button>
+        <button onclick="closeStockModal()" style="flex:1;">取消</button>
+        <button id="stock-delete-btn" onclick="deleteStockFromModal()" style="flex:1; display:none; color:#c0392b; border-color:#e0b0ad;">刪除</button>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+ 
+<!-- 管理標的 modal -->
+<div id="targets-modal" class="modal-box-overlay"onclick="handleOverlayClick(event,'targets-modal')">
+  <div class="modal-box">
+    <h2>管理標的</h2>
+    <div id="targets-list" style="margin-bottom:1rem;"></div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+      <input type="text" id="new-target-input" placeholder="新增標的，例如：0050" style="flex:1; padding:0.4rem 0.6rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;">
+      <button onclick="addTarget()">新增</button>
+    </div>
+    <button class="btn-full" onclick="closeTargetsModal()">關閉</button>
+  </div>
+</div>
+<!-- 分類管理 -->
+<div id="cat-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'cat-modal')">
+  <div class="modal-box" style="width:420px;">
+    <h2>分類管理</h2>
+    <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+      <button id="cat-tab-expense" class="btn-sm btn-primary" onclick="setCatTab('expense')">支出分類</button>
+      <button id="cat-tab-income"  class="btn-sm"             onclick="setCatTab('income')">收入分類</button>
+    </div>
+    <div id="cat-list" style="margin-bottom:1rem;"></div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+      <input type="text" id="new-cat-input" placeholder="新分類名稱" style="flex:1; padding:0.4rem 0.6rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;">
+      <input type="text" id="new-cat-emoji" placeholder="emoji" style="width:64px; padding:0.4rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none; text-align:center;">
+      <button onclick="addCategory()">新增</button>
+    </div>
+    <button class="btn-full" onclick="closeCatModal()">關閉</button>
+  </div>
+</div>
+ 
+<!-- 刪除確認 -->
+<div id="confirm-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'confirm-modal')">
+  <div class="modal-box" style="width:280px;">
+    <h2>確定要刪除？</h2>
+    <p style="font-size:0.88rem; color:#5f5e5a; margin-bottom:1.25rem;">刪除後無法復原。</p>
+    <div style="display:flex; gap:0.5rem;">
+      <button onclick="closeConfirmModal()" style="flex:1;">取消</button>
+      <button id="confirm-delete-btn" class="btn-primary" style="flex:1;">確定刪除</button>
+    </div>
+  </div>
+</div>
+<!-- 爸爸帳本新增選擇 -->
+<div id="dad-add-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'dad-add-modal')">
+  <div class="modal-box" style="width:280px; text-align:center;">
+    <h2 style="margin-bottom:1.25rem;">新增什麼？</h2>
+    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+      <button class="btn-primary btn-full" onclick="closeDadAddModal(); openAddRecord();">📝 一般記帳</button>
+      <button class="btn-full" onclick="closeDadAddModal(); openDadStockAdd();">📈 新增存股</button>
+    </div>
+  </div>
+</div>
+<!-- 配色主題 -->
+<div id="theme-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'theme-modal')">
+  <div class="modal-box" style="width:400px;">
+    <h2 id="theme-modal-title">🎨 選擇配色</h2>
+    <div class="theme-grid" id="theme-grid" style="margin-bottom:1rem;"></div>
+    <button class="btn-full" onclick="closeThemeModal()">關閉</button>
+  </div>
+</div>
+<!-- 邀請成員 -->
+<div id="invite-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'invite-modal')">
+  <div class="modal-box">
+    <h2 id="invite-modal-title">邀請成員</h2>
+    <p style="font-size:0.82rem; color:#5f5e5a; margin-bottom:1rem;">輸入對方的 Gmail，對方登入後即可看到並編輯此帳本。</p>
+    <div id="member-list" style="margin-bottom:1rem;"></div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+      <input type="email" id="invite-email" placeholder="對方的 Gmail" style="flex:1; padding:0.4rem 0.6rem; border:1px solid #d3d1c7; border-radius:8px; background:#f1efe8; outline:none;">
+      <button onclick="addMember()">邀請</button>
+    </div>
+    <button class="btn-full" onclick="closeInviteModal()">關閉</button>
+  </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, updateDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+ 
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXNHHiH6-1hT-bEG5uy-Eyqa2dcMVX61s",
+    authDomain: "my-expense-app-c4e73.firebaseapp.com",
+    projectId: "my-expense-app-c4e73",
+    storageBucket: "my-expense-app-c4e73.firebasestorage.app",
+    messagingSenderId: "728977309080",
+    appId: "1:728977309080:web:2b836492afc9a996663fed"
+  };
+ 
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+ 
+  // ===========================
+  // 📦 全域狀態
+  // ===========================
+ 
+  let currentUid   = null;
+  let currentEmail = null;
+  let currentName  = null;
+  let currentType  = 'expense';
+  let currentLedgerId = null;
+  let currentLedger   = null;
+  let ledgers  = [];
+  let records  = [];
+  let allLedgerRecords = [];
+ 
+  // 支出分類（含 emoji）
+  let expenseCategories = [
+    { name:'餐飲', emoji:'🍽️' },
+    { name:'交通', emoji:'🛵' },
+    { name:'娛樂', emoji:'🎮' },
+    { name:'學習', emoji:'📚' },
+    { name:'治裝', emoji:'👚' },
+    { name:'醫療', emoji:'💊' },
+    { name:'繳錢', emoji:'💸' },
+    { name:'購物', emoji:'🛍️' },
+  ];
+ 
+  // 收入分類
+  let incomeCategories = [
+    { name:'工作收入', emoji:'💼' },
+    { name:'蝦皮分潤', emoji:'📦' },
+    { name:'二手拍',   emoji:'🏷️' },
+    { name:'其他收入', emoji:'💰' },
+  ];
+ 
+  // 共同帳本支出分類
+  let sharedExpenseCategories = [
+    { name:'吃飯', emoji:'🍽️' },
+    { name:'娛樂', emoji:'🎮' },
+    { name:'家用品', emoji:'🧴' },
+    { name:'旅遊', emoji:'✈️' },
+  ];
+ 
+  // 支付方式
+  const PAYMENT_PERSONAL = [
+    { name:'倩cube',    emoji:'🌳', label:'倩cube' },
+    { name:'倩Costco',  emoji:'©️', label:'倩Costco' },
+    { name:'倩現金',    emoji:'🟡', label:'倩現金' },
+  ];
+  const PAYMENT_SHARED = [
+    { name:'倩cube',    emoji:'🌳', label:'倩cube' },
+    { name:'倩Costco',  emoji:'©️', label:'倩Costco' },
+    { name:'倩現金',    emoji:'🟡', label:'倩現金' },
+    { name:'騰cube',    emoji:'🌳', label:'騰cube' },
+    { name:'騰現金',    emoji:'🟢', label:'騰現金' },
+    { name:'錢櫃',      emoji:'💰', label:'錢櫃' },
+  ];
+  const PAYMENT_DAD = [
+    { name:'現金', emoji:'🟡', label:'現金' },
+    { name:'國泰', emoji:'🌳', label:'國泰' },
+  ];
+ 
+  const CC_CATHAY_QIAN = ['倩cube'];
+  const CC_FUBON       = ['倩Costco'];
+  const CC_TENG        = ['騰cube'];
+ 
+  let presets = [];
+ 
+  // 圓餅圖
+  let pieChart = null;
+ 
+  // 月份
+  const now = new Date();
+  let currentYear  = now.getFullYear();
+  let currentMonth = now.getMonth() + 1;
+  let ccYear  = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  let ccMonth = (now.getMonth() + 2 > 12) ? 1 : now.getMonth() + 2;
+  let budgetYear  = now.getFullYear();
+  let budgetMonth = now.getMonth() + 1;
+  let budgetLedgerType = 'personal';
+ 
+  let activeFilter     = null;
+  let pendingDeleteId  = null;
+  let invitingLedgerId = null;
+  let editingRecordId  = null;
+  let deletingRecordSource = null;
+  let modalSelectedLedger = null;
+  let selectedCat      = null;
+  let selectedPay      = null;
+  let selectedPCat     = null; // preset 的分類
+  let selectedPPay     = null; // preset 的支付方式
+  let catTabType       = 'expense';
+ 
+  // 預算資料 { personal: { '餐飲': 7000, ... }, shared: { '吃飯': 3000, ... } }
+  let budgets = { personal: {}, shared: {} };
+ 
+  let unsubscribeRecords = null;
+  let unsubscribeLedgers = null;
+  let currentPage = 'ledger';
+ 
+ 
+  // ===========================
+  // 🔐 登入登出
+  // ===========================
+ 
+  document.getElementById('google-login-btn').addEventListener('click', async () => {
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch(e) { alert('登入失敗，請再試一次'); }
+  });
+ 
+  window.logout = async function() { await signOut(auth); };
+ 
+  onAuthStateChanged(auth, async (user) => {
+    document.getElementById('loading').style.display = 'none';
+    if (user) {
+      currentUid   = user.uid;
+      currentEmail = user.email;
+      currentName  = user.displayName;
+ 
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('main').style.display = 'block';
+      document.getElementById('fab').style.display = 'flex';
+      document.getElementById('sidebar-user').textContent = '👤 ' + currentName;
+      const suBottom = document.getElementById('sidebar-user-bottom');
+      if (suBottom) suBottom.textContent = '👤 ' + currentName;
+ 
+      setTodayDate();
+      await setDoc(doc(db,'users',currentUid), { email:currentEmail, name:currentName }, { merge:true });
+      await loadUserSettings();
+      loadLedgers();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('main').style.display = 'none';
+      document.getElementById('fab').style.display = 'none';
+      if (unsubscribeRecords) unsubscribeRecords();
+      if (unsubscribeLedgers) unsubscribeLedgers();
+    }
+  });
+ 
+  function setTodayDate() {
+    const today = new Date();
+    document.getElementById('rec-date').value =
+      `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }
+ 
+ 
+  // ===========================
+  // ☰ 側邊欄
+  // ===========================
+ 
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 600) {
+      sidebar.classList.toggle('mobile-open');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (overlay) overlay.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+  };
+
+  window.closeMobileSidebar = function() {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (overlay) overlay.style.display = 'none';
+  };
+ 
+  // ===========================
+  // 📄 頁面切換
+  // ===========================
+ 
+window.showPage = function(page) {
+  document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  currentPage = page;
+  document.getElementById('fab').style.display = 'flex';
+  document.getElementById('fab').onclick = openAddRecord;
+ 
+    // 手機版選完頁面後自動收合選單
+    if (window.innerWidth <= 600) {
+      closeMobileSidebar();
+    }
+ 
+    // 非帳本頁面時，清除帳本選單的 active
+    if (page !== 'ledger') {
+      document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => b.classList.remove('active'));
+    }
+ 
+if (page === 'ledger') {
+      // 標記左側選單 active
+      document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => {
+        if (b.dataset.id === currentLedgerId) b.classList.add('active');
+      });
+ 
+// 爸爸帳本用專屬頁面
+if (currentLedger && currentLedger.type === 'dad') {
+  document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
+  document.getElementById('page-dad').style.display = 'block';
+  document.getElementById('fab').onclick = openDadAddChoice;
+  listenDadRecords();
+  return;
+}
+            document.getElementById('page-ledger').style.display = 'block';
+      updateMonthLabel();
+      listenRecords();
+    } else if (page === 'cc-summary') {
+      document.getElementById('page-cc-summary').style.display = 'block';
+      document.getElementById('btn-cc').classList.add('active');
+      updateCCMonthLabel();
+      renderCCSummary();
+} else if (page === 'stocks') {
+      document.getElementById('page-stocks').style.display = 'block';
+      document.getElementById('btn-stocks').classList.add('active');
+      // 存股頁面隱藏右下角 + 按鈕
+      document.getElementById('fab').style.display = 'none';
+      renderStockPage();
+    } else if (page === 'budget') {
+      document.getElementById('page-budget').style.display = 'block';
+      document.getElementById('btn-budget').classList.add('active');
+      updateBudgetMonthLabel();
+      renderBudgetPage();
+    } else if (page === 'ledger-manage') {
+      document.getElementById('page-ledger-manage').style.display = 'block';
+      document.getElementById('btn-manage').classList.add('active');
+      renderLedgerManage();
+    } else if (page === 'home') {
+      document.getElementById('page-home').style.display = 'block';
+      document.getElementById('fab').style.display = 'flex';
+      renderHomePage();
+    }
+    updateBottomNav();
+  };
+ 
+ 
+  // ===========================
+  // 📒 帳本
+  // ===========================
+ 
+  function loadLedgers() {
+    unsubscribeLedgers = onSnapshot(collection(db,'ledgers'), async (snapshot) => {
+      ledgers = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(l => l.members && l.members.includes(currentEmail))
+.sort((a,b) => {
+  const orderMap = { 'personal': 0, 'shared': 1, 'dad': 2 };
+  return (orderMap[a.type] ?? 99) - (orderMap[b.type] ?? 99);
+});
+const personalId = `personal_${currentUid}`;
+        if (!ledgers.find(l => l.id === personalId)) {
+          await setDoc(doc(db,'ledgers',personalId), {
+            name:'個人記帳', owner:currentEmail,
+            members:[currentEmail], type:'personal', createdAt:Date.now(),
+            expenseCategories: [
+              {name:'餐飲',emoji:'🍽️'},{name:'交通',emoji:'🛵'},
+              {name:'娛樂',emoji:'🎮'},{name:'學習',emoji:'📚'},
+              {name:'治裝',emoji:'👚'},{name:'醫療',emoji:'💊'},
+              {name:'繳錢',emoji:'💸'},{name:'購物',emoji:'🛍️'}
+            ]
+          });
+        }
+ 
+      if (!currentLedgerId && ledgers.length > 0) {
+        currentLedgerId = ledgers[0].id;
+        currentLedger   = ledgers[0];
+      } else {
+        currentLedger = ledgers.find(l => l.id === currentLedgerId) || ledgers[0];
+      }
+ 
+      renderLedgerMenu();
+      renderLedgerManage();
+      updateLedgerUI();
+      if (currentPage === 'ledger') listenRecords();
+      if (currentPage === 'home') renderHomePage();
+    });
+  }
+ 
+function renderLedgerMenu() {
+    const container = document.getElementById('ledger-menu');
+    container.innerHTML = '';
+    ledgers.forEach(function(ledger) {
+      const btn = document.createElement('button');
+      // active 狀態只看 currentLedgerId，且只在 ledger 頁面才標示
+      btn.className = 'sidebar-item' + (ledger.id === currentLedgerId && currentPage === 'ledger' ? ' active' : '');
+      btn.dataset.id = ledger.id;
+      const icon = ledger.type === 'shared' ? '👫' : ledger.type === 'dad' ? '🧡' : '👤';
+      btn.innerHTML = `<span class="sidebar-icon">${icon}</span><span class="sidebar-label">${ledger.name}</span>`;
+btn.onclick = function() {
+        currentLedgerId = ledger.id;
+        currentLedger   = ledger;
+        activeFilter    = null;
+        updateLedgerUI();
+        showPage('ledger');
+        if (window.innerWidth <= 600) {
+          document.getElementById('sidebar').classList.remove('mobile-open');
+        }
+      };      container.appendChild(btn);
+    });
+  }
+ 
+async function updateLedgerUI() {
+    if (!currentLedger) return;
+    document.getElementById('ledger-title').textContent = currentLedger.name;
+    const isShared = currentLedger.type === 'shared';
+    document.getElementById('topup-card').style.display = isShared ? 'block' : 'none';
+ 
+    // 預設分類
+    const defaultPersonal = [
+      {name:'餐飲',emoji:'🍽️'},{name:'交通',emoji:'🛵'},
+      {name:'娛樂',emoji:'🎮'},{name:'學習',emoji:'📚'},
+      {name:'治裝',emoji:'👚'},{name:'醫療',emoji:'💊'},
+      {name:'繳錢',emoji:'💸'},{name:'購物',emoji:'🛍️'}
+    ];
+    const defaultShared = [
+      {name:'吃飯',emoji:'🍽️'},{name:'娛樂',emoji:'🎮'},
+      {name:'家用品',emoji:'🧴'},{name:'旅遊',emoji:'✈️'}
+    ];
+    const defaultDad = [
+      {name:'股票',emoji:'💹'},{name:'電話費',emoji:'📞'}
+    ];
+ 
+    // 判斷帳本分類是否有效（必須是陣列且每個元素有 name 和 emoji）
+    const isValid = (arr) =>
+      Array.isArray(arr) && arr.length > 0 && arr[0].name && arr[0].emoji;
+ 
+    if (currentLedger.type === 'shared') {
+      expenseCategories = isValid(currentLedger.expenseCategories)
+        ? currentLedger.expenseCategories : defaultShared;
+    } else if (currentLedger.type === 'dad') {
+      expenseCategories = isValid(currentLedger.expenseCategories)
+        ? currentLedger.expenseCategories : defaultDad;
+    } else {
+      expenseCategories = isValid(currentLedger.expenseCategories)
+        ? currentLedger.expenseCategories : defaultPersonal;
+    }
+ 
+    // 如果帳本還沒有分類，自動存一份進去
+    if (!isValid(currentLedger.expenseCategories)) {
+      await updateDoc(doc(db,'ledgers',currentLedgerId), { expenseCategories });
+      currentLedger.expenseCategories = expenseCategories;
+    }
+ 
+    // 常用支出改成每個帳本各自獨立
+    presets = Array.isArray(currentLedger.presets) ? currentLedger.presets : [];
+ 
+// 套用帳本配色
+applyTheme(currentLedger.theme || 'original');
+renderCatPicker();
+    renderPayPicker();
+    renderPresets();
+    }
+window.createLedger = async function(type) {
+    const name = document.getElementById('new-ledger-name').value.trim();
+    if (!name) { alert('請輸入帳本名稱！'); return; }
+    await addDoc(collection(db,'ledgers'), {
+      name, owner:currentEmail, members:[currentEmail],
+      type, createdAt:Date.now()
+    });
+    document.getElementById('new-ledger-name').value = '';
+  };
+  function renderLedgerManage() {
+    const container = document.getElementById('ledger-manage-list');
+    if (!container) return;
+    container.innerHTML = '';
+    ledgers.forEach(function(ledger) {
+      const row = document.createElement('div');
+row.style.cssText = 'display:grid; grid-template-columns:1fr auto; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border);';
+      const info = document.createElement('div');
+      info.innerHTML = `<span style="font-size:0.9rem; font-weight:500;">${ledger.name}</span>
+        <span style="font-size:0.75rem; color:#888780; margin-left:0.5rem;">${ledger.members.length} 人</span>`;
+      const btnGroup = document.createElement('div');
+      btnGroup.style.cssText = 'display:flex; gap:0.5rem;';
+if (ledger.owner === currentEmail) {
+  const invBtn = document.createElement('button');
+  invBtn.textContent = '邀請成員';
+  invBtn.className = 'btn-sm';
+  invBtn.onclick = () => openInviteModal(ledger);
+  btnGroup.appendChild(invBtn);
+ 
+  const themeBtn = document.createElement('button');
+  themeBtn.textContent = '🎨';
+  themeBtn.className = 'btn-sm';
+  themeBtn.title = '配色主題';
+  themeBtn.onclick = () => openThemeModal(ledger);
+  btnGroup.appendChild(themeBtn);
+  // 個人帳本不能刪
+if (ledger.type !== 'personal') {
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '刪除';
+    delBtn.className = 'btn-sm';
+    delBtn.style.color = '#c0392b';
+    delBtn.style.borderColor = '#e0b0ad';
+    delBtn.onclick = () => deleteLedger(ledger);
+    btnGroup.appendChild(delBtn);
+  } else {
+    // 佔位，保持對齊
+    const placeholder = document.createElement('button');
+    placeholder.className = 'btn-sm';
+    placeholder.style.visibility = 'hidden';
+    placeholder.textContent = '刪除';
+    btnGroup.appendChild(placeholder);
+  }
+}
+      row.appendChild(info);
+      row.appendChild(btnGroup);
+      container.appendChild(row);
+    });
+  }
+ 
+  async function deleteLedger(ledger) {
+  if (!confirm(`確定要刪除「${ledger.name}」？\n裡面的記錄也會一併刪除，無法復原！`)) return;
+  const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
+  for (const d of snap.docs) {
+    await deleteDoc(doc(db,'ledgers',ledger.id,'expenses',d.id));
+  }
+  await deleteDoc(doc(db,'ledgers',ledger.id));
+  if (currentLedgerId === ledger.id) {
+    currentLedgerId = null;
+    currentLedger = null;
+  }
+}
+ 
+ 
+  // ===========================
+  // ⚙️ 個人設定
+  // ===========================
+ 
+  async function loadUserSettings() {
+    const snap = await getDoc(doc(db,'users',currentUid));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.expenseCategories)       expenseCategories       = data.expenseCategories;
+      if (data.incomeCategories)        incomeCategories        = data.incomeCategories;
+      if (data.sharedExpenseCategories) sharedExpenseCategories = data.sharedExpenseCategories;
+      if (data.budgets)                 budgets                 = data.budgets;
+    } else {
+      await saveUserSettings();
+    }
+await loadStockTargets();
+    listenStocks();
+    renderPresets();
+    updateMonthLabel();
+    updateCCMonthLabel();
+    updateBudgetMonthLabel();
+    showPage('home');
+  }
+ 
+async function saveUserSettings() {
+    // 分類存到帳本裡
+    if (currentLedgerId) {
+      await updateDoc(doc(db,'ledgers',currentLedgerId), {
+        expenseCategories
+      });
+    }
+    // 收入分類、預算還是存在使用者設定（常用支出改存帳本，見 savePresets）
+    await setDoc(doc(db,'users',currentUid), {
+      incomeCategories, budgets
+    }, { merge:true });
+  }
+ 
+  async function savePresets() {
+    if (!currentLedgerId) return;
+    await updateDoc(doc(db,'ledgers',currentLedgerId), { presets });
+    if (currentLedger) currentLedger.presets = presets;
+  }
+ 
+  function getCurrentCategories() {
+    const ledger = modalSelectedLedger || currentLedger;
+    if (currentType === 'income') return incomeCategories;
+    if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
+    return expenseCategories;
+  }
+ 
+ 
+  // ===========================
+  // 📅 月份
+  // ===========================
+ 
+  function updateMonthLabel() {
+    document.getElementById('month-label').textContent =
+      `${currentYear}/${String(currentMonth).padStart(2,'0')}`;
+  }
+ 
+  window.changeMonth = function(delta) {
+    currentMonth += delta;
+    if (currentMonth > 12) { currentMonth = 1;  currentYear++; }
+    if (currentMonth < 1)  { currentMonth = 12; currentYear--; }
+    updateMonthLabel();
+    listenRecords();
+  };
+ 
+  function updateCCMonthLabel() {
+    document.getElementById('cc-month-label').textContent =
+      `${ccYear}/${String(ccMonth).padStart(2,'0')}`;
+  }
+ 
+  window.changeCCMonth = function(delta) {
+    ccMonth += delta;
+    if (ccMonth > 12) { ccMonth = 1;  ccYear++; }
+    if (ccMonth < 1)  { ccMonth = 12; ccYear--; }
+    updateCCMonthLabel();
+    renderCCSummary();
+  };
+ 
+  function updateBudgetMonthLabel() {
+    document.getElementById('budget-month-label').textContent =
+      `${budgetYear}/${String(budgetMonth).padStart(2,'0')}`;
+  }
+ 
+  window.changeBudgetMonth = function(delta) {
+    budgetMonth += delta;
+    if (budgetMonth > 12) { budgetMonth = 1;  budgetYear++; }
+    if (budgetMonth < 1)  { budgetMonth = 12; budgetYear--; }
+    updateBudgetMonthLabel();
+    renderBudgetPage();
+  };
+ 
+ 
+  // ===========================
+  // 🔄 支出/收入切換
+  // ===========================
+ 
+  window.setType = function(type) {
+    currentType = type;
+    document.getElementById('tab-expense').className = type === 'expense' ? 'type-tab active-expense' : 'type-tab';
+    document.getElementById('tab-income').className  = type === 'income'  ? 'type-tab active-income'  : 'type-tab';
+    document.getElementById('pay-row').style.display = type === 'expense' ? 'flex' : 'none';
+    selectedCat = null;
+    selectedPay = null;
+    renderCatPicker();
+    renderPayPicker();
+  };
+ 
+ 
+  // ===========================
+  // 🎨 emoji 選擇器
+  // ===========================
+ 
+  function renderCatPicker() {
+    const container = document.getElementById('cat-picker');
+    container.innerHTML = '';
+    const cats = getCurrentCategories();
+    cats.forEach(function(cat) {
+      const el = document.createElement('div');
+      el.className = 'emoji-option' + (selectedCat === cat.name ? ' selected' : '');
+      el.innerHTML = `${cat.emoji}<span class="emoji-tooltip">${cat.name}</span>`;
+      el.title = cat.name;
+      el.onclick = function() { selectedCat = cat.name; renderCatPicker(); };
+      container.appendChild(el);
+    });
+  }
+ 
+  function renderPayPicker() {
+    const container = document.getElementById('pay-picker');
+    container.innerHTML = '';
+    const pays = getPaymentOptions();
+    pays.forEach(function(pay) {
+      const el = document.createElement('div');
+      el.className = 'emoji-option' + (selectedPay === pay.name ? ' selected' : '');
+      el.innerHTML = `${pay.emoji}<span class="emoji-tooltip">${pay.label}</span>`;
+      el.title = pay.label;
+      el.onclick = function() { selectedPay = pay.name; renderPayPicker(); };
+      container.appendChild(el);
+    });
+  }
+ 
+  function renderPCatPicker() {
+    const container = document.getElementById('p-cat-picker');
+    container.innerHTML = '';
+    expenseCategories.forEach(function(cat) {
+      const el = document.createElement('div');
+      el.className = 'emoji-option' + (selectedPCat === cat.name ? ' selected' : '');
+      el.innerHTML = `${cat.emoji}<span class="emoji-tooltip">${cat.name}</span>`;
+      el.title = cat.name;
+      el.onclick = function() { selectedPCat = cat.name; renderPCatPicker(); };
+      container.appendChild(el);
+    });
+  }
+ 
+  function getPaymentOptions() {
+    if (!currentLedger) return PAYMENT_PERSONAL;
+    if (currentLedger.type === 'shared') return PAYMENT_SHARED;
+    if (currentLedger.type === 'dad')    return PAYMENT_DAD;
+    return PAYMENT_PERSONAL;
+  }
+ 
+  function getCatEmoji(catName) {
+    const all = [...expenseCategories, ...incomeCategories, ...sharedExpenseCategories];
+    const found = all.find(c => c.name === catName);
+    return found ? found.emoji : '📌';
+  }
+ 
+  function getPayEmoji(payName) {
+    const all = [...PAYMENT_PERSONAL, ...PAYMENT_SHARED, ...PAYMENT_DAD];
+    const found = all.find(p => p.name === payName);
+    return found ? found.emoji : '💳';
+  }
+ 
+ 
+  // ===========================
+  // ⭐ 常用支出
+  // ===========================
+ 
+  function renderPresets() {
+    const container = document.getElementById('preset-buttons');
+    container.innerHTML = '';
+    presets.forEach(function(preset) {
+      const item = document.createElement('div');
+      item.className = 'preset-chip';
+      const btn = document.createElement('button');
+      btn.className = 'preset-chip-btn';
+      const emoji = getCatEmoji(preset.category);
+      btn.textContent = `${emoji} ${preset.name} $${preset.amount}`;
+      btn.onclick = function() {
+        // 自動切換支出模式並填入
+        setType('expense');
+        document.getElementById('rec-name').value   = preset.name;
+        document.getElementById('rec-amount').value = preset.amount;
+        selectedCat = preset.category;
+        selectedPay = preset.payment || selectedPay;
+        renderCatPicker();
+        openAddRecord();
+      };
+      const del = document.createElement('button');
+      del.className = 'preset-chip-del';
+      del.textContent = '✕';
+      del.onclick = async function() {
+        presets = presets.filter(p => p.id !== preset.id);
+        await savePresets();
+        renderPresets();
+      };
+      item.appendChild(btn);
+      item.appendChild(del);
+      container.appendChild(item);
+    });
+  }
+ 
+  function renderModalPresets() {
+    const container = document.getElementById('modal-preset-buttons');
+    if (!container) return;
+    container.innerHTML = '';
+    const ledger = modalSelectedLedger || currentLedger;
+    const modalPresets = (ledger && Array.isArray(ledger.presets)) ? ledger.presets : [];
+    modalPresets.forEach(function(preset) {
+      const btn = document.createElement('button');
+      btn.className = 'preset-chip-btn';
+      btn.style.cssText = 'border:1px solid var(--border); border-radius:8px; background:var(--card);';
+      btn.textContent = `${preset.name} $${preset.amount}`;
+      btn.onclick = function() {
+        document.getElementById('rec-name').value   = preset.name;
+        document.getElementById('rec-amount').value = preset.amount;
+        selectedCat = preset.category;
+        selectedPay = preset.payment || selectedPay;
+        renderCatPicker();
+        renderPayPicker();
+      };
+      container.appendChild(btn);
+    });
+  }
+ 
+  window.openAddPreset = function() {
+    selectedPCat = null;
+    selectedPPay = null;
+    document.getElementById('p-name').value   = '';
+    document.getElementById('p-amount').value = '';
+    const ledger = modalSelectedLedger || currentLedger;
+    document.getElementById('preset-ledger-name').textContent = ledger ? ledger.name : '記帳本';
+    renderPCatPicker();
+    renderPPayPicker();
+    document.getElementById('preset-modal').classList.add('show');
+  };
+ 
+  function renderPPayPicker() {
+    const container = document.getElementById('p-pay-picker');
+    container.innerHTML = '';
+    const pays = getPaymentOptions();
+    pays.forEach(function(pay) {
+      const el = document.createElement('div');
+      el.className = 'emoji-option' + (selectedPPay === pay.name ? ' selected' : '');
+      el.innerHTML = `${pay.emoji}<span class="emoji-tooltip">${pay.label}</span>`;
+      el.title = pay.label;
+      el.onclick = function() { selectedPPay = pay.name; renderPPayPicker(); };
+      container.appendChild(el);
+    });
+  }
+ 
+  window.closePresetModal = function() {
+    document.getElementById('preset-modal').classList.remove('show');
+  };
+ 
+  window.submitPreset = async function() {
+    const name   = document.getElementById('p-name').value.trim();
+    const amount = document.getElementById('p-amount').value;
+    if (!name || !amount || !selectedPCat) { alert('請填寫名稱、金額並選擇分類！'); return; }
+    presets.push({ id: Date.now(), name, amount: Number(amount), category: selectedPCat, payment: selectedPPay || '' });
+    await savePresets();
+    renderPresets();
+    closePresetModal();
+  };
+ 
+ 
+  // ===========================
+  // 💰 錢櫃課金
+  // ===========================
+ 
+  window.calcTopup = function(source) {
+    const qianInput = document.getElementById('topup-qian');
+    const tengInput  = document.getElementById('topup-teng-input');
+ 
+    if (source === 'teng') {
+      const tengVal = Number(tengInput.value) || 0;
+      qianInput.value = tengVal ? Math.round(tengVal / 1.5) : '';
+    } else {
+      const qianVal = Number(qianInput.value) || 0;
+      tengInput.value = qianVal ? Math.round(qianVal * 1.5) : '';
+    }
+ 
+    const qian    = Number(qianInput.value) || 0;
+    const teng    = Number(tengInput.value) || 0;
+    const total   = qian + teng;
+    const current = Number(document.getElementById('wallet-balance-display').value) || 0;
+    document.getElementById('topup-total').textContent = total.toLocaleString();
+    document.getElementById('topup-after').textContent = (current + total).toLocaleString();
+  };
+ 
+  window.doTopup = async function() {
+    const qian = Number(document.getElementById('topup-qian').value);
+    if (!qian || qian <= 0) { alert('請輸入倩的課金金額！'); return; }
+    const teng = Math.round(qian * 1.5);
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+ 
+    // 找個人帳本
+    const personalLedger = ledgers.find(l => l.type === 'personal');
+    // 找共同帳本
+    const sharedLedger   = ledgers.find(l => l.type === 'shared');
+ 
+    if (!personalLedger || !sharedLedger) { alert('找不到個人或共同帳本！'); return; }
+ 
+    // 1. 個人帳本新增支出「錢櫃課金」
+    await addDoc(collection(db,'ledgers',personalLedger.id,'expenses'), {
+      name: '錢櫃課金', amount: qian, category: '繳錢',
+      payment: '倩現金', date: dateStr, note: '',
+      type: 'expense', addedBy: currentName, addedByEmail: currentEmail,
+      prestored: false, readyToPay: false
+    });
+ 
+    // 2. 共同帳本新增收入「倩課金」
+    await addDoc(collection(db,'ledgers',sharedLedger.id,'expenses'), {
+      name: '倩課金', amount: qian, category: '錢櫃課金',
+      payment: '', date: dateStr, note: '',
+      type: 'income', addedBy: currentName, addedByEmail: currentEmail,
+      prestored: false, readyToPay: false
+    });
+ 
+    // 3. 共同帳本新增收入「騰課金」
+    await addDoc(collection(db,'ledgers',sharedLedger.id,'expenses'), {
+      name: '騰課金', amount: teng, category: '錢櫃課金',
+      payment: '', date: dateStr, note: '',
+      type: 'income', addedBy: currentName, addedByEmail: currentEmail,
+      prestored: false, readyToPay: false
+    });
+ 
+    const newBalance = (Number(document.getElementById('wallet-balance-display').value) || 0) + qian + teng;
+      await updateDoc(doc(db,'ledgers',sharedLedger.id), { walletBalance: newBalance, walletUpdatedAt: Date.now() });
+      if (currentLedger && currentLedger.id === sharedLedger.id) {
+        currentLedger.walletBalance   = newBalance;
+        currentLedger.walletUpdatedAt = Date.now();
+      }
+      document.getElementById('wallet-balance-display').value = newBalance;
+      renderWalletUpdatedAt();
+ 
+      document.getElementById('topup-qian').value = '';
+        document.getElementById('topup-teng-input').value = '';
+    calcTopup();
+    alert(`課金完成！\n個人帳本：-$${qian.toLocaleString()}\n共同帳本收入：+$${(qian+teng).toLocaleString()}`);
+  };
+ 
+  async function updateWalletDisplay(allRecords) {
+    let balance;
+ 
+    if (currentLedger && currentLedger.walletBalance !== undefined && currentLedger.walletBalance !== null) {
+      balance = currentLedger.walletBalance;
+    } else {
+      const income  = allRecords.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+      const expense = allRecords.filter(r => r.type === 'expense' && r.payment === '錢櫃').reduce((s,r) => s + r.amount, 0);
+      balance = income - expense;
+      try {
+        await updateDoc(doc(db,'ledgers',currentLedgerId), { walletBalance: balance, walletUpdatedAt: Date.now() });
+        if (currentLedger) currentLedger.walletBalance = balance;
+      } catch(e) {
+        console.warn('初始化錢櫃餘額失敗', e);
+      }
+    }
+ 
+    document.getElementById('wallet-balance-display').value = balance;
+    const warning = document.getElementById('wallet-warning');
+    warning.style.display = balance < 2000 ? 'inline' : 'none';
+    renderWalletUpdatedAt();
+    calcTopup();
+  }
+ 
+  function renderWalletUpdatedAt() {
+    const el = document.getElementById('wallet-updated-at');
+    if (!el) return;
+    if (currentLedger && currentLedger.walletUpdatedAt) {
+      const d = new Date(currentLedger.walletUpdatedAt);
+      el.textContent = `上次更新：${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    } else {
+      el.textContent = '';
+    }
+  }
+ 
+  window.saveWalletBalance = async function(value) {
+    const balance = Number(value) || 0;
+    if (!currentLedgerId) return;
+    await updateDoc(doc(db,'ledgers',currentLedgerId), { walletBalance: balance, walletUpdatedAt: Date.now() });
+    if (currentLedger) {
+      currentLedger.walletBalance   = balance;
+      currentLedger.walletUpdatedAt = Date.now();
+    }
+    renderWalletUpdatedAt();
+    const warning = document.getElementById('wallet-warning');
+    warning.style.display = balance < 2000 ? 'inline' : 'none';
+    calcTopup();
+  };
+ 
+ 
+  // ===========================
+  // 👂 監聽記錄
+  // ===========================
+ 
+  function listenRecords() {
+    if (unsubscribeRecords) unsubscribeRecords();
+    if (!currentLedgerId) return;
+ 
+    const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+    const endDate   = `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+ 
+    const q = query(collection(db,'ledgers',currentLedgerId,'expenses'), orderBy('date','desc'));
+ 
+    unsubscribeRecords = onSnapshot(q, (snapshot) => {
+      allLedgerRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      records = allLedgerRecords.filter(r => r.date >= startDate && r.date <= endDate);
+      render();
+      renderPieChart();
+      if (currentLedger && currentLedger.type === 'shared') {
+        updateWalletDisplay(allLedgerRecords);
+ 
+      }
+    });
+  }
+ 
+ 
+  // ===========================
+  // ➕ 新增/編輯記錄 modal
+  // ===========================
+ 
+window.openAddRecord = function() {
+    editingRecordId = null;
+    deletingRecordSource = null;
+ 
+    if (currentLedger && (currentLedger.type === 'personal' || currentLedger.type === 'shared')) {
+      modalSelectedLedger = currentLedger;
+    } else {
+      modalSelectedLedger = ledgers.find(l => l.type === 'personal') || currentLedger;
+    }
+ 
+    document.getElementById('ledger-switch-arrows').style.display = 'flex';
+    renderModalLedgerTitle();
+ 
+    document.getElementById('record-modal-title').textContent = '新增記錄';
+    document.getElementById('record-submit-btn').textContent  = '新增';
+    document.getElementById('record-delete-btn').style.display = 'none';
+ 
+    document.getElementById('rec-name').value   = '';
+    document.getElementById('rec-amount').value = '';
+    document.getElementById('rec-note').value   = '';
+    setTodayDate();
+ 
+    currentType = 'expense';
+    document.getElementById('tab-expense').className = 'type-tab active-expense';
+    document.getElementById('tab-income').className  = 'type-tab';
+    document.getElementById('pay-row').style.display = 'flex';
+ 
+    selectedCat = null;
+    selectedPay = null;
+ 
+    document.getElementById('note-row').style.display = 'flex';
+ 
+    renderCatPicker();
+    renderPayPicker();
+    renderModalPresets();
+    document.getElementById('record-modal').classList.add('show');
+  };
+ 
+  function renderModalLedgerTitle() {
+    const ledgerName = modalSelectedLedger ? modalSelectedLedger.name : '記帳本';
+    document.getElementById('record-modal-ledger-name').textContent = ledgerName;
+  }
+ 
+  window.switchModalLedger = function(direction) {
+    const switchable = ledgers.filter(l => l.type === 'personal' || l.type === 'shared');
+    if (switchable.length < 2) return;
+    let idx = switchable.findIndex(l => l.id === modalSelectedLedger?.id);
+    if (idx === -1) idx = 0;
+    idx = (idx + direction + switchable.length) % switchable.length;
+    modalSelectedLedger = switchable[idx];
+    renderModalLedgerTitle();
+    selectedCat = null;
+    selectedPay = null;
+    renderCatPicker();
+    renderPayPicker();
+    renderModalPresets();
+  };
+ 
+  let recordModalTouchStartX = 0;
+  window.recordModalTouchStart = function(e) {
+    recordModalTouchStartX = e.changedTouches[0].screenX;
+  };
+  window.recordModalTouchEnd = function(e) {
+    if (!modalSelectedLedger) return;
+    const endX = e.changedTouches[0].screenX;
+    const diff = endX - recordModalTouchStartX;
+    if (Math.abs(diff) < 50) return;
+    if (diff > 0) switchModalLedger(-1);
+    else switchModalLedger(1);
+  };
+ 
+  window.openEditRecord = function(id) {
+    const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id) || allLedgerRecords.find(r => r.id === id);
+    if (!record) return;
+    editingRecordId = id;
+ 
+    const isDadRecord = currentLedger && currentLedger.type === 'dad';
+    deletingRecordSource = isDadRecord ? { type: 'dad', stockId: record.stockId || '' } : { type: 'normal' };
+ 
+    modalSelectedLedger = null;
+    document.getElementById('ledger-switch-arrows').style.display = 'none';
+ 
+    document.getElementById('record-modal-title').textContent = '編輯記錄';
+    document.getElementById('record-submit-btn').textContent  = '儲存';
+    document.getElementById('record-delete-btn').style.display = 'block';
+    document.getElementById('rec-name').value   = record.name;
+    document.getElementById('rec-amount').value = record.amount;
+    document.getElementById('rec-date').value   = record.date;
+    document.getElementById('rec-note').value   = record.note || '';
+ 
+    currentType = record.type || 'expense';
+    document.getElementById('tab-expense').className = currentType === 'expense' ? 'type-tab active-expense' : 'type-tab';
+    document.getElementById('tab-income').className  = currentType === 'income'  ? 'type-tab active-income'  : 'type-tab';
+    document.getElementById('pay-row').style.display = currentType === 'expense' ? 'flex' : 'none';
+ 
+    selectedCat = record.category || null;
+    selectedPay = record.payment  || null;
+ 
+    document.getElementById('note-row').style.display = 'flex';
+ 
+    renderCatPicker();
+    renderPayPicker();
+    document.getElementById('record-modal').classList.add('show');
+  };
+ 
+  window.closeRecordModal = function() {
+    document.getElementById('record-modal').classList.remove('show');
+    editingRecordId = null;
+    selectedCat = null;
+    selectedPay = null;
+    deletingRecordSource = null;
+  };
+ 
+  window.deleteRecordFromModal = function() {
+    if (!editingRecordId || !deletingRecordSource) return;
+    if (deletingRecordSource.type === 'dad') {
+      deleteDadRecord(editingRecordId, deletingRecordSource.stockId);
+    } else {
+      deleteRecord(editingRecordId);
+    }
+    closeRecordModal();
+  };
+ 
+  window.submitRecord = async function() {
+    const name   = document.getElementById('rec-name').value.trim();
+    const amount = document.getElementById('rec-amount').value;
+    const date   = document.getElementById('rec-date').value;
+    const note   = document.getElementById('rec-note').value.trim();
+ 
+    if (!name || !amount || !date) { alert('請填寫名稱、金額和日期！'); return; }
+    if (!selectedCat) { alert('請選擇分類！'); return; }
+    if (currentType === 'expense' && !selectedPay) { alert('請選擇支付方式！'); return; }
+    if (!currentLedgerId) { alert('請先選擇帳本！'); return; }
+ 
+    const data = {
+      name, amount: Number(amount), category: selectedCat,
+      payment: currentType === 'expense' ? selectedPay : '',
+      date, note, type: currentType,
+      addedBy: currentName, addedByEmail: currentEmail,
+    };
+ 
+    if (editingRecordId) {
+      // 編輯模式
+      await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',editingRecordId), data);
+    } else {
+      // 新增模式：用彈窗暫存帳本（若有切換過），否則用目前主畫面帳本
+      const targetLedgerId = modalSelectedLedger ? modalSelectedLedger.id : currentLedgerId;
+      await addDoc(collection(db,'ledgers',targetLedgerId,'expenses'), {
+        ...data, prestored: false, readyToPay: false
+      });
+    }
+ 
+    closeRecordModal();
+  };
+ 
+ 
+  // ===========================
+  // 🗑️ 刪除
+  // ===========================
+ 
+  window.deleteRecord = function(id) {
+    pendingDeleteId = id;
+    document.getElementById('confirm-modal').classList.add('show');
+  };
+ 
+  window.closeConfirmModal = function() {
+    pendingDeleteId = null;
+    document.getElementById('confirm-modal').classList.remove('show');
+  };
+ 
+document.getElementById('confirm-delete-btn').onclick = async function() {
+    if (pendingDeleteId) {
+      const deleteType = document.getElementById('confirm-delete-btn').dataset.deleteType;
+      if (deleteType === 'stock') {
+        // 刪除存股記錄，同步刪爸爸帳本
+        const stockSnap = await getDoc(doc(db,'users',currentUid,'stocks',pendingDeleteId));
+        await deleteDoc(doc(db,'users',currentUid,'stocks',pendingDeleteId));
+        // 找爸爸帳本中有 stockId 對應的記錄並刪除
+        const dadLedger = ledgers.find(l => l.type === 'dad');
+        if (dadLedger) {
+          const expSnap = await getDocs(collection(db,'ledgers',dadLedger.id,'expenses'));
+          for (const d of expSnap.docs) {
+            if (d.data().stockId === pendingDeleteId) {
+              await deleteDoc(doc(db,'ledgers',dadLedger.id,'expenses',d.id));
+              break;
+            }
+          }
+        }
+        document.getElementById('confirm-delete-btn').dataset.deleteType = '';
+      } else if (deleteType === 'dadExpense') {
+        // 刪除爸爸帳本記錄，如果有 stockId 也同步刪存股
+        const expSnap = await getDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        if (expSnap.exists() && expSnap.data().stockId) {
+          await deleteDoc(doc(db,'users',currentUid,'stocks',expSnap.data().stockId));
+        }
+        await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        document.getElementById('confirm-delete-btn').dataset.deleteType = '';
+      } else {
+        // 一般刪除支出記錄
+        await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+      }
+    }
+    closeConfirmModal();
+  };
+ 
+ 
+  // ===========================
+  // ✅ 已預存
+  // ===========================
+ 
+  window.togglePrestored = async function(id, current) {
+    await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',id), { prestored: !current });
+  };
+ 
+ 
+  // ===========================
+  // 🎯 預算
+  // ===========================
+ 
+  window.setBudgetLedger = function(type) {
+    budgetLedgerType = type;
+    document.getElementById('budget-tab-personal').className = type === 'personal' ? 'btn-sm btn-primary' : 'btn-sm';
+    document.getElementById('budget-tab-shared').className   = type === 'shared'   ? 'btn-sm btn-primary' : 'btn-sm';
+    renderBudgetPage();
+  };
+ 
+  async function renderBudgetPage() {
+    const isShared = budgetLedgerType === 'shared';
+    const cats = isShared ? sharedExpenseCategories : expenseCategories;
+    const budgetKey = budgetLedgerType; // 'personal' or 'shared'
+    const monthKey  = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
+ 
+    document.getElementById('budget-ledger-label').textContent =
+      isShared ? '共同帳本預算' : '個人帳本預算';
+ 
+    // 找對應的帳本
+    const ledger = isShared
+      ? ledgers.find(l => l.type === 'shared')
+      : ledgers.find(l => l.type === 'personal');
+ 
+    // 撈該月支出
+    let monthExpense = {};
+    if (ledger) {
+      const startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-01`;
+      const endDate   = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-31`;
+      const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
+      snap.docs.forEach(d => {
+        const r = d.data();
+        if (r.type === 'expense' && r.date >= startDate && r.date <= endDate) {
+          monthExpense[r.category] = (monthExpense[r.category] || 0) + r.amount;
+        }
+      });
+    }
+ 
+    const container = document.getElementById('budget-list');
+    container.innerHTML = '';
+ 
+    cats.forEach(function(cat) {
+// 如果這個月沒有預算，自動找上個月的設定來用
+    let prevMonth = budgetMonth - 1;
+    let prevYear  = budgetYear;
+    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+    const prevMonthKey = `${prevYear}-${String(prevMonth).padStart(2,'0')}`;
+ 
+    const budget =
+      (budgets[budgetKey]?.[monthKey]?.[cat.name]) ??           // 這個月有設定就用這個月的
+      (budgets[budgetKey]?.[prevMonthKey]?.[cat.name]) ??       // 沒有就用上個月的
+      0;                                                         // 上個月也沒有就是 0
+      const spent   = monthExpense[cat.name] || 0;
+      const remain  = budget - spent;
+      const pct     = budget > 0 ? Math.min(spent / budget * 100, 100) : 0;
+      const isOver  = remain < 0;
+ 
+      const item = document.createElement('div');
+      item.className = 'budget-item';
+      item.innerHTML = `
+        <div class="budget-icon">${cat.emoji}</div>
+        <div class="budget-body">
+          <div class="budget-label">${cat.name}</div>
+          <div class="budget-bar-wrap"><div class="budget-bar${isOver?' over':''}" style="width:${pct}%"></div></div>
+          <div class="budget-nums">已花 $${spent.toLocaleString()} / 預算 <span class="budget-edit-trigger" data-cat="${cat.name}" style="cursor:pointer; text-decoration:underline; color:#444441;">$${budget > 0 ? budget.toLocaleString() : '點擊設定'}</span></div>
+        </div>
+        <div class="budget-right">
+          <div class="budget-remaining${isOver?' over':''}">${isOver ? '-' : ''}$${Math.abs(remain).toLocaleString()}</div>
+          <div style="font-size:0.72rem; color:#888780;">${isOver ? '超支' : '剩餘'}</div>
+        </div>
+      `;
+ 
+      // 點擊預算數字可以編輯
+      item.querySelector('.budget-edit-trigger').onclick = async function() {
+        const newBudget = prompt(`設定「${cat.name}」${monthKey} 預算`, budget || '');
+        if (newBudget === null) return;
+        const val = Number(newBudget);
+        if (isNaN(val) || val < 0) { alert('請輸入有效金額！'); return; }
+        if (!budgets[budgetKey]) budgets[budgetKey] = {};
+        if (!budgets[budgetKey][monthKey]) budgets[budgetKey][monthKey] = {};
+        budgets[budgetKey][monthKey][cat.name] = val;
+        await saveUserSettings();
+        renderBudgetPage();
+      };
+ 
+      container.appendChild(item);
+    });
+  }
+ 
+ 
+  // ===========================
+  // 🖥️ 渲染清單
+  // ===========================
+ 
+  function renderFilterButtons() {
+    const container = document.getElementById('filter-buttons');
+    container.innerHTML = '';
+ 
+    const cats = currentLedger && currentLedger.type === 'shared'
+      ? sharedExpenseCategories : expenseCategories;
+ 
+    const select = document.createElement('select');
+    select.style.cssText = 'flex:1; padding:0.35rem 0.6rem; font-size:0.88rem; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text); outline:none;';
+ 
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = '全部分類';
+    select.appendChild(allOpt);
+ 
+    cats.forEach(function(cat) {
+      const opt = document.createElement('option');
+      opt.value = cat.name;
+      opt.textContent = cat.emoji + ' ' + cat.name;
+      if (activeFilter === cat.name) opt.selected = true;
+      select.appendChild(opt);
+    });
+ 
+    select.onchange = function() {
+      activeFilter = this.value || null;
+      render();
+    };
+ 
+    container.appendChild(select);
+  }
+ 
+  function render() {
+    const container = document.getElementById('record-list');
+    container.innerHTML = '';
+ 
+    const filtered = activeFilter
+      ? records.filter(r => r.category === activeFilter)
+      : records;
+ 
+    const totalIncome  = records.filter(r => r.type === 'income').reduce((s,r)  => s + r.amount, 0);
+    const totalExpense = records.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
+    document.getElementById('total-income').textContent  = totalIncome.toLocaleString();
+    document.getElementById('total-expense').textContent = totalExpense.toLocaleString();
+    document.getElementById('total-balance').textContent = (totalIncome - totalExpense).toLocaleString();
+ 
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#b4b2a9; padding:2rem 0; font-size:0.9rem;">本月沒有記錄</div>';
+      return;
+    }
+ 
+    filtered.forEach(function(item) {
+      const isExpense    = item.type !== 'income';
+      const isCreditCard = [...CC_CATHAY_QIAN, ...CC_FUBON, ...CC_TENG].includes(item.payment);
+      const catEmoji  = getCatEmoji(item.category);
+      const payEmoji  = item.payment ? getPayEmoji(item.payment) : '';
+      const payLabel  = item.payment || '';
+ 
+      const div = document.createElement('div');
+      div.className = 'record-item';
+ 
+      const prestoredHtml = (isExpense && isCreditCard)
+        ? `<span class="tag ${item.prestored ? 'tag-prestored' : ''}"
+             onclick="togglePrestored('${item.id}', ${item.prestored})">
+             ${item.prestored ? '✓ 已預存' : '預存'}
+           </span>` : '';
+ 
+      const noteHtml = item.note
+        ? `<span style="cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'inline':''; this.textContent=this.nextElementSibling.style.display==='none'?'📝':'📝'">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : '';
+ 
+      div.innerHTML = `
+        <div class="record-icon" title="${item.category || ''}">${catEmoji}</div>
+        <div class="record-body">
+          <div class="record-name">${item.name}</div>
+          <div class="record-meta">
+            <span>${item.date}</span>
+            ${payEmoji ? `<span class="pay-badge" title="${payLabel}">${payEmoji}</span>` : ''}
+            ${noteHtml}
+            ${prestoredHtml}
+          </div>
+        </div>
+        <div class="record-right">
+          <div class="record-amount ${isExpense ? 'amount-expense' : 'amount-income'}">
+            ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
+          </div>
+          <div class="record-actions">
+            <button class="tag-btn" onclick="openEditRecord('${item.id}')">編輯</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+ 
+    renderFilterButtons();
+  }
+ 
+ 
+  // ===========================
+  // 🥧 圓餅圖
+  // ===========================
+ 
+  function renderPieChart() {
+    const expenseRecords = records.filter(r => r.type === 'expense');
+    const cats = currentLedger && currentLedger.type === 'shared'
+      ? sharedExpenseCategories : expenseCategories;
+ 
+    const data = {};
+    cats.forEach(c => { data[c.name] = 0; });
+    expenseRecords.forEach(r => {
+      if (data[r.category] !== undefined) data[r.category] += r.amount;
+    });
+ 
+    const labels  = cats.map(c => c.name).filter(n => data[n] > 0);
+    const values  = labels.map(n => data[n]);
+    const total   = values.reduce((a,b) => a+b, 0);
+    const emojis  = labels.map(n => cats.find(c => c.name === n)?.emoji || '');
+ 
+//圓餅圖顏色
+const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1D1C4','#f6cb66','#f7d5d0','#efddbf'];
+    // 更新圖例
+    const legend = document.getElementById('pie-legend');
+    legend.innerHTML = '';
+ 
+    if (total === 0) {
+      legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">本月無支出</div>';
+      // 清空圖表
+      const canvas = document.getElementById('pie-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 140, 140);
+      if (pieChart) { pieChart.destroy(); pieChart = null; }
+      return;
+    }
+ 
+    labels.forEach(function(label, i) {
+      const pct = Math.round(values[i] / total * 100);
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `
+        <div class="legend-dot" style="background:${COLORS[i % COLORS.length]};"></div>
+        <span class="legend-label">${emojis[i]} ${label}</span>
+        <span class="legend-amount">$${values[i].toLocaleString()}</span>
+        <span class="legend-pct">${pct}%</span>
+      `;
+      legend.appendChild(item);
+    });
+ 
+    // 畫圓餅圖
+    const canvas = document.getElementById('pie-canvas');
+    if (pieChart) { pieChart.destroy(); }
+    pieChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: COLORS.slice(0, labels.length),
+          borderWidth: 2,
+          borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw/total*100)}%)`
+            }
+          }
+        },
+        cutout: '60%'
+      }
+    });
+  }
+ 
+ 
+  // ===========================
+  // 💳 信用卡統計
+  // ===========================
+ 
+  // 對帳資料快取
+  let reconcileData = {};
+ 
+  async function loadReconcileData() {
+    const monthKey = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUid, 'ccReconcile', monthKey));
+      reconcileData = snap.exists() ? snap.data() : {};
+    } catch(e) { reconcileData = {}; }
+  }
+ 
+  async function saveReconcile(reconcileId, field, value) {
+    const monthKey = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
+    if (!reconcileData[reconcileId]) reconcileData[reconcileId] = {};
+    reconcileData[reconcileId][field] = value === '' ? '' : Number(value);
+    await setDoc(
+      doc(db, 'users', currentUid, 'ccReconcile', monthKey),
+      reconcileData,
+      { merge: true }
+    );
+    renderCCSummary();
+  }
+  window.saveReconcile = saveReconcile;
+ 
+  
+function renderReconcile(reconcileId, appTotal, showSaved) {
+    const container = document.getElementById(reconcileId);
+    if (!container) return;
+ 
+    if (showSaved === false) {
+      container.innerHTML = '';
+      return;
+    }
+ 
+    const rd      = reconcileData[reconcileId] || {};
+    const actual  = rd.actual  !== undefined ? rd.actual  : '';
+    const bank    = rd.bank    !== undefined ? rd.bank    : '';
+    const cash    = rd.cash    !== undefined ? rd.cash    : '';
+ 
+    let diffHtml = '';
+    if (actual !== '') {
+      const totalSaved = (Number(bank) || 0) + (Number(cash) || 0);
+      const diff = totalSaved - Number(actual);
+      if (bank !== '' || cash !== '') {
+        const cls = diff >= 0 ? 'ok' : 'warn';
+        const msg = diff >= 0 ? '✓ 預存充足，多了' : '⚠ 還差';
+        diffHtml = `
+          <div>
+            <div class="cc-recon-diff ${cls}">${msg} $${Math.abs(diff).toLocaleString()}</div>
+            <div class="cc-recon-note">帳單 $${Number(actual).toLocaleString()} ／帳戶 $${(Number(bank)||0).toLocaleString()} ＋ 現金 $${(Number(cash)||0).toLocaleString()} ＝ 已預存 $${totalSaved.toLocaleString()}</div>
+          </div>`;
+      } else {
+        const diff2 = appTotal - Number(actual);
+        const cls2  = Math.abs(diff2) < 10 ? 'exact' : 'warn';
+        const label = diff2 === 0 ? '✓ APP 與帳單吻合'
+                    : diff2 > 0  ? `APP 比帳單多 $${Math.abs(diff2).toLocaleString()}（可能有漏記？）`
+                                 : `APP 比帳單少 $${Math.abs(diff2).toLocaleString()}（可能有漏記？）`;
+        diffHtml = `
+          <div>
+            <div class="cc-recon-diff ${cls2}">${label}</div>
+            <div class="cc-recon-note">APP 統計 $${appTotal.toLocaleString()} ／帳單 $${Number(actual).toLocaleString()}</div>
+          </div>`;
+      }
+    }
+ 
+    container.innerHTML = `
+      <div class="cc-reconcile">
+        <h3>📋 對帳</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.6rem; margin-bottom:0.75rem;">
+          <div class="cc-recon-field">
+            <label>帳單實際金額（銀行 APP）</label>
+            <input type="number" placeholder="輸入帳單金額"
+              value="${actual}"
+              onchange="saveReconcile('${reconcileId}','actual',this.value)">
+          </div>
+          <div class="cc-recon-field">
+            <label>帳戶預存</label>
+            <input type="number" placeholder="輸入金額"
+              value="${bank}"
+              onchange="saveReconcile('${reconcileId}','bank',this.value)">
+          </div>
+          <div class="cc-recon-field">
+            <label>現金預存</label>
+            <input type="number" placeholder="輸入金額"
+              value="${cash}"
+              onchange="saveReconcile('${reconcileId}','cash',this.value)">
+          </div>
+        </div>
+        ${diffHtml
+          ? `<div class="cc-recon-result">${diffHtml}</div>`
+          : '<div class="cc-recon-note">填入帳單金額後自動比對</div>'}
+      </div>
+    `;
+  }
+ 
+  async function renderCCSummary() {
+    await loadReconcileData();
+ 
+    const cathayStart = getCycleStart(ccYear, ccMonth, 4);
+    const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-03`;
+    const fubonStart  = getCycleStart(ccYear, ccMonth, 3);
+    const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
+ 
+    allLedgerRecords = [];
+    for (const ledger of ledgers) {
+      const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
+      snap.docs.forEach(d => allLedgerRecords.push({ ...d.data(), id:d.id, ledgerId:ledger.id, ledgerName:ledger.name }));
+    }
+    const allRecords = allLedgerRecords;
+ 
+renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QIAN, cathayStart, cathayEnd, 'recon-cathay', true);
+    renderCCSection('cc-fubon-summary', 'cc-fubon-detail',  allRecords, CC_FUBON,        fubonStart,  fubonEnd,  'recon-fubon',  true);
+    renderCCSection('cc-teng-summary',  'cc-teng-detail',   allRecords, CC_TENG,         cathayStart, cathayEnd, 'recon-teng',   false);
+    }
+ 
+  function getCycleStart(year, month, day) {
+    let y = year, m = month - 1;
+    if (m < 1) { m = 12; y--; }
+    return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+ 
+function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId, showSaved) {
+      const filtered    = allRecords.filter(r => r.type==='expense' && paymentNames.includes(r.payment) && r.date>=startDate && r.date<=endDate);
+    const total       = filtered.reduce((s,r) => s+r.amount, 0);
+    const prestored   = filtered.filter(r => r.prestored).reduce((s,r) => s+r.amount, 0);
+    const unprestored = total - prestored;
+ 
+    document.getElementById(summaryId).innerHTML = `
+      <div class="cc-stat"><div class="cc-stat-label">本期總計</div><div class="cc-stat-value amount-expense">$${total.toLocaleString()}</div></div>
+      <div class="cc-stat"><div class="cc-stat-label">✓ 已預存</div><div class="cc-stat-value" style="color:#2e7d32;">$${prestored.toLocaleString()}</div></div>
+      <div class="cc-stat"><div class="cc-stat-label">⚠ 未預存</div><div class="cc-stat-value amount-expense">$${unprestored.toLocaleString()}</div></div>
+    `;
+ 
+    const detailEl = document.getElementById(detailId);
+    if (filtered.length === 0) {
+      detailEl.innerHTML = '<div style="font-size:0.85rem; color:#888780; padding:0.5rem 0;">本期無記錄</div>';
+renderReconcile(reconcileId, total, showSaved);
+      return;
+        }
+    // 分個人/共同兩欄
+    const personalLedger = ledgers.find(l => l.type === 'personal');
+    const sharedLedger   = ledgers.find(l => l.type === 'shared');
+    const personalRecs   = filtered.filter(r => r.ledgerId === personalLedger?.id);
+    const sharedRecs     = filtered.filter(r => r.ledgerId === sharedLedger?.id);
+
+    function renderRecRows(recs) {
+      if (recs.length === 0) return '<div style="font-size:0.78rem; color:var(--text-dim); padding:0.5rem 0;">無記錄</div>';
+      return recs.map(r => `
+        <div style="display:grid; grid-template-columns:1fr 64px 88px; align-items:center; padding:0.4rem 0; border-bottom:0.5px solid var(--border); gap:4px;">
+          <span style="font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.date.slice(5).replace('-','/')}　${r.name}</span>
+          <span class="amount-expense" style="font-size:0.82rem; text-align:right;">$${r.amount.toLocaleString()}</span>
+          <span style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+            <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="font-size:0.68rem; min-width:40px; text-align:center;">${r.prestored ? '✓已存' : '預存'}</span>
+            <span onclick="openEditRecord('${r.id}')" style="font-size:0.68rem; cursor:pointer; color:var(--text-dim); padding:2px 6px; border:0.5px solid var(--border); border-radius:4px;">編輯</span>
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // 手機：Tab 切換；電腦：左右兩欄
+    const pName = personalLedger?.name || '個人';
+    const sName = sharedLedger?.name   || '共同';
+    detailEl.innerHTML = `
+      <!-- 電腦兩欄 -->
+      <div class="cc-ledger-cols">
+        <div class="cc-ledger-col">
+          <div class="cc-col-title">👤 ${pName}</div>
+          ${renderRecRows(personalRecs)}
+        </div>
+        <div class="cc-ledger-col">
+          <div class="cc-col-title">👫 ${sName}</div>
+          ${renderRecRows(sharedRecs)}
+        </div>
+      </div>
+      <!-- 手機 Tab -->
+      <div class="cc-ledger-tabs">
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <button class="cc-tab-btn active" onclick="switchCCTab(this,'cc-tab-p-${summaryId}','cc-tab-s-${summaryId}')">${pName}</button>
+          <button class="cc-tab-btn" onclick="switchCCTab(this,'cc-tab-s-${summaryId}','cc-tab-p-${summaryId}')">${sName}</button>
+        </div>
+        <div id="cc-tab-p-${summaryId}">${renderRecRows(personalRecs)}</div>
+        <div id="cc-tab-s-${summaryId}" style="display:none;">${renderRecRows(sharedRecs)}</div>
+      </div>
+    `;
+ 
+    // 對帳區塊
+renderReconcile(reconcileId, total, showSaved);
+  }
+ 
+  window.togglePrestoredCC = async function(recordId, ledgerId, current) {
+    await updateDoc(doc(db,'ledgers',ledgerId,'expenses',recordId), { prestored: !current });
+    renderCCSummary();
+  };
+ 
+ 
+  // ===========================
+  // 🏷️ 分類管理
+  // ===========================
+ 
+// 從新增記錄 modal 開啟分類管理
+  // 先關閉記錄 modal，管理完再重新開啟
+window.openCategoryModalFromRecord = function() {
+    document.getElementById('record-modal').classList.remove('show');
+    catTabType = currentType === 'income' ? 'income' : 'expense';
+    renderCatList();
+    // 稍微延遲確保第一個視窗完全關閉後再開啟
+    setTimeout(function() {
+      document.getElementById('cat-modal').classList.add('show');
+    }, 150);
+  };
+  window.openCategoryModal = function() {
+    catTabType = 'expense';
+    renderCatList();
+    document.getElementById('cat-modal').classList.add('show');
+  };
+ 
+  window.closeCatModal = function() {
+    document.getElementById('cat-modal').classList.remove('show');
+  };
+ 
+  window.setCatTab = function(type) {
+    catTabType = type;
+    document.getElementById('cat-tab-expense').className = type==='expense' ? 'btn-sm btn-primary' : 'btn-sm';
+    document.getElementById('cat-tab-income').className  = type==='income'  ? 'btn-sm btn-primary' : 'btn-sm';
+    renderCatList();
+  };
+ 
+  function renderCatList() {
+    const container = document.getElementById('cat-list');
+    container.innerHTML = '';
+    const cats = catTabType === 'income' ? incomeCategories : expenseCategories;
+    cats.forEach(function(cat, idx) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid #f1efe8;';
+      row.innerHTML = `
+        <span style="font-size:1.1rem;">${cat.emoji}</span>
+        <span style="flex:1; font-size:0.9rem;">${cat.name}</span>
+        <button class="btn-sm" style="color:#c0392b; border-color:#e0b0ad;"
+          onclick="removeCategory(${idx})">刪除</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+ 
+  window.removeCategory = async function(idx) {
+    if (catTabType === 'income') {
+      incomeCategories.splice(idx, 1);
+    } else {
+      expenseCategories.splice(idx, 1);
+    }
+    await saveUserSettings();
+    renderCatList();
+  };
+ 
+  window.addCategory = async function() {
+    const name  = document.getElementById('new-cat-input').value.trim();
+    const emoji = document.getElementById('new-cat-emoji').value.trim();
+    if (!name || !emoji) { alert('請填寫分類名稱和 emoji！'); return; }
+ 
+    if (catTabType === 'income') {
+      if (incomeCategories.find(c => c.name === name)) { alert('已存在！'); return; }
+      incomeCategories.push({ name, emoji });
+    } else {
+      if (expenseCategories.find(c => c.name === name)) { alert('已存在！'); return; }
+      expenseCategories.push({ name, emoji });
+    }
+ 
+    document.getElementById('new-cat-input').value  = '';
+    document.getElementById('new-cat-emoji').value  = '';
+    await saveUserSettings();
+    renderCatList();
+  };
+ 
+ 
+  // ===========================
+  // 👥 邀請成員
+  // ===========================
+ 
+  window.openInviteModal = function(ledger) {
+    invitingLedgerId = ledger.id;
+    document.getElementById('invite-modal-title').textContent = `邀請成員 — ${ledger.name}`;
+    renderMemberList(ledger);
+    document.getElementById('invite-modal').classList.add('show');
+  };
+ 
+  window.closeInviteModal = function() {
+    document.getElementById('invite-modal').classList.remove('show');
+    invitingLedgerId = null;
+  };
+ 
+  function renderMemberList(ledger) {
+    const container = document.getElementById('member-list');
+    container.innerHTML = '';
+    ledger.members.forEach(function(email) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid #f1efe8; font-size:0.88rem;';
+      const emailEl = document.createElement('span');
+      emailEl.textContent = email + (email === ledger.owner ? '（擁有者）' : '');
+      if (email === ledger.owner) emailEl.style.color = '#888780';
+      row.appendChild(emailEl);
+      if (ledger.owner === currentEmail && email !== currentEmail) {
+        const rmBtn = document.createElement('button');
+        rmBtn.textContent = '移除';
+        rmBtn.className = 'btn-sm';
+        rmBtn.style.color = '#c0392b';
+        rmBtn.onclick = async function() {
+          if (!confirm(`確定移除 ${email}？`)) return;
+          await updateDoc(doc(db,'ledgers',invitingLedgerId), { members: arrayRemove(email) });
+          const l = ledgers.find(l => l.id === invitingLedgerId);
+          if (l) { l.members = l.members.filter(m => m !== email); renderMemberList(l); }
+        };
+        row.appendChild(rmBtn);
+      }
+      container.appendChild(row);
+    });
+  }
+ 
+  window.addMember = async function() {
+    const email = document.getElementById('invite-email').value.trim().toLowerCase();
+    if (!email || !email.includes('@')) { alert('請輸入正確的 Gmail！'); return; }
+    const ledger = ledgers.find(l => l.id === invitingLedgerId);
+    if (ledger && ledger.members.includes(email)) { alert('已經是成員了！'); return; }
+    await updateDoc(doc(db,'ledgers',invitingLedgerId), { members: arrayUnion(email) });
+    document.getElementById('invite-email').value = '';
+    alert(`已邀請 ${email}！對方登入後即可看到此帳本。`);
+    const l = ledgers.find(l => l.id === invitingLedgerId);
+    if (l) { l.members.push(email); renderMemberList(l); }
+  };
+ 
+ 
+  // ===========================
+  // 🪟 overlay 點擊關閉
+  // ===========================
+// ===========================
+  // 📈 存股記錄
+  // ===========================
+ 
+  // 目前的視角：'qian'、'dad'、'combined'
+  let stockView = 'qian';
+ 
+  // 新增存股時的歸屬
+  let stockOwner = 'qian';
+ 
+  // 存股圓餅圖
+  let stockPieChart = null;
+ 
+  // 標的清單（預設有 0050）
+  let stockTargets = ['0050'];
+ 
+  // 所有存股記錄（從 Firestore 撈）
+  let stockRecords = [];
+ 
+  // 監聽存股記錄
+  function listenStocks() {
+    // 從 Firestore 的 stocks 集合監聽，只取這個使用者的
+    onSnapshot(
+      query(collection(db, 'users', currentUid, 'stocks'), orderBy('date', 'desc')),
+      (snapshot) => {
+        stockRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (currentPage === 'stocks') renderStockPage();
+      }
+    );
+  }
+ 
+  // 載入標的設定
+  async function loadStockTargets() {
+    const snap = await getDoc(doc(db, 'users', currentUid));
+    if (snap.exists() && snap.data().stockTargets) {
+      stockTargets = snap.data().stockTargets;
+    }
+  }
+ 
+  async function saveStockTargets() {
+    await setDoc(doc(db, 'users', currentUid), { stockTargets }, { merge: true });
+  }
+ 
+  // 切換視角
+  window.setStockView = function(view) {
+    stockView = view;
+    document.getElementById('stock-tab-qian').className     = view === 'qian'     ? 'btn-sm btn-primary' : 'btn-sm';
+    document.getElementById('stock-tab-dad').className      = view === 'dad'      ? 'btn-sm btn-primary' : 'btn-sm';
+    document.getElementById('stock-tab-combined').className = view === 'combined' ? 'btn-sm btn-primary' : 'btn-sm';
+    renderStockPage();
+  };
+ 
+  // 渲染整個存股頁面
+  function renderStockPage() {
+    // 篩選記錄
+    const filtered = stockView === 'combined'
+      ? stockRecords
+      : stockRecords.filter(r => r.owner === stockView);
+ 
+    renderStockPie(filtered);
+    renderStockTargets(filtered);
+  }
+ 
+  // 圓餅圖（各標的佔比，用總成本計算）
+  function renderStockPie(filtered) {
+    const legend = document.getElementById('stock-pie-legend');
+    legend.innerHTML = '';
+ 
+    // 計算每個標的的總投入
+    const data = {};
+    stockTargets.forEach(t => { data[t] = 0; });
+    filtered.forEach(r => {
+      if (data[r.target] !== undefined) data[r.target] += r.taken;
+      else data[r.target] = r.taken;
+    });
+ 
+    const labels = Object.keys(data).filter(k => data[k] > 0);
+    const values = labels.map(k => data[k]);
+    const total  = values.reduce((a,b) => a+b, 0);
+ 
+    const COLORS = ['#444441','#88AFB5','#EFB187','#ABD5A4','#FAC1B6','#BEC4E4','#C1D1C4','#F99895'];
+ 
+    if (total === 0) {
+      legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">尚無記錄</div>';
+      const canvas = document.getElementById('stock-pie-canvas');
+      canvas.getContext('2d').clearRect(0, 0, 140, 140);
+      if (stockPieChart) { stockPieChart.destroy(); stockPieChart = null; }
+      return;
+    }
+ 
+    labels.forEach(function(label, i) {
+      const pct = Math.round(values[i] / total * 100);
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      item.innerHTML = `
+        <div class="legend-dot" style="background:${COLORS[i % COLORS.length]};"></div>
+        <span class="legend-label">${label}</span>
+        <span class="legend-amount">$${values[i].toLocaleString()}</span>
+        <span class="legend-pct">${pct}%</span>
+      `;
+      legend.appendChild(item);
+    });
+ 
+    const canvas = document.getElementById('stock-pie-canvas');
+    if (stockPieChart) stockPieChart.destroy();
+    stockPieChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: COLORS.slice(0, labels.length),
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw/total*100)}%)` } }
+        },
+        cutout: '60%'
+      }
+    });
+  }
+ 
+  // 每個標的的明細區塊
+  function renderStockTargets(filtered) {
+    const container = document.getElementById('stock-targets-area');
+    container.innerHTML = '';
+ 
+    // 依標的分組
+    const targetGroups = {};
+    stockTargets.forEach(t => { targetGroups[t] = []; });
+    filtered.forEach(r => {
+      if (!targetGroups[r.target]) targetGroups[r.target] = [];
+      targetGroups[r.target].push(r);
+    });
+ 
+    Object.entries(targetGroups).forEach(function([target, records]) {
+      if (records.length === 0) return;
+ 
+      // 計算統計
+      const totalShares = records.reduce((s,r) => s + r.shares, 0);
+      const totalCost   = records.reduce((s,r) => s + r.cost, 0);
+      const totalTaken  = records.reduce((s,r) => s + r.taken, 0);
+      const avgCost     = totalShares > 0 ? (totalCost / totalShares).toFixed(2) : 0;
+ 
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.marginBottom = '1rem';
+ 
+      // 標題 + 統計
+      card.innerHTML = `
+        <h2 style="margin-bottom:0.75rem;">📊 ${target}</h2>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; margin-bottom:1rem;">
+          <div class="cc-stat">
+            <div class="cc-stat-label">總持股數</div>
+            <div class="cc-stat-value">${totalShares} 股</div>
+          </div>
+          <div class="cc-stat">
+            <div class="cc-stat-label">平均成本</div>
+            <div class="cc-stat-value">$${avgCost}</div>
+          </div>
+          <div class="cc-stat">
+            <div class="cc-stat-label">總投入金額</div>
+            <div class="cc-stat-value">$${totalTaken.toLocaleString()}</div>
+          </div>
+        </div>
+      `;
+ 
+      // 明細表格
+const table = document.createElement('table');
+      table.style.cssText = 'width:100%; table-layout:fixed; font-size:0.82rem; border-collapse:collapse;';
+      table.innerHTML = `
+        <thead>
+          <tr style="color:#888780; font-size:0.75rem;">
+            <th style="text-align:left; padding:0.3rem 0.25rem; width:85px;">日期</th>
+            <th style="text-align:left; padding:0.3rem 0.25rem; width:35px;">歸屬</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:50px;">股價</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:35px;">股數</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">成本</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">拿取</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:40px;"></th>
+          </tr>
+        </thead>
+      `;
+      const tbody = document.createElement('tbody');
+      records.forEach(function(r) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border);">${r.date}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); color:var(--text-dim);">${r.owner === 'qian' ? '我' : '爸爸'}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.price}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">${r.shares}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${Math.ceil(r.cost).toLocaleString()}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.taken.toLocaleString()}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">
+            <button class="tag-btn" onclick="openEditStockFromTable('${r.id}')">編輯</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      card.appendChild(table);
+      container.appendChild(card);
+    });
+  }
+ 
+ 
+  // ===========================
+  // ➕ 新增存股 modal
+  // ===========================
+ 
+  window.openAddStock = function() {
+    document.getElementById('stock-delete-btn').style.display = 'none';
+    document.getElementById('stock-submit-btn').textContent = '新增';
+    // 設定今天日期
+    const today = new Date();
+    document.getElementById('stock-date').value =
+      `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+ 
+    // 清空欄位
+    document.getElementById('stock-price').value  = '';
+    document.getElementById('stock-shares').value = '';
+    document.getElementById('stock-taken').value  = '';
+    document.getElementById('stock-cost-display').textContent = '0';
+ 
+    // 設定歸屬預設
+    setStockOwner('qian');
+ 
+    // 填入標的選單
+    renderTargetSelect();
+ 
+    // 監聽股價和股數變動，自動計算成本
+    document.getElementById('stock-price').oninput  = calcStockCost;
+    document.getElementById('stock-shares').oninput = calcStockCost;
+ 
+ 
+    document.getElementById('stock-modal').classList.add('show');
+  };
+ 
+  window.closeStockModal = function() {
+    document.getElementById('stock-modal').classList.remove('show');
+  };
+ 
+  window.deleteStockFromModal = function() {
+    const editStockId = document.getElementById('stock-modal').dataset.editStockId;
+    if (!editStockId) return;
+    deleteStock(editStockId);
+    closeStockModal();
+  };
+ 
+  window.setStockOwner = function(owner) {
+    stockOwner = owner;
+    document.getElementById('stock-owner-qian').className = owner === 'qian' ? 'btn-sm btn-primary' : 'btn-sm';
+    document.getElementById('stock-owner-dad').className  = owner === 'dad'  ? 'btn-sm btn-primary' : 'btn-sm';
+  };
+ 
+  function renderTargetSelect() {
+    const select = document.getElementById('stock-target');
+    select.innerHTML = '';
+    stockTargets.forEach(function(t) {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = t;
+      select.appendChild(opt);
+    });
+  }
+ 
+  function calcStockCost() {
+    const price  = Number(document.getElementById('stock-price').value)  || 0;
+    const shares = Number(document.getElementById('stock-shares').value) || 0;
+    // 總成本 = 股價 × 股數 + 1元手續費
+    const cost = price * shares + (shares > 0 ? 1 : 0);
+    document.getElementById('stock-cost-display').textContent = cost.toLocaleString();
+  }
+ 
+window.submitStock = async function() {
+    const target = document.getElementById('stock-target').value;
+    const date   = document.getElementById('stock-date').value;
+    const price  = Number(document.getElementById('stock-price').value);
+    const shares = Number(document.getElementById('stock-shares').value);
+    const taken  = Number(document.getElementById('stock-taken').value);
+ 
+    if (!target || !date || !price || !shares || !taken) {
+      alert('請填寫所有欄位！'); return;
+    }
+ 
+    const cost = price * shares + 1;
+ 
+    const stockRef = await addDoc(collection(db, 'users', currentUid, 'stocks'), {
+      owner: stockOwner,
+      target, date, price, shares, cost, taken,
+      addedBy: currentEmail,
+      createdAt: Date.now()
+    });
+ 
+    // 爸爸的存股，同步寫一筆支出到爸爸帳本
+    const fromDad = document.getElementById('stock-modal').dataset.fromDad === 'true';
+    if (fromDad || stockOwner === 'dad') {
+      const dadLedger = ledgers.find(l => l.type === 'dad');
+      if (dadLedger) {
+        await addDoc(collection(db,'ledgers',dadLedger.id,'expenses'), {
+          name: `買入 ${target}`,
+          amount: taken,
+          category: '股票',
+          payment: '現金',
+          date, note: `${shares}股 × $${price}`,
+          type: 'expense',
+          addedBy: currentName,
+          addedByEmail: currentEmail,
+          prestored: false, readyToPay: false,
+          stockId: stockRef.id
+        });
+      }
+      document.getElementById('stock-modal').dataset.fromDad = '';
+    }
+ 
+    // 如果是編輯模式，更新既有記錄
+    const editStockId   = document.getElementById('stock-modal').dataset.editStockId;
+    const editExpenseId = document.getElementById('stock-modal').dataset.editExpenseId;
+ 
+    if (editStockId) {
+      // 更新 stocks 集合
+      await updateDoc(doc(db, 'users', currentUid, 'stocks', editStockId), {
+        target, date, price, shares, cost, taken
+      });
+      // 同步更新爸爸帳本記錄
+      const dadLedger = ledgers.find(l => l.type === 'dad');
+      if (dadLedger && editExpenseId) {
+        await updateDoc(doc(db,'ledgers',dadLedger.id,'expenses',editExpenseId), {
+          name: `買入 ${target}`,
+          amount: taken,
+          date,
+          note: `${shares}股 × $${price}`
+        });
+      }
+      document.getElementById('stock-modal').dataset.editStockId   = '';
+      document.getElementById('stock-modal').dataset.editExpenseId = '';
+      document.getElementById('stock-modal-title').textContent = '新增存股記錄';
+    }
+ 
+    closeStockModal();
+  };
+ 
+  window.deleteStock = function(id) {
+    pendingDeleteId = id;
+    // 借用現有的確認刪除 modal，但刪的是 stocks
+    document.getElementById('confirm-delete-btn').dataset.deleteType = 'stock';
+    document.getElementById('confirm-modal').classList.add('show');
+  };
+ 
+ 
+  // ===========================
+ 
+// ===========================
+  // 👴 爸爸帳本
+  // ===========================
+ 
+  let dadRecords = [];
+  let dadPieChart = null;
+  let unsubscribeDad = null;
+ 
+  function listenDadRecords() {
+    if (unsubscribeDad) unsubscribeDad();
+    if (!currentLedgerId) return;
+ 
+    const q = query(
+      collection(db,'ledgers',currentLedgerId,'expenses'),
+      orderBy('date','desc')
+    );
+ 
+    unsubscribeDad = onSnapshot(q, (snapshot) => {
+      dadRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderDadPage();
+    });
+  }
+ 
+  function renderDadPage() {
+    // 總餘額 = 所有收入 - 所有支出（不分月份）
+    const totalIncome  = dadRecords.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+    const totalExpense = dadRecords.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
+    const balance = totalIncome - totalExpense;
+    document.getElementById('dad-balance').textContent = balance.toLocaleString();
+ 
+    // 圓餅圖（支出分類）
+    const dadCats = [
+      { name: '股票',   emoji: '💹' },
+      { name: '電話費', emoji: '📞' },
+    ];
+ 
+    const data = {};
+    dadCats.forEach(c => { data[c.name] = 0; });
+    dadRecords.filter(r => r.type === 'expense').forEach(r => {
+      if (data[r.category] !== undefined) data[r.category] += r.amount;
+    });
+ 
+    const labels  = dadCats.map(c => c.name).filter(n => data[n] > 0);
+    const values  = labels.map(n => data[n]);
+    const total   = values.reduce((a,b) => a+b, 0);
+    const emojis  = labels.map(n => dadCats.find(c => c.name === n)?.emoji || '');
+    const COLORS  = ['#444441','#88AFB5'];
+ 
+    const legend = document.getElementById('dad-pie-legend');
+    legend.innerHTML = '';
+ 
+    if (total > 0) {
+      labels.forEach(function(label, i) {
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-sub);';
+        item.innerHTML = `
+          <div style="width:7px; height:7px; border-radius:50%; background:${COLORS[i]}; flex-shrink:0;"></div>
+          <span>${label}</span>
+          <span style="color:var(--text); font-weight:500; margin-left:2px;">$${values[i].toLocaleString()}</span>
+        `;
+        legend.appendChild(item);
+      });
+ 
+      const canvas = document.getElementById('dad-pie-canvas');
+      if (dadPieChart) dadPieChart.destroy();
+      dadPieChart = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: COLORS.slice(0, labels.length),
+            borderWidth: 2, borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw/total*100)}%)` } }
+          },
+          cutout: '60%'
+        }
+      });
+    } else {
+      legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">尚無支出記錄</div>';
+    }
+ 
+    // 記錄清單
+    const container = document.getElementById('dad-record-list');
+    container.innerHTML = '';
+ 
+    if (dadRecords.length === 0) {
+      container.innerHTML = '<div style="text-align:center; color:#b4b2a9; padding:2rem 0; font-size:0.9rem;">尚無記錄</div>';
+      return;
+    }
+ 
+    dadRecords.forEach(function(item) {
+      const isExpense = item.type !== 'income';
+      const div = document.createElement('div');
+      div.className = 'record-item';
+      div.innerHTML = `
+        <div class="record-icon">${isExpense ? (item.category === '股票' ? '💹' : '📞') : '💵'}</div>
+        <div class="record-body">
+          <div class="record-name">${item.name}</div>
+          <div class="record-meta">
+            <span>${item.date}</span>
+            ${item.note ? `<span style="cursor:pointer;" onclick="var s=this.nextElementSibling; s.style.display=s.style.display==='none'?'inline':'none';">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : ''}
+          </div>
+        </div>
+        <div class="record-right">
+          <div class="record-amount ${isExpense ? 'amount-expense' : 'amount-income'}">
+            ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
+          </div>
+          <div class="record-actions">
+            <button class="tag-btn" onclick="${item.stockId ? `openEditStock('${item.id}','${item.stockId}')` : `openEditRecord('${item.id}')`}">編輯</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+  // 🏷️ 管理標的
+  // ===========================
+ 
+  window.openManageTargets = function() {
+    renderTargetsList();
+    document.getElementById('targets-modal').classList.add('show');
+  };
+ 
+  window.closeTargetsModal = function() {
+    document.getElementById('targets-modal').classList.remove('show');
+  };
+ 
+  function renderTargetsList() {
+    const container = document.getElementById('targets-list');
+    container.innerHTML = '';
+    stockTargets.forEach(function(target, idx) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid #f1efe8;';
+      row.innerHTML = `
+        <span style="font-size:0.9rem;">${target}</span>
+        <button class="btn-sm" style="color:#c0392b;" onclick="removeTarget(${idx})">刪除</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+ 
+  window.addTarget = async function() {
+    const name = document.getElementById('new-target-input').value.trim().toUpperCase();
+    if (!name) { alert('請輸入標的名稱！'); return; }
+    if (stockTargets.includes(name)) { alert('已存在！'); return; }
+    stockTargets.push(name);
+    document.getElementById('new-target-input').value = '';
+    await saveStockTargets();
+    renderTargetsList();
+  };
+ 
+  window.removeTarget = async function(idx) {
+    if (!confirm(`確定刪除「${stockTargets[idx]}」？`)) return;
+    stockTargets.splice(idx, 1);
+    await saveStockTargets();
+    renderTargetsList();
+  };
+// 讓所有 emoji 統一使用 Noto Emoji 風格（Google）
+  function applyNotoEmoji() {
+    twemoji.parse(document.body, {
+      folder: 'svg',
+      ext: '.svg',
+      base: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/svg/',
+      className: 'noto-emoji'
+    });
+  }
+ 
+ 
+// ===========================
+// 🎨 配色主題
+// ===========================
+ 
+const THEMES = [
+  { id:'original',  name:'原色',    bg:'#f1efe8', sidebar:'#ffffff', card:'#ffffff', border:'#d3d1c7', accent:'#444441', text:'#2c2c2a', textSub:'#5f5e5a', hover:'#f1efe8' },
+  { id:'sakura',    name:'櫻花粉',  bg:'#fdf0f2', sidebar:'#fff5f7', card:'#ffffff', border:'#f7d5dc', accent:'#dd918f', text:'#3a2828', textSub:'#7a5050', hover:'#fae0e4' },
+  { id:'peach',     name:'水蜜桃',  bg:'#fdf5ee', sidebar:'#fffaf5', card:'#ffffff', border:'#f2d9c4', accent:'#eca85b', text:'#3a2c20', textSub:'#7a5c40', hover:'#faeade' },
+  { id:'lemon',     name:'檸檬黃',  bg:'#fdfbee', sidebar:'#fffef5', card:'#ffffff', border:'#eee9b0', accent:'#ecd55a', text:'#383010', textSub:'#6a5a20', hover:'#f5f0cc' },
+  { id:'mint',      name:'薄荷綠',  bg:'#f0f8f5', sidebar:'#f5fcf8', card:'#ffffff', border:'#bde0d4', accent:'#629aaa', text:'#1a3030', textSub:'#3a5a54', hover:'#daf0e8' },
+  { id:'sky',       name:'天空藍',  bg:'#eef4fb', sidebar:'#f5f8fd', card:'#ffffff', border:'#c8d8eb', accent:'#78bcd2', text:'#1a2838', textSub:'#3a5060', hover:'#dce8f5' },
+  { id:'lavender',  name:'薰衣草',  bg:'#f4f0f8', sidebar:'#f8f5fb', card:'#ffffff', border:'#d4c8e8', accent:'#9ecfc8', text:'#28203a', textSub:'#584870', hover:'#ece5f5' },
+  { id:'dark',      name:'深色',    bg:'#1a1a18', sidebar:'#242422', card:'#2c2c2a', border:'#3a3a38', accent:'#a0a09e', text:'#e8e8e6', textSub:'#b0b0ae', hover:'#323230' },
+];
+let currentTheme = 'original';
+let themingLedgerId = null;
+ 
+function applyTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+  const r = document.documentElement;
+  r.style.setProperty('--bg',       theme.bg);
+  r.style.setProperty('--sidebar',  theme.sidebar);
+  r.style.setProperty('--card',     theme.card);
+  r.style.setProperty('--border',   theme.border);
+  r.style.setProperty('--accent',   theme.accent);
+  r.style.setProperty('--accent2',  theme.accent);
+  r.style.setProperty('--text',     theme.text);
+  r.style.setProperty('--text-sub', theme.textSub);
+  r.style.setProperty('--hover',    theme.hover);
+  r.style.setProperty('--input-bg', theme.bg);
+  r.style.setProperty('--tag-bg',   theme.bg);
+  r.style.setProperty('--text-dim', '#888780');
+  currentTheme = themeId;
+}
+ 
+window.openThemeModal = function(ledger) {
+  themingLedgerId = ledger.id;
+  document.getElementById('theme-modal-title').textContent = `🎨 ${ledger.name} 配色`;
+  renderThemeGrid(ledger.theme || 'original');
+  document.getElementById('theme-modal').classList.add('show');
+};
+ 
+window.closeThemeModal = function() {
+  document.getElementById('theme-modal').classList.remove('show');
+  themingLedgerId = null;
+};
+ 
+function renderThemeGrid(activeThemeId) {
+  const container = document.getElementById('theme-grid');
+  if (!container) return;
+  container.innerHTML = '';
+  THEMES.forEach(function(theme) {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (activeThemeId === theme.id ? ' active' : '');
+    card.innerHTML = `
+      <div class="theme-preview">
+        <div style="width:30%; background:${theme.sidebar};"></div>
+        <div style="flex:1; background:${theme.bg}; padding:4px; display:flex; flex-direction:column; gap:3px;">
+          <div style="flex:1; background:${theme.card}; border-radius:3px; border:1px solid ${theme.border};"></div>
+          <div style="height:8px; background:${theme.accent}; border-radius:3px; opacity:0.8;"></div>
+        </div>
+      </div>
+      <div class="theme-name">${theme.name}</div>
+    `;
+    card.onclick = async function() {
+      console.log('themingLedgerId:', themingLedgerId);
+      applyTheme(theme.id);
+      await updateDoc(doc(db,'ledgers',themingLedgerId), { theme: theme.id });
+      // 更新本地 ledger 資料
+      const l = ledgers.find(l => l.id === themingLedgerId);
+      if (l) l.theme = theme.id;
+      renderThemeGrid(theme.id);
+    };
+    container.appendChild(card);
+  });
+}
+ 
+// ===========================
+// 👴 爸爸帳本新增選擇
+// ===========================
+ 
+window.openDadAddChoice = function() {
+  document.getElementById('dad-add-modal').classList.add('show');
+};
+ 
+window.closeDadAddModal = function() {
+  document.getElementById('dad-add-modal').classList.remove('show');
+};
+ 
+// 編輯存股
+window.handleDadEdit = function(expenseId, stockId) {
+  if (stockId) {
+    openEditStock(expenseId, stockId);
+  } else {
+    openEditRecord(expenseId);
+  }
+};
+ 
+window.deleteDadRecord = function(expenseId, stockId) {
+  pendingDeleteId = expenseId;
+  if (stockId) {
+    document.getElementById('confirm-delete-btn').dataset.deleteType = 'dadExpense';
+  } else {
+    document.getElementById('confirm-delete-btn').dataset.deleteType = '';
+  }
+  document.getElementById('confirm-modal').classList.add('show');
+};
+ 
+window.openEditStockFromTable = async function(stockId) {
+    // 存股表格直接編輯，不經過爸爸帳本的支出記錄
+    const stockSnap = await getDoc(doc(db, 'users', currentUid, 'stocks', stockId));
+    if (!stockSnap.exists()) { alert('找不到存股記錄'); return; }
+    const r = stockSnap.data();
+ 
+    document.getElementById('stock-modal-title').textContent = '編輯存股記錄';
+    document.getElementById('stock-modal').dataset.editStockId = stockId;
+    document.getElementById('stock-modal').dataset.editExpenseId = '';
+    document.getElementById('stock-modal').dataset.fromDad = '';
+    document.getElementById('stock-delete-btn').style.display = 'block';
+    document.getElementById('stock-submit-btn').textContent = '儲存';
+ 
+    setStockOwner(r.owner || 'qian');
+    renderTargetSelect();
+    const sel = document.getElementById('stock-target');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === r.target) { sel.selectedIndex = i; break; }
+    }
+    document.getElementById('stock-date').value   = r.date;
+    document.getElementById('stock-price').value  = r.price;
+    document.getElementById('stock-shares').value = r.shares;
+    document.getElementById('stock-taken').value  = r.taken;
+    document.getElementById('stock-cost-display').textContent = Math.ceil(r.cost).toLocaleString();
+    document.getElementById('stock-price').oninput  = calcStockCost;
+    document.getElementById('stock-shares').oninput = calcStockCost;
+    document.getElementById('stock-modal').classList.add('show');
+  };
+ 
+  window.openEditStock = async function(expenseId, stockId) {
+  if (!stockId) {
+    // 沒有 stockId，開一般編輯
+    openEditRecord(expenseId);
+    return;
+  }
+ 
+  // 載入存股資料
+  const stockSnap = await getDoc(doc(db, 'users', currentUid, 'stocks', stockId));
+  if (!stockSnap.exists()) {
+    alert('找不到存股記錄，可能已刪除');
+    openEditRecord(expenseId);
+    return;
+  }
+ 
+  const r = stockSnap.data();
+ 
+  // 設定存股 modal 為編輯模式
+  document.getElementById('stock-modal-title').textContent = '編輯存股記錄';
+  document.getElementById('stock-modal').dataset.editStockId = stockId;
+  document.getElementById('stock-modal').dataset.editExpenseId = expenseId;
+  document.getElementById('stock-modal').dataset.fromDad = '';
+  document.getElementById('stock-delete-btn').style.display = 'block';
+  document.getElementById('stock-submit-btn').textContent = '儲存';
+ 
+  setStockOwner(r.owner || 'dad');
+  renderTargetSelect();
+ 
+  // 選到對應的標的
+  const sel = document.getElementById('stock-target');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === r.target) { sel.selectedIndex = i; break; }
+  }
+ 
+  document.getElementById('stock-date').value   = r.date;
+  document.getElementById('stock-price').value  = r.price;
+  document.getElementById('stock-shares').value = r.shares;
+  document.getElementById('stock-taken').value  = r.taken;
+  document.getElementById('stock-cost-display').textContent = Math.ceil(r.cost).toLocaleString();
+ 
+  document.getElementById('stock-price').oninput  = calcStockCost;
+  document.getElementById('stock-shares').oninput = calcStockCost;
+ 
+  document.getElementById('stock-modal').classList.add('show');
+};
+ 
+window.openDadStockAdd = function() {
+  // 預設歸屬為爸爸
+  setStockOwner('dad');
+ 
+  // 設定今天日期
+  const today = new Date();
+  document.getElementById('stock-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+ 
+  // 清空欄位
+  document.getElementById('stock-price').value  = '';
+  document.getElementById('stock-shares').value = '';
+  document.getElementById('stock-taken').value  = '';
+  document.getElementById('stock-cost-display').textContent = '0';
+ 
+  renderTargetSelect();
+  document.getElementById('stock-price').oninput  = calcStockCost;
+  document.getElementById('stock-shares').oninput = calcStockCost;
+ 
+  // 覆寫 submitStock，完成後同步到爸爸帳本
+  document.getElementById('stock-modal').dataset.fromDad = 'true';
+  document.getElementById('stock-modal').classList.add('show');
+};
+ 
+window.handleStockDateInput = function(input) {
+  const val = input.value.replace(/\D/g, '');
+  if (val.length === 8) {
+    input.value = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
+  }
+};
+ 
+ 
+window.switchToLedgerType = function(type) {
+  const ledger = ledgers.find(l => l.type === type);
+  if (!ledger) return;
+  currentLedgerId = ledger.id;
+  currentLedger   = ledger;
+  activeFilter    = null;
+  updateLedgerUI();
+  showPage('ledger');
+};
+
+function updateBottomNav() {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  if (currentPage === 'home') {
+    document.getElementById('nav-home')?.classList.add('active');
+  } else if (currentPage === 'cc-summary') {
+    document.getElementById('nav-cc')?.classList.add('active');
+  } else if (currentPage === 'ledger') {
+    if (currentLedger?.type === 'personal') document.getElementById('nav-personal')?.classList.add('active');
+    else if (currentLedger?.type === 'shared') document.getElementById('nav-shared')?.classList.add('active');
+  }
+}
+
+// ===========================
+// 🏠 首頁
+// ===========================
+
+let homeTab = 'personal';
+let homePieChart = null;
+
+window.setHomeTab = function(tab) {
+  homeTab = tab;
+  const btnP = document.getElementById('home-tab-personal');
+  const btnS = document.getElementById('home-tab-shared');
+  if (btnP) { btnP.style.background = tab==='personal' ? 'var(--accent)' : 'var(--card)'; btnP.style.color = tab==='personal' ? '#fff' : 'var(--text-sub)'; }
+  if (btnS) { btnS.style.background = tab==='shared'   ? 'var(--accent)' : 'var(--card)'; btnS.style.color = tab==='shared'   ? '#fff' : 'var(--text-sub)'; }
+  renderHomePage();
+};
+
+async function renderHomePage() {
+  const greetEl = document.getElementById('home-greeting');
+  const monthEl = document.getElementById('home-month');
+  if (greetEl) greetEl.textContent = `你好，${currentName?.split(' ')[0] || ''} 👋`;
+  if (monthEl) monthEl.textContent = `${currentYear}年${String(currentMonth).padStart(2,'0')}月`;
+
+  const walletCard = document.getElementById('home-wallet-card');
+  const sharedLedger = ledgers.find(l => l.type === 'shared');
+  if (walletCard && sharedLedger) {
+    walletCard.style.display = 'block';
+    try {
+      const snap = await getDoc(doc(db,'users',currentUid,'settings','wallet'));
+      if (snap.exists()) {
+        const bal = snap.data().balance || 0;
+        const el = document.getElementById('home-wallet-balance');
+        if (el) el.textContent = '$' + bal.toLocaleString();
+        if (snap.data().updatedAt) {
+          const d = new Date(snap.data().updatedAt);
+          const str = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+          const uel = document.getElementById('home-wallet-updated');
+          if (uel) uel.textContent = `更新於 ${str}`;
+        }
+      }
+    } catch(e) {}
+  } else if (walletCard) { walletCard.style.display = 'none'; }
+
+  const ledger = homeTab === 'shared' ? ledgers.find(l => l.type==='shared') : ledgers.find(l => l.type==='personal');
+  const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+  const endDate   = `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+  let monthRecords = [];
+  if (ledger) {
+    try {
+      const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
+      monthRecords = snap.docs.map(d => d.data()).filter(r => r.date >= startDate && r.date <= endDate);
+    } catch(e) {}
+  }
+
+  const totalExpense = monthRecords.filter(r => r.type==='expense').reduce((s,r) => s+r.amount, 0);
+  const expEl = document.getElementById('home-expense');
+  if (expEl) expEl.textContent = '$' + totalExpense.toLocaleString();
+
+  const budgetKey = homeTab;
+  const monthKey  = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+  const cats = homeTab === 'shared' ? sharedExpenseCategories : expenseCategories;
+  const totalBudget = cats.reduce((s, cat) => {
+    let pm = currentMonth-1, py = currentYear;
+    if (pm < 1) { pm = 12; py--; }
+    const pk = `${py}-${String(pm).padStart(2,'0')}`;
+    return s + ((budgets[budgetKey]?.[monthKey]?.[cat.name]) ?? (budgets[budgetKey]?.[pk]?.[cat.name]) ?? 0);
+  }, 0);
+  const remainEl = document.getElementById('home-budget-remain');
+  if (remainEl) {
+    if (totalBudget > 0) {
+      const remain = totalBudget - totalExpense;
+      remainEl.textContent = (remain < 0 ? '-' : '') + '$' + Math.abs(remain).toLocaleString();
+      remainEl.style.color = remain < 0 ? '#c0392b' : '#2e7d32';
+    } else { remainEl.textContent = '未設定'; remainEl.style.color = 'var(--text-dim)'; }
+  }
+
+  const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1D1C4','#f6cb66'];
+  const data = {}; cats.forEach(c => { data[c.name] = 0; });
+  monthRecords.filter(r => r.type==='expense').forEach(r => { if (data[r.category]!==undefined) data[r.category] += r.amount; });
+  const labels = cats.map(c => c.name).filter(n => data[n] > 0);
+  const values = labels.map(n => data[n]);
+  const total  = values.reduce((a,b) => a+b, 0);
+
+  const legend = document.getElementById('home-pie-legend');
+  if (legend) {
+    legend.innerHTML = '';
+    if (total === 0) { legend.innerHTML = '<div style="font-size:12px; color:var(--text-dim);">本月無支出</div>'; }
+    else { labels.forEach((label, i) => {
+      const pct = Math.round(values[i]/total*100);
+      const emoji = cats.find(c => c.name===label)?.emoji || '';
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:11px;';
+      row.innerHTML = `<div style="width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0;"></div><span style="color:var(--text-sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${emoji} ${label}</span><span style="font-weight:500;color:var(--text);">$${values[i].toLocaleString()}</span><span style="color:var(--text-dim);">${pct}%</span>`;
+      legend.appendChild(row);
+    }); }
+  }
+
+  const canvas = document.getElementById('home-pie-canvas');
+  if (canvas) {
+    if (homePieChart) { homePieChart.destroy(); homePieChart = null; }
+    if (total > 0) {
+      homePieChart = new Chart(canvas, { type:'doughnut', data:{ labels, datasets:[{ data:values, backgroundColor:COLORS.slice(0,labels.length), borderWidth:2, borderColor:'#fff' }] }, options:{ responsive:false, plugins:{ legend:{ display:false } }, cutout:'60%' } });
+    } else { canvas.getContext('2d').clearRect(0,0,80,80); }
+  }
+
+  renderHomeCCList();
+}
+
+async function renderHomeCCList() {
+  const container = document.getElementById('home-cc-list');
+  if (!container) return;
+  const cathayStart = getCycleStart(ccYear, ccMonth, 4);
+  const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-03`;
+  const fubonStart  = getCycleStart(ccYear, ccMonth, 3);
+  const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
+  let allRecords = [];
+  for (const ledger of ledgers) {
+    try { const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses')); snap.docs.forEach(d => allRecords.push({ ...d.data(), id:d.id })); } catch(e) {}
+  }
+  function calcCC(paymentNames, start, end) {
+    const filtered = allRecords.filter(r => r.type==='expense' && paymentNames.includes(r.payment) && r.date>=start && r.date<=end);
+    return { total: filtered.reduce((s,r) => s+r.amount, 0), unpaid: filtered.filter(r => !r.prestored).reduce((s,r) => s+r.amount, 0) };
+  }
+  const cards = [
+    { name:'倩cube（國泰）',   ...calcCC(CC_CATHAY_QIAN, cathayStart, cathayEnd) },
+    { name:'倩Costco（富邦）', ...calcCC(CC_FUBON,       fubonStart,  fubonEnd)  },
+    { name:'騰cube',           ...calcCC(CC_TENG,        cathayStart, cathayEnd) },
+  ];
+  container.innerHTML = '';
+  cards.forEach((card, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:5px 0;' + (i<cards.length-1 ? ' border-bottom:0.5px solid var(--border);' : '');
+    row.innerHTML = `<div style="font-size:12px;color:var(--text-sub);">${card.name}</div><div style="text-align:right;"><div style="font-size:13px;font-weight:500;color:#c0392b;">$${card.total.toLocaleString()}</div>${card.unpaid>0 ? `<div style="font-size:11px;color:#854F0B;">未預存 $${card.unpaid.toLocaleString()}</div>` : card.total>0 ? `<div style="font-size:11px;color:#2e7d32;">全部已預存 ✓</div>` : ''}</div>`;
+    container.appendChild(row);
+  });
+}
+
+window.switchCCTab = function(btn, showId, hideId) {
+  document.querySelectorAll('.cc-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const showEl = document.getElementById(showId);
+  const hideEl = document.getElementById(hideId);
+  if (showEl) showEl.style.display = '';
+  if (hideEl) hideEl.style.display = 'none';
+};
+
+window.togglePresetCard = function() {
+  const body = document.getElementById('preset-body');
+  const icon = document.getElementById('preset-toggle-icon');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  icon.classList.toggle('open', !isOpen);
+};
+ 
+  window.handleOverlayClick = function(event, modalId) {
+    if (event.target.id === modalId) {
+      const el = document.getElementById(modalId);
+      el.classList.remove('show');
+      if (modalId === 'record-modal') { editingRecordId = null; selectedCat = null; selectedPay = null; }
+    }
+  };
+ 
+        
+</script>
+</body>
+</html>
