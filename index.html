@@ -2000,7 +2000,7 @@ window.openAddRecord = function() {
   };
  
   window.openEditRecord = function(id) {
-    const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id);
+    const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id) || allLedgerRecords.find(r => r.id === id);
     if (!record) return;
     editingRecordId = id;
  
@@ -2520,11 +2520,12 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
     const fubonStart  = getCycleStart(ccYear, ccMonth, 3);
     const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
  
-    let allRecords = [];
+    allLedgerRecords = [];
     for (const ledger of ledgers) {
       const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
-      snap.docs.forEach(d => allRecords.push({ ...d.data(), id:d.id, ledgerId:ledger.id, ledgerName:ledger.name }));
+      snap.docs.forEach(d => allLedgerRecords.push({ ...d.data(), id:d.id, ledgerId:ledger.id, ledgerName:ledger.name }));
     }
+    const allRecords = allLedgerRecords;
  
 renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QIAN, cathayStart, cathayEnd, 'recon-cathay', true);
     renderCCSection('cc-fubon-summary', 'cc-fubon-detail',  allRecords, CC_FUBON,        fubonStart,  fubonEnd,  'recon-fubon',  true);
