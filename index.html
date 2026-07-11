@@ -2568,7 +2568,7 @@ renderReconcile(reconcileId, total, showSaved);
           <span style="font-size:0.82rem;">${r.date.slice(5).replace('-','/')}　${r.name}</span>
           <span style="display:flex; align-items:center; gap:0.4rem;">
             <span class="amount-expense" style="font-size:0.82rem;">$${r.amount.toLocaleString()}</span>
-            <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="font-size:0.68rem;">
+            <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="font-size:0.68rem; min-width:42px; text-align:center; display:inline-block;">
               ${r.prestored ? '✓已存' : '預存'}
             </span>
             <span onclick="openEditRecord('${r.id}')" style="font-size:0.68rem; cursor:pointer; color:var(--text-dim); padding:2px 6px; border:0.5px solid var(--border); border-radius:4px;">編輯</span>
