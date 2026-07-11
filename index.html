@@ -268,6 +268,11 @@ button:hover { background: var(--hover); }
     /* 信用卡統計 */
     .cc-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
 .cc-stat { background: var(--hover); border-radius: 8px; padding: 0.75rem 1rem; }
+@media (max-width: 600px) {
+  .cc-stat { padding: 0.5rem 0.6rem; }
+  .cc-stat-label { font-size: 0.68rem; }
+  .cc-stat-value { font-size: 0.9rem; }
+}
     .cc-stat-label { font-size: 0.75rem; color: #888780; margin-bottom: 0.25rem; }
     .cc-stat-value { font-size: 1.05rem; font-weight: 500; }
     .cc-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f1efe8; font-size: 0.85rem; }
@@ -400,7 +405,7 @@ button:hover { background: var(--hover); }
       #main { padding: 1rem; padding-bottom: 72px; }
       #bottom-nav { display: flex; }
       .summary-grid { grid-template-columns: 1fr 1fr; }
-      .cc-summary-row { grid-template-columns: 1fr 1fr; }
+      .cc-summary-row { grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
       #fab { bottom: calc(56px + 16px + env(safe-area-inset-bottom)); right: 1.25rem; }
       #topup-row { flex-direction: column; align-items: stretch; }
       .topup-field { width: 100%; }
@@ -442,6 +447,18 @@ body { background-color: var(--bg); color: var(--text); }
 .theme-name { font-size: 0.78rem; font-weight: 500; text-align: center; color: var(--text-sub); }
 @media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
  
+/* 信用卡帳本分欄 */
+.cc-ledger-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.cc-ledger-col {}
+.cc-col-title { font-size: 0.75rem; font-weight: 500; color: var(--text-dim); margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 0.5px solid var(--border); }
+.cc-ledger-tabs { display: none; }
+.cc-tab-btn { font-size: 0.78rem; padding: 3px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: var(--card); color: var(--text-sub); cursor: pointer; }
+.cc-tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (max-width: 600px) {
+  .cc-ledger-cols { display: none; }
+  .cc-ledger-tabs { display: block; }
+}
+
 /* 快速輸入 toggle */
 .preset-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .preset-toggle-icon { font-size: 0.75rem; color: #888780; transition: transform 0.2s; }
@@ -2539,17 +2556,52 @@ function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDat
 renderReconcile(reconcileId, total, showSaved);
       return;
         }
-    detailEl.innerHTML = filtered.map(r => `
-      <div class="cc-detail-row">
-        <span>${r.date}　${r.name} <span style="font-size:0.78rem; color:#888780;">（${r.ledgerName}）</span></span>
-        <span style="display:flex; align-items:center; gap:0.5rem;">
-          <span class="amount-expense">$${r.amount.toLocaleString()}</span>
-          <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})">
-            ${r.prestored ? '✓ 已預存' : '預存'}
+    // 分個人/共同兩欄
+    const personalLedger = ledgers.find(l => l.type === 'personal');
+    const sharedLedger   = ledgers.find(l => l.type === 'shared');
+    const personalRecs   = filtered.filter(r => r.ledgerId === personalLedger?.id);
+    const sharedRecs     = filtered.filter(r => r.ledgerId === sharedLedger?.id);
+
+    function renderRecRows(recs) {
+      if (recs.length === 0) return '<div style="font-size:0.78rem; color:var(--text-dim); padding:0.5rem 0;">無記錄</div>';
+      return recs.map(r => `
+        <div class="cc-detail-row">
+          <span style="font-size:0.82rem;">${r.date.slice(5).replace('-','/')}　${r.name}</span>
+          <span style="display:flex; align-items:center; gap:0.4rem;">
+            <span class="amount-expense" style="font-size:0.82rem;">$${r.amount.toLocaleString()}</span>
+            <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="font-size:0.68rem;">
+              ${r.prestored ? '✓已存' : '預存'}
+            </span>
           </span>
-        </span>
+        </div>
+      `).join('');
+    }
+
+    // 手機：Tab 切換；電腦：左右兩欄
+    const pName = personalLedger?.name || '個人';
+    const sName = sharedLedger?.name   || '共同';
+    detailEl.innerHTML = `
+      <!-- 電腦兩欄 -->
+      <div class="cc-ledger-cols">
+        <div class="cc-ledger-col">
+          <div class="cc-col-title">👤 ${pName}</div>
+          ${renderRecRows(personalRecs)}
+        </div>
+        <div class="cc-ledger-col">
+          <div class="cc-col-title">👫 ${sName}</div>
+          ${renderRecRows(sharedRecs)}
+        </div>
       </div>
-    `).join('');
+      <!-- 手機 Tab -->
+      <div class="cc-ledger-tabs">
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <button class="cc-tab-btn active" onclick="switchCCTab(this,'cc-tab-p-${summaryId}','cc-tab-s-${summaryId}')">👤 ${pName}</button>
+          <button class="cc-tab-btn" onclick="switchCCTab(this,'cc-tab-s-${summaryId}','cc-tab-p-${summaryId}')">👫 ${sName}</button>
+        </div>
+        <div id="cc-tab-p-${summaryId}">${renderRecRows(personalRecs)}</div>
+        <div id="cc-tab-s-${summaryId}" style="display:none;">${renderRecRows(sharedRecs)}</div>
+      </div>
+    `;
  
     // 對帳區塊
 renderReconcile(reconcileId, total, showSaved);
@@ -3601,6 +3653,15 @@ async function renderHomeCCList() {
     container.appendChild(row);
   });
 }
+
+window.switchCCTab = function(btn, showId, hideId) {
+  document.querySelectorAll('.cc-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const showEl = document.getElementById(showId);
+  const hideEl = document.getElementById(hideId);
+  if (showEl) showEl.style.display = '';
+  if (hideEl) hideEl.style.display = 'none';
+};
 
 window.togglePresetCard = function() {
   const body = document.getElementById('preset-body');
