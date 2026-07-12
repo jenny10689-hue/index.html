@@ -3969,7 +3969,9 @@ function applyPageColor(pageKey) {
     r.style.setProperty('--accent2',  theme.accent);
     r.style.setProperty('--text',     theme.text);
     r.style.setProperty('--text-sub', theme.textSub);
+    r.style.setProperty('--text-dim', getLuminance(theme.bg) < 0.15 ? '#aaaaaa' : '#888780');
     r.style.setProperty('--hover',    theme.hover);
+    r.style.setProperty('--input-bg', theme.bg);
   } else {
     applyTheme('original');
   }
