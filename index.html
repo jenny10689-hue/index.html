@@ -51,7 +51,7 @@
     .sidebar-item {
       display: flex; align-items: center; gap: 0.6rem;
       padding: 0.55rem 0.75rem; border-radius: 8px; cursor: pointer;
-      font-size: 0.88rem; color: #5f5e5a; border: none; background: transparent;
+      font-size: 0.88rem; color: var(--text-sub); border: none; background: transparent;
       text-align: left; width: 100%; white-space: nowrap; transition: background 0.15s;
     }
     .sidebar-item:hover { background-color: #f1efe8; }
@@ -3867,6 +3867,7 @@ const PAGE_COLOR_KEYS = [
   { key: 'budget',     label: '預算管理' },
   { key: 'stocks',     label: '存股記錄' },
   { key: 'dad',        label: '爸爸帳本' },
+  { key: 'settings',   label: '設定' },
 ];
 
 const PRESET_COLORS = [
@@ -3901,15 +3902,15 @@ function lightenColor(hex, amount) {
   return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
 }
 
-function buildThemeFromColor(accent) {
+function buildThemeFromColor(accent, bgOverride) {
   const lum = getLuminance(accent);
-  const isDark = lum < 0.1;
-  const bg      = isDark ? lightenColor(accent, 20)  : lightenColor(accent, 110);
-  const card    = isDark ? lightenColor(accent, 40)  : '#ffffff';
-  const border  = isDark ? lightenColor(accent, 60)  : lightenColor(accent, 70);
-  const hover   = isDark ? lightenColor(accent, 30)  : lightenColor(accent, 90);
-  const text    = isDark ? '#ffffff' : '#2c2c2a';
-  const textSub = isDark ? '#cccccc' : '#5f5e5a';
+  const isDark = getLuminance(bgOverride || accent) < 0.1;
+  const bg      = bgOverride || (isDark ? lightenColor(accent, 20) : lightenColor(accent, 110));
+  const card    = isDark ? lightenColor(accent, 40) : '#ffffff';
+  const border  = isDark ? lightenColor(accent, 60) : lightenColor(accent, 70);
+  const hover   = isDark ? lightenColor(accent, 30) : lightenColor(accent, 90);
+  const text    = getLuminance(bg) < 0.3 ? '#ffffff' : '#2c2c2a';
+  const textSub = getLuminance(bg) < 0.3 ? '#cccccc' : '#5f5e5a';
   return { bg, card, border, accent, hover, text, textSub, sidebar: bg };
 }
 
@@ -3927,9 +3928,11 @@ async function savePageColors() {
 }
 
 function applyPageColor(pageKey) {
-  const color = pageColors[pageKey];
-  if (color) {
-    const theme = buildThemeFromColor(color);
+  const setting = pageColors[pageKey];
+  const accent = setting?.accent || null;
+  const bg     = setting?.bg     || null;
+  if (accent) {
+    const theme = buildThemeFromColor(accent, bg);
     const r = document.documentElement;
     r.style.setProperty('--bg',       theme.bg);
     r.style.setProperty('--sidebar',  theme.sidebar);
@@ -3941,7 +3944,7 @@ function applyPageColor(pageKey) {
     r.style.setProperty('--text-sub', theme.textSub);
     r.style.setProperty('--hover',    theme.hover);
   } else {
-    applyTheme(currentLedger?.theme || 'original');
+    applyTheme('original');
   }
 }
 
