@@ -1087,6 +1087,15 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let ledgers  = [];
   let records  = [];
   let allLedgerRecords = [];
+  let appSettings = {
+    salaryDate: 10,
+    salary: 0,
+    cathayDay: 4,
+    fubonDay: 3,
+    tengDay: 4,
+    themeColor: '#444441',
+    devNotes: []
+  };
  
   // 支出分類（含 emoji）
   let expenseCategories = [
@@ -1203,6 +1212,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       setTodayDate();
       await setDoc(doc(db,'users',currentUid), { email:currentEmail, name:currentName }, { merge:true });
       await loadUserSettings();
+      await loadAppSettings();
       loadLedgers();
     } else {
       document.getElementById('login-screen').style.display = 'flex';
@@ -1501,7 +1511,23 @@ if (ledger.type !== 'personal') {
   // ⚙️ 個人設定
   // ===========================
  
-  async function loadUserSettings() {
+  async function loadAppSettings() {
+  try {
+    const snap = await getDoc(doc(db, 'users', currentUid, 'settings', 'app'));
+    if (snap.exists()) {
+      appSettings = { ...appSettings, ...snap.data() };
+    }
+  } catch(e) { console.warn('loadAppSettings error', e); }
+}
+
+async function saveAppSettings(updates) {
+  appSettings = { ...appSettings, ...updates };
+  try {
+    await setDoc(doc(db, 'users', currentUid, 'settings', 'app'), appSettings, { merge: true });
+  } catch(e) { console.warn('saveAppSettings error', e); }
+}
+
+async function loadUserSettings() {
     const snap = await getDoc(doc(db,'users',currentUid));
     if (snap.exists()) {
       const data = snap.data();
@@ -2519,9 +2545,9 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
   async function renderCCSummary() {
     await loadReconcileData();
  
-    const cathayStart = getCycleStart(ccYear, ccMonth, 4);
-    const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-03`;
-    const fubonStart  = getCycleStart(ccYear, ccMonth, 3);
+    const cathayStart = getCycleStart(ccYear, ccMonth, appSettings.cathayDay);
+    const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.cathayDay - 1).padStart(2,'0')}`;
+    const fubonStart  = getCycleStart(ccYear, ccMonth, appSettings.fubonDay);
     const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
  
     allLedgerRecords = [];
