@@ -418,7 +418,7 @@ button:hover { background: var(--hover); }
 :root {
   --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff;
   --border: #d3d1c7; --text: #2c2c2a; --text-sub: #5f5e5a;
-  --text-dim: #888780; --hover: #f1efe8; --input-bg: #f1efe8;
+  --text-dim: #888780; --hover: #f1efe8; --input-bg: #f1efe8; --accent-text: #ffffff;
   --accent: #444441; --accent2: #2c2c2a;
 }
 body { background-color: var(--bg); color: var(--text); }
@@ -544,7 +544,7 @@ body { background-color: var(--bg); color: var(--text); }
       <div style="font-size:0.72rem; font-weight:500; color:var(--text-dim); letter-spacing:0.06em;">本月支出</div>
       <div style="display:flex; gap:6px;">
         <button id="home-tab-personal" onclick="setHomeTab('personal')"
-          style="font-size:11px; padding:3px 10px; border-radius:20px; border:0.5px solid var(--border); background:var(--accent); color:#fff; cursor:pointer;">個人</button>
+          style="font-size:11px; padding:3px 10px; border-radius:20px; border:0.5px solid var(--border); background:var(--accent); color:var(--accent-text); cursor:pointer;">個人</button>
         <button id="home-tab-shared" onclick="setHomeTab('shared')"
           style="font-size:11px; padding:3px 10px; border-radius:20px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); cursor:pointer;">共同</button>
       </div>
@@ -823,12 +823,20 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
             <input type="color" id="color-picker-native" style="position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; border-radius:50%;">
           </div>
         </div>
-        <div style="display:grid; grid-template-columns:44px 1fr 36px; align-items:center; gap:8px; padding:6px 0;">
+        <div style="display:grid; grid-template-columns:44px 1fr 36px; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border);">
           <div style="font-size:11px; color:var(--text-dim);">底色</div>
           <input type="text" id="color-picker-bg-hex" class="input-sm" style="font-size:12px;" placeholder="#f1efe8">
           <div style="position:relative; width:36px; height:36px;">
             <div id="color-picker-bg-swatch" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--border);"></div>
             <input type="color" id="color-picker-bg-native" style="position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; border-radius:50%;">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:44px 1fr 36px; align-items:center; gap:8px; padding:6px 0;">
+          <div style="font-size:11px; color:var(--text-dim);">文字色</div>
+          <input type="text" id="color-picker-text-hex" class="input-sm" style="font-size:12px;" placeholder="#2c2c2a">
+          <div style="position:relative; width:36px; height:36px;">
+            <div id="color-picker-text-swatch" style="width:36px; height:36px; border-radius:50%; border:2px solid var(--border);"></div>
+            <input type="color" id="color-picker-text-native" style="position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; border-radius:50%;">
           </div>
         </div>
       </div>
@@ -3530,6 +3538,7 @@ function applyTheme(themeId) {
   r.style.setProperty('--text-sub', theme.textSub);
   r.style.setProperty('--hover',    theme.hover);
   r.style.setProperty('--input-bg', theme.bg);
+  r.style.setProperty('--accent-text', '#ffffff');
   r.style.setProperty('--tag-bg',   theme.bg);
   r.style.setProperty('--text-dim', '#888780');
   currentTheme = themeId;
@@ -3748,7 +3757,7 @@ window.setHomeTab = function(tab) {
   homeTab = tab;
   const btnP = document.getElementById('home-tab-personal');
   const btnS = document.getElementById('home-tab-shared');
-  if (btnP) { btnP.style.background = tab==='personal' ? 'var(--accent)' : 'var(--card)'; btnP.style.color = tab==='personal' ? '#fff' : 'var(--text-sub)'; }
+  if (btnP) { btnP.style.background = tab==='personal' ? 'var(--accent)' : 'var(--card)'; btnP.style.color = tab==='personal' ? 'var(--accent-text)' : 'var(--text-sub)'; }
   if (btnS) { btnS.style.background = tab==='shared'   ? 'var(--accent)' : 'var(--card)'; btnS.style.color = tab==='shared'   ? '#fff' : 'var(--text-sub)'; }
   renderHomePage();
 };
@@ -3956,8 +3965,9 @@ async function savePageColors() {
 
 function applyPageColor(pageKey) {
   const setting = pageColors[pageKey];
-  const accent = setting?.accent || null;
-  const bg     = setting?.bg     || null;
+  const accent    = setting?.accent    || null;
+  const bg        = setting?.bg        || null;
+  const textColor = setting?.textColor || null;
   if (accent) {
     const theme = buildThemeFromColor(accent, bg);
     const r = document.documentElement;
@@ -3970,6 +3980,12 @@ function applyPageColor(pageKey) {
     r.style.setProperty('--text',     theme.text);
     r.style.setProperty('--text-sub', theme.textSub);
     r.style.setProperty('--text-dim', getLuminance(theme.bg) < 0.15 ? '#aaaaaa' : '#888780');
+    r.style.setProperty('--accent-text', getTextColor(theme.accent));
+    if (textColor) {
+      r.style.setProperty('--text',     textColor);
+      r.style.setProperty('--text-sub', textColor);
+      r.style.setProperty('--text-dim', textColor + 'aa');
+    }
     r.style.setProperty('--hover',    theme.hover);
     r.style.setProperty('--input-bg', theme.bg);
   } else {
@@ -4050,7 +4066,7 @@ let editingFavIndex = -1;
 function loadFavColor(i) {
   editingFavIndex = i;
   const fav = savedFavColors[i];
-  syncColorPicker(fav.accent, fav.bg);
+  syncColorPicker(fav.accent, fav.bg, fav.textColor || '#2c2c2a');
   // 顯示刪除按鈕
   const btnRow = document.getElementById('color-btn-row');
   if (btnRow) btnRow.innerHTML = `
@@ -4079,7 +4095,8 @@ window.saveColorToFav = async function() {
   if (!accent || !bg) return;
   const name = prompt('幫這個配色取個名字：');
   if (!name) return;
-  savedFavColors.push({ accent, bg, name });
+  const textColor = document.getElementById('color-picker-text-hex')?.value || '#2c2c2a';
+  savedFavColors.push({ accent, bg, textColor, name });
   await saveFavColors();
   renderFavColors();
 };
@@ -4103,7 +4120,11 @@ window.openColorPicker = function(key, label) {
   document.getElementById('color-picker-bg-native').value = currentBg;
   document.getElementById('color-picker-bg-hex').value = currentBg;
   document.getElementById('color-picker-bg-swatch').style.background = currentBg;
-  updateColorPreview(currentAccent, currentBg);
+  const currentText = setting.textColor || '#2c2c2a';
+  document.getElementById('color-picker-text-native').value = currentText;
+  document.getElementById('color-picker-text-hex').value = currentText;
+  document.getElementById('color-picker-text-swatch').style.background = currentText;
+  updateColorPreview(currentAccent, currentBg, currentText);
 
   // 預設色點
   const row = document.getElementById('color-presets-row');
@@ -4122,10 +4143,16 @@ window.openColorPicker = function(key, label) {
     if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) syncColorPicker(hexInput.value, null);
   };
   const bgPicker = document.getElementById('color-picker-bg-native');
-  bgPicker.oninput = () => { syncColorPicker(null, bgPicker.value); };
+  bgPicker.oninput = () => { syncColorPicker(null, bgPicker.value, null); };
   const bgHex = document.getElementById('color-picker-bg-hex');
   bgHex.oninput = () => {
-    if (/^#[0-9a-fA-F]{6}$/.test(bgHex.value)) syncColorPicker(null, bgHex.value);
+    if (/^#[0-9a-fA-F]{6}$/.test(bgHex.value)) syncColorPicker(null, bgHex.value, null);
+  };
+  const textPicker = document.getElementById('color-picker-text-native');
+  textPicker.oninput = () => { syncColorPicker(null, null, textPicker.value); };
+  const textHex = document.getElementById('color-picker-text-hex');
+  textHex.oninput = () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(textHex.value)) syncColorPicker(null, null, textHex.value);
   };
 
   renderFavColors();
@@ -4137,7 +4164,7 @@ window.pickPresetColor = function(accent, bg) {
   syncColorPicker(accent, bg);
 };
 
-function syncColorPicker(accent, bg) {
+function syncColorPicker(accent, bg, textColor) {
   if (accent) {
     document.getElementById('color-picker-native').value = accent;
     document.getElementById('color-picker-hex').value = accent;
@@ -4148,27 +4175,36 @@ function syncColorPicker(accent, bg) {
     document.getElementById('color-picker-bg-hex').value = bg;
     document.getElementById('color-picker-bg-swatch').style.background = bg;
   }
-  const curAccent = accent || document.getElementById('color-picker-hex').value;
-  const curBg     = bg     || document.getElementById('color-picker-bg-hex').value;
-  updateColorPreview(curAccent, curBg);
+  if (textColor) {
+    document.getElementById('color-picker-text-native').value = textColor;
+    document.getElementById('color-picker-text-hex').value = textColor;
+    document.getElementById('color-picker-text-swatch').style.background = textColor;
+  }
+  const curAccent = accent    || document.getElementById('color-picker-hex').value;
+  const curBg     = bg        || document.getElementById('color-picker-bg-hex').value;
+  const curText   = textColor || document.getElementById('color-picker-text-hex').value;
+  updateColorPreview(curAccent, curBg, curText);
 }
 
-function updateColorPreview(accent, bg) {
+function updateColorPreview(accent, bg, textColor) {
   const theme = buildThemeFromColor(accent, bg);
   const box = document.getElementById('color-picker-preview');
   const txt = document.getElementById('preview-text');
   const btn = document.getElementById('preview-btn-active');
+  const tc  = textColor || theme.text;
   if (box) box.style.background = theme.bg;
-  if (txt) txt.style.color = theme.text;
-  if (btn) { btn.style.background = theme.accent; btn.style.color = getTextColor(theme.accent); }
+  if (txt) txt.style.color = tc;
+  if (btn) { btn.style.background = theme.accent; btn.style.color = textColor || getTextColor(theme.accent); }
 }
 
 window.applyColorSetting = async function() {
-  const accent = document.getElementById('color-picker-hex').value;
-  const bg     = document.getElementById('color-picker-bg-hex').value;
-  if (!/^#[0-9a-fA-F]{6}$/.test(accent)) { alert('請輸入有效的重點色碼'); return; }
-  if (!/^#[0-9a-fA-F]{6}$/.test(bg))     { alert('請輸入有效的底色碼'); return; }
-  pageColors[editingColorKey] = { accent, bg };
+  const accent    = document.getElementById('color-picker-hex').value;
+  const bg        = document.getElementById('color-picker-bg-hex').value;
+  const textColor = document.getElementById('color-picker-text-hex').value;
+  if (!/^#[0-9a-fA-F]{6}$/.test(accent))    { alert('請輸入有效的重點色碼'); return; }
+  if (!/^#[0-9a-fA-F]{6}$/.test(bg))        { alert('請輸入有效的底色碼'); return; }
+  if (!/^#[0-9a-fA-F]{6}$/.test(textColor)) { alert('請輸入有效的文字色碼'); return; }
+  pageColors[editingColorKey] = { accent, bg, textColor };
   await savePageColors();
   closeColorPickerModal();
   renderColorSettingsPage();
