@@ -807,11 +807,23 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;" id="color-presets-row"></div>
 
       <!-- 自訂色 -->
-      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">自訂色碼</div>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-        <div id="color-picker-swatch" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--border); flex-shrink:0;"></div>
-        <input type="color" id="color-picker-native" style="width:32px; height:32px; border:none; background:none; cursor:pointer; padding:0;">
-        <input type="text" id="color-picker-hex" class="input-sm" style="flex:1;" placeholder="#444441">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">重點色（按鈕）</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div id="color-picker-swatch" style="width:28px; height:28px; border-radius:50%; border:1px solid var(--border); flex-shrink:0;"></div>
+            <input type="color" id="color-picker-native" style="width:28px; height:28px; border:none; background:none; cursor:pointer; padding:0;">
+            <input type="text" id="color-picker-hex" class="input-sm" style="flex:1; font-size:12px;" placeholder="#444441">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">底色（背景）</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div id="color-picker-bg-swatch" style="width:28px; height:28px; border-radius:50%; border:1px solid var(--border); flex-shrink:0;"></div>
+            <input type="color" id="color-picker-bg-native" style="width:28px; height:28px; border:none; background:none; cursor:pointer; padding:0;">
+            <input type="text" id="color-picker-bg-hex" class="input-sm" style="flex:1; font-size:12px;" placeholder="#f1efe8">
+          </div>
+        </div>
       </div>
 
       <!-- 預覽 -->
@@ -3979,45 +3991,66 @@ function renderColorSettingsPage() {
 
 window.openColorPicker = function(key, label) {
   editingColorKey = key;
-  const current = pageColors[key] || '#444441';
+  const setting = pageColors[key] || {};
+  const currentAccent = setting.accent || '#444441';
+  const currentBg     = setting.bg     || '#f1efe8';
   document.getElementById('color-picker-title').textContent = label + ' 配色';
-  document.getElementById('color-picker-native').value = current;
-  document.getElementById('color-picker-hex').value = current;
-  document.getElementById('color-picker-swatch').style.background = current;
-  updateColorPreview(current);
+  document.getElementById('color-picker-native').value = currentAccent;
+  document.getElementById('color-picker-hex').value = currentAccent;
+  document.getElementById('color-picker-swatch').style.background = currentAccent;
+  document.getElementById('color-picker-bg-native').value = currentBg;
+  document.getElementById('color-picker-bg-hex').value = currentBg;
+  document.getElementById('color-picker-bg-swatch').style.background = currentBg;
+  updateColorPreview(currentAccent, currentBg);
 
   // 預設色點
   const row = document.getElementById('color-presets-row');
   if (row) {
+    const curAccent = (pageColors[key]?.accent) || '#444441';
     row.innerHTML = PRESET_COLORS.map(p => `
-      <div onclick="pickPresetColor('${p.accent}')" style="width:28px; height:28px; border-radius:50%; background:${p.accent}; border:2px solid ${current===p.accent ? '#888780' : 'transparent'}; cursor:pointer; flex-shrink:0;"></div>
+      <div onclick="pickPresetColor('${p.accent}','${p.bg}')" style="width:28px; height:28px; border-radius:50%; background:${p.accent}; border:2px solid ${curAccent===p.accent ? '#888780' : 'transparent'}; cursor:pointer; flex-shrink:0;"></div>
     `).join('');
   }
 
   // 同步 color picker
   const picker = document.getElementById('color-picker-native');
-  picker.oninput = () => { syncColorPicker(picker.value); };
+  picker.oninput = () => { syncColorPicker(picker.value, null); };
   const hexInput = document.getElementById('color-picker-hex');
   hexInput.oninput = () => {
-    if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) syncColorPicker(hexInput.value);
+    if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) syncColorPicker(hexInput.value, null);
+  };
+  const bgPicker = document.getElementById('color-picker-bg-native');
+  bgPicker.oninput = () => { syncColorPicker(null, bgPicker.value); };
+  const bgHex = document.getElementById('color-picker-bg-hex');
+  bgHex.oninput = () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(bgHex.value)) syncColorPicker(null, bgHex.value);
   };
 
   document.getElementById('color-picker-modal').style.display = 'flex';
 };
 
-window.pickPresetColor = function(accent) {
-  syncColorPicker(accent);
+window.pickPresetColor = function(accent, bg) {
+  syncColorPicker(accent, bg);
 };
 
-function syncColorPicker(hex) {
-  document.getElementById('color-picker-native').value = hex;
-  document.getElementById('color-picker-hex').value = hex;
-  document.getElementById('color-picker-swatch').style.background = hex;
-  updateColorPreview(hex);
+function syncColorPicker(accent, bg) {
+  if (accent) {
+    document.getElementById('color-picker-native').value = accent;
+    document.getElementById('color-picker-hex').value = accent;
+    document.getElementById('color-picker-swatch').style.background = accent;
+  }
+  if (bg) {
+    document.getElementById('color-picker-bg-native').value = bg;
+    document.getElementById('color-picker-bg-hex').value = bg;
+    document.getElementById('color-picker-bg-swatch').style.background = bg;
+  }
+  const curAccent = accent || document.getElementById('color-picker-hex').value;
+  const curBg     = bg     || document.getElementById('color-picker-bg-hex').value;
+  updateColorPreview(curAccent, curBg);
 }
 
-function updateColorPreview(hex) {
-  const theme = buildThemeFromColor(hex);
+function updateColorPreview(accent, bg) {
+  const theme = buildThemeFromColor(accent, bg);
   const box = document.getElementById('color-picker-preview');
   const txt = document.getElementById('preview-text');
   const btn = document.getElementById('preview-btn-active');
@@ -4027,9 +4060,11 @@ function updateColorPreview(hex) {
 }
 
 window.applyColorSetting = async function() {
-  const hex = document.getElementById('color-picker-hex').value;
-  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) { alert('請輸入有效的色碼'); return; }
-  pageColors[editingColorKey] = hex;
+  const accent = document.getElementById('color-picker-hex').value;
+  const bg     = document.getElementById('color-picker-bg-hex').value;
+  if (!/^#[0-9a-fA-F]{6}$/.test(accent)) { alert('請輸入有效的重點色碼'); return; }
+  if (!/^#[0-9a-fA-F]{6}$/.test(bg))     { alert('請輸入有效的底色碼'); return; }
+  pageColors[editingColorKey] = { accent, bg };
   await savePageColors();
   closeColorPickerModal();
   renderColorSettingsPage();
