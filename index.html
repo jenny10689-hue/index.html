@@ -3919,7 +3919,7 @@ function getLuminance(hex) {
 }
 
 function getTextColor(bgHex) {
-  return getLuminance(bgHex) > 0.3 ? '#2c2c2a' : '#ffffff';
+  return getLuminance(bgHex) > 0.15 ? '#2c2c2a' : '#ffffff';
 }
 
 function lightenColor(hex, amount) {
@@ -3936,8 +3936,8 @@ function buildThemeFromColor(accent, bgOverride) {
   const card    = isDark ? lightenColor(accent, 40) : '#ffffff';
   const border  = isDark ? lightenColor(accent, 60) : lightenColor(accent, 70);
   const hover   = isDark ? lightenColor(accent, 30) : lightenColor(accent, 90);
-  const text    = getLuminance(bg) < 0.3 ? '#ffffff' : '#2c2c2a';
-  const textSub = getLuminance(bg) < 0.3 ? '#cccccc' : '#5f5e5a';
+  const text    = getLuminance(bg) < 0.15 ? '#ffffff' : '#2c2c2a';
+  const textSub = getLuminance(bg) < 0.15 ? '#cccccc' : '#5f5e5a';
   return { bg, card, border, accent, hover, text, textSub, sidebar: bg };
 }
 
