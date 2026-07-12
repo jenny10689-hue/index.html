@@ -211,7 +211,11 @@
     .form-compact { display: flex; flex-direction: column; gap: 0.75rem; }
     .form-row-compact { display: flex; align-items: center; gap: 0.75rem; }
     .rec-date-field { width: 140px; flex: none !important; }
-    @media (max-width: 600px) { .rec-date-field { width: 110px; } }
+    @media (max-width: 600px) {
+      .rec-date-field { width: 90px; font-size: 0.78rem; }
+      .form-row-compact { gap: 0.35rem; }
+      .form-row-compact .input-sm { font-size: 0.78rem; padding: 0.4rem 0.4rem; }
+    }
     .form-label { font-size: 0.8rem; color: #888780; width: 56px; flex-shrink: 0; }
  
     .input-sm {
