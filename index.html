@@ -790,6 +790,47 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <!-- 每個標的的明細 -->
       <div id="stock-targets-area"></div>
     </div>
+  <!-- 配色設定頁 -->
+  <div id="page-color-settings" class="container" style="display:none;">
+    <h1>🎨 配色設定</h1>
+    <div style="font-size:12px; color:var(--text-dim); margin-bottom:1rem;">每個頁面可以有不同的配色，切換頁面時自動套用。</div>
+    <div class="card settings-card" id="color-page-list"></div>
+  </div>
+
+  <!-- 選色彈窗 -->
+  <div id="color-picker-modal" class="modal-overlay" onclick="handleColorPickerOverlay(event)" style="display:none;">
+    <div class="modal-sheet">
+      <div style="font-size:14px; font-weight:500; color:var(--text); margin-bottom:14px;" id="color-picker-title">配色</div>
+
+      <!-- 快速預設色 -->
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">快速選色</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;" id="color-presets-row"></div>
+
+      <!-- 自訂色 -->
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">自訂色碼</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+        <div id="color-picker-swatch" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--border); flex-shrink:0;"></div>
+        <input type="color" id="color-picker-native" style="width:32px; height:32px; border:none; background:none; cursor:pointer; padding:0;">
+        <input type="text" id="color-picker-hex" class="input-sm" style="flex:1;" placeholder="#444441">
+      </div>
+
+      <!-- 預覽 -->
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">預覽效果</div>
+      <div id="color-picker-preview" style="border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="font-size:12px; margin-bottom:6px;" id="preview-text">本月支出</div>
+        <div style="display:flex; gap:6px;">
+          <span id="preview-btn-active" style="font-size:11px; padding:3px 12px; border-radius:20px; border:none;">個人</span>
+          <span style="font-size:11px; padding:3px 12px; border-radius:20px; border:0.5px solid #d3d1c7; background:#fff; color:#888780;">共同</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button class="btn-primary" onclick="applyColorSetting()">套用</button>
+        <button class="btn-secondary" onclick="closeColorPickerModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 設定頁 -->
   <div id="page-settings" class="container" style="display:none;">
     <h1>⚙️ 設定</h1>
@@ -840,11 +881,11 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <!-- 外觀 -->
     <div class="settings-section-label">外觀</div>
     <div class="card settings-card">
-      <div class="settings-row">
-        <div class="settings-row-label">主題色</div>
-        <div class="settings-row-right" style="gap:8px;">
-          <input type="color" id="set-theme-color-picker" style="width:28px; height:28px; border:none; background:none; cursor:pointer; padding:0;">
-          <input type="text" id="set-theme-color-hex" class="settings-input-sm" style="width:80px;" placeholder="#444441">
+      <div class="settings-row" onclick="showPage('color-settings')" style="cursor:pointer;">
+        <div class="settings-row-label">配色設定</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">
+          <div id="settings-color-preview" style="display:flex; gap:4px; align-items:center;"></div>
+          ›
         </div>
       </div>
     </div>
@@ -1425,6 +1466,10 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('page-settings').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
       renderSettingsPage();
+    } else if (page === 'color-settings') {
+      document.getElementById('page-color-settings').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      renderColorSettingsPage();
     }
     updateBottomNav();
   };
