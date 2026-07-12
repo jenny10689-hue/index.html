@@ -115,7 +115,7 @@
     .preset-chip-del:hover { background: #f1efe8; color: #5f5e5a; }
  
     /* 課金快速輸入 */
-#topup-inline { background: var(--hover); border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); }
+#topup-inline { background: var(--bg); border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); }
     #topup-inline h3 { font-size: 0.85rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.6rem; }
     #topup-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     #topup-result { font-size: 0.85rem; color: #5f5e5a; line-height: 1.8; }
@@ -636,7 +636,7 @@ body { background-color: var(--bg); color: var(--text); }
               總計：<strong>$<span id="topup-total">0</span></strong>　
               課金後：<strong>$<span id="topup-after">0</span></strong>
             </div>
-            <button class="btn-income-color btn-sm" onclick="doTopup()">課金</button>
+            <button style="background:var(--accent); color:var(--accent-text); border:none; border-radius:8px; padding:0.4rem 1rem; cursor:pointer; font-size:0.85rem;" onclick="doTopup()">課金</button>
           </div>
       </div>
     </div>
