@@ -462,7 +462,18 @@ body { background-color: var(--bg); color: var(--text); }
   .cc-ledger-tabs { display: block; }
 }
 
-/* 快速輸入 toggle */
+/* 設定頁面 */
+    .settings-section-label { font-size: 11px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.06em; margin: 14px 0 6px; }
+    .settings-card { padding: 0; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 0.5px solid var(--hover); }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-left {}
+    .settings-row-label { font-size: 13px; color: var(--text); }
+    .settings-row-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .settings-row-right { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-sub); }
+    .settings-input-sm { font-size: 13px; color: var(--text); text-align: right; border: none; background: transparent; outline: none; width: 60px; }
+
+    /* 快速輸入 toggle */
 .preset-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .preset-toggle-icon { font-size: 0.75rem; color: #888780; transition: transform 0.2s; }
 .preset-toggle-icon.open { transform: rotate(180deg); }
@@ -498,6 +509,7 @@ body { background-color: var(--bg); color: var(--text); }
   <div id="sidebar-user"></div>
   <h2>帳本</h2>
   <button class="sidebar-item" id="btn-home" onclick="showPage('home')"><span class="sidebar-icon">🏠</span><span class="sidebar-label">首頁</span></button>
+  <button class="sidebar-item" id="btn-settings" onclick="showPage('settings')"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">設定</span></button>
   <div id="ledger-menu"></div>
   <h2>工具</h2>
 <button class="sidebar-item" id="btn-cc"     onclick="showPage('cc-summary')"><span class="sidebar-icon">💳</span><span class="sidebar-label">信用卡統計</span></button>
@@ -779,6 +791,102 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <!-- 每個標的的明細 -->
       <div id="stock-targets-area"></div>
     </div>
+  <!-- 設定頁 -->
+  <div id="page-settings" class="container" style="display:none;">
+    <h1>⚙️ 設定</h1>
+
+    <!-- 帳戶 -->
+    <div class="settings-section-label">帳戶</div>
+    <div class="card settings-card">
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label">發薪日</div>
+          <div class="settings-row-sub">月結算以此日為基準</div>
+        </div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-salary-date" class="settings-input-sm" min="1" max="28" value="10"> 日
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">月薪</div>
+        <div class="settings-row-right">
+          $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- 信用卡週期 -->
+    <div class="settings-section-label">信用卡週期</div>
+    <div class="card settings-card">
+      <div class="settings-row">
+        <div class="settings-row-label">倩cube（國泰）</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-cathay-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">倩Costco（富邦）</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-fubon-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">騰cube</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-teng-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+    </div>
+
+    <!-- 外觀 -->
+    <div class="settings-section-label">外觀</div>
+    <div class="card settings-card">
+      <div class="settings-row">
+        <div class="settings-row-label">主題色</div>
+        <div class="settings-row-right" style="gap:8px;">
+          <input type="color" id="set-theme-color-picker" style="width:28px; height:28px; border:none; background:none; cursor:pointer; padding:0;">
+          <input type="text" id="set-theme-color-hex" class="settings-input-sm" style="width:80px;" placeholder="#444441">
+        </div>
+      </div>
+    </div>
+
+    <!-- 分類管理 -->
+    <div class="settings-section-label">分類管理</div>
+    <div class="card settings-card">
+      <div class="settings-row" onclick="showPage('category-manage')" style="cursor:pointer;">
+        <div class="settings-row-label">編輯支出分類</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">›</div>
+      </div>
+    </div>
+
+    <!-- 開發者筆記 -->
+    <div class="settings-section-label">開發者筆記</div>
+    <div class="card settings-card">
+      <div id="dev-notes-list"></div>
+      <div class="settings-row" onclick="openDevNoteEdit(-1)" style="cursor:pointer; color:var(--text-dim);">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+          <i class="ti ti-plus" aria-hidden="true"></i> 新增筆記
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveSettingsAll()" style="width:100%; margin-top:1rem;">儲存設定</button>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- 開發者筆記編輯彈窗 -->
+  <div id="dev-note-modal" class="modal-overlay" onclick="handleDevNoteOverlayClick(event)" style="display:none;">
+    <div class="modal-sheet">
+      <div style="font-size:14px; font-weight:500; margin-bottom:12px;" id="dev-note-modal-title">編輯筆記</div>
+      <textarea id="dev-note-input" class="input-sm" rows="3" placeholder="輸入筆記內容" style="width:100%; resize:none; margin-bottom:12px;"></textarea>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button class="btn-primary" onclick="saveDevNote()">儲存</button>
+        <button class="btn-secondary" onclick="closeDevNoteModal()">取消</button>
+      </div>
+      <button id="dev-note-delete-btn" onclick="deleteDevNote()" style="width:100%; margin-top:8px; background:none; border:none; color:#c0392b; font-size:13px; cursor:pointer; padding:8px;">刪除此筆記</button>
+    </div>
+  </div>
+
   <!-- 帳本管理頁 -->
   <div id="page-ledger-manage" class="container" style="display:none;">
     <h1>📒 帳本管理</h1>
@@ -1314,6 +1422,10 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('page-home').style.display = 'block';
       document.getElementById('fab').style.display = 'flex';
       renderHomePage();
+    } else if (page === 'settings') {
+      document.getElementById('page-settings').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      renderSettingsPage();
     }
     updateBottomNav();
   };
