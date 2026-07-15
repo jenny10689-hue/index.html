@@ -519,7 +519,8 @@ body { background-color: var(--bg); color: var(--text); }
 <button class="sidebar-item" id="btn-cc"     onclick="showPage('cc-summary')"><span class="sidebar-icon">💳</span><span class="sidebar-label">信用卡統計</span></button>
   <button class="sidebar-item" id="btn-budget" onclick="showPage('budget')">    <span class="sidebar-icon">🎯</span><span class="sidebar-label">預算管理</span></button>
   <button class="sidebar-item" id="btn-stocks" onclick="showPage('stocks')">    <span class="sidebar-icon">📈</span><span class="sidebar-label">存股記錄</span></button>
-  <button class="sidebar-item" id="btn-manage" onclick="showPage('ledger-manage')"><span class="sidebar-icon">📒</span><span class="sidebar-label">帳本管理</span></button>  <div style="flex:1;"></div>
+  <button class="sidebar-item" id="btn-manage" onclick="showPage('ledger-manage')"><span class="sidebar-icon">📒</span><span class="sidebar-label">帳本管理</span></button>
+  <button class="sidebar-item" id="btn-schedule" onclick="showPage('schedule')"><span class="sidebar-icon">📅</span><span class="sidebar-label">班表管理</span></button>  <div style="flex:1;"></div>
   <div style="border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.5rem;">
     <div id="sidebar-user-bottom" style="font-size:0.78rem; color:var(--text-dim); padding:0.25rem 0.5rem; margin-bottom:0.25rem;"></div>
     <button class="sidebar-item" onclick="logout()"><span class="sidebar-icon">🚪</span><span class="sidebar-label">登出</span></button>
@@ -923,6 +924,128 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     </div>
   </div>
 
+  <!-- 班表頁 -->
+  <div id="page-schedule" class="container" style="display:none;">
+    <div class="page-title-row">
+      <button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+      <h1>📅 班表管理</h1>
+    </div>
+
+    <style>
+      .sch-month-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+      .sch-month-nav button { background:var(--card); border:0.5px solid var(--border); color:var(--text); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+      .sch-month-title { font-size:15px; font-weight:500; color:var(--text); }
+      .sch-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:4px; }
+      .sch-weekday { text-align:center; font-size:10px; color:var(--text-dim); padding:4px 0; }
+      .sch-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:1rem; }
+      .sch-day { background:var(--card); border:0.5px solid var(--border); border-radius:8px; padding:6px 4px; text-align:center; cursor:pointer; min-height:56px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+      .sch-day.empty { background:transparent; border-color:transparent; cursor:default; }
+      .sch-day.today { border-color:var(--accent); border-width:1.5px; }
+      .sch-day.early { background:#b8deca; border-color:#88c4a8; }
+      .sch-day.late  { background:#F9D3BE; border-color:#e8b09a; }
+      .sch-day.off   { background:#f0e8e0; border-color:#d4c4b8; }
+      .sch-day-num { font-size:11px; color:var(--text); font-weight:500; }
+      .sch-day-label { font-size:10px; font-weight:700; }
+      .sch-day.early .sch-day-label { color:#3a7a58; }
+      .sch-day.late  .sch-day-label { color:#a05030; }
+      .sch-day.off   .sch-day-label { color:#888780; }
+      .sch-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+      .sch-stat { background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
+      .sch-stat-num { font-size:20px; font-weight:500; color:var(--text); }
+      .sch-stat-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
+      .sch-wage-card { background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+      .sch-wage-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .sch-wage-item { text-align:center; }
+      .sch-wage-num { font-size:18px; font-weight:500; color:var(--accent); }
+      .sch-wage-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
+      .sch-btn-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:1rem; }
+      .sch-btn { padding:8px; font-size:12px; border:0.5px solid var(--border); border-radius:8px; background:var(--card); color:var(--text-sub); cursor:pointer; }
+      .sch-btn.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
+    </style>
+
+    <div class="sch-month-nav">
+      <button id="sch-prev">‹</button>
+      <div class="sch-month-title" id="sch-month-title"></div>
+      <button id="sch-next">›</button>
+    </div>
+
+    <div class="sch-weekdays">
+      <div class="sch-weekday">一</div><div class="sch-weekday">二</div>
+      <div class="sch-weekday">三</div><div class="sch-weekday">四</div>
+      <div class="sch-weekday">五</div>
+      <div class="sch-weekday" style="color:#60a5fa;">六</div>
+      <div class="sch-weekday" style="color:#f87171;">日</div>
+    </div>
+    <div class="sch-calendar" id="sch-calendar"></div>
+
+    <div class="sch-summary">
+      <div class="sch-stat"><div class="sch-stat-num" id="sch-early" style="color:#3a7a58;">0</div><div class="sch-stat-lbl">早班</div></div>
+      <div class="sch-stat"><div class="sch-stat-num" id="sch-late" style="color:#a05030;">0</div><div class="sch-stat-lbl">晚班</div></div>
+      <div class="sch-stat"><div class="sch-stat-num" id="sch-off" style="color:#888780;">0</div><div class="sch-stat-lbl">休假</div></div>
+    </div>
+
+    <div class="sch-wage-card">
+      <div class="sch-wage-row">
+        <div class="sch-wage-item">
+          <div class="sch-wage-num" id="sch-daily-wage">$0</div>
+          <div class="sch-wage-lbl">日薪</div>
+        </div>
+        <div class="sch-wage-item">
+          <div class="sch-wage-num" id="sch-earned">$0</div>
+          <div class="sch-wage-lbl">本月已賺 🎉</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sch-btn-row">
+      <button class="sch-btn" onclick="openSchOvertimeModal()">加班補休</button>
+      <button class="sch-btn" onclick="openSchCustomTimeModal()">自訂時間</button>
+      <button class="sch-btn primary" onclick="syncSchToGoogle()">傳送班表</button>
+    </div>
+
+    <!-- 加班補休 Modal -->
+    <div id="sch-overtime-modal" class="modal-overlay" onclick="if(event.target===this)closeSchOvertimeModal()" style="display:none;">
+      <div class="modal-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:14px; font-weight:500;">加班補休</div>
+          <button onclick="closeSchOvertimeModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-dim);">×</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; text-align:center;">
+          <div class="card" style="padding:10px;"><div id="sch-ot-total" style="font-size:18px; font-weight:500; color:#3a7a58;">0</div><div style="font-size:11px; color:var(--text-dim);">加班累積(時)</div></div>
+          <div class="card" style="padding:10px;"><div id="sch-ot-used" style="font-size:18px; font-weight:500; color:#a05030;">0</div><div style="font-size:11px; color:var(--text-dim);">已補休(時)</div></div>
+          <div class="card" style="padding:10px;"><div id="sch-ot-remain" style="font-size:18px; font-weight:500; color:var(--text);">0</div><div style="font-size:11px; color:var(--text-dim);">餘(時)</div></div>
+        </div>
+        <div id="sch-ot-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;"></div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <input type="date" id="sch-ot-date" class="input-sm" style="flex:1; min-width:120px;">
+          <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 12px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer;">加班</button>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <button onclick="adjustSchOtHours(-1)" style="width:24px; height:24px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer;">−</button>
+            <span id="sch-ot-hours" style="min-width:28px; text-align:center; font-size:14px; font-weight:500;">1</span>
+            <button onclick="adjustSchOtHours(1)" style="width:24px; height:24px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer;">＋</button>
+          </div>
+          <button onclick="addSchOtEntry()" style="padding:6px 14px; border-radius:16px; border:none; background:#b8deca; color:#0a1a0f; font-size:13px; font-weight:700; cursor:pointer;">新增</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自訂時間 Modal -->
+    <div id="sch-custom-time-modal" class="modal-overlay" onclick="if(event.target===this)closeSchCustomTimeModal()" style="display:none;">
+      <div class="modal-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div style="font-size:14px; font-weight:500;">自訂上下班時間</div>
+          <button onclick="closeSchCustomTimeModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-dim);">×</button>
+        </div>
+        <div id="sch-custom-time-sub" style="font-size:12px; color:var(--text-dim); margin-bottom:10px;"></div>
+        <div id="sch-custom-time-list" style="max-height:300px; overflow-y:auto; margin-bottom:12px;"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <button class="btn-secondary" onclick="closeSchCustomTimeModal()">取消</button>
+          <button class="btn-primary" onclick="saveSchCustomTime()">儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 設定頁 -->
   <div id="page-settings" class="container" style="display:none;">
     <div class="page-title-row"><button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>⚙️ 設定</h1></div>
@@ -1016,6 +1139,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
   <button class="bottom-nav-btn" id="nav-cc" onclick="showPage('cc-summary')">
     <i class="ti ti-credit-card" aria-hidden="true"></i>
     <span>信用卡</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-schedule" onclick="showPage('schedule')">
+    <i class="ti ti-calendar" aria-hidden="true"></i>
+    <span>班表</span>
   </button>
   <button class="bottom-nav-btn" id="nav-more" onclick="toggleSidebar()">
     <i class="ti ti-menu-2" aria-hidden="true"></i>
@@ -1522,6 +1649,12 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('page-home').style.display = 'block';
       document.getElementById('fab').style.display = 'flex';
       renderHomePage();
+    } else if (page === 'schedule') {
+      document.getElementById('page-schedule').style.display = 'block';
+      document.getElementById('nav-schedule')?.classList.add('active');
+      document.getElementById('fab').style.display = 'none';
+      applyPageColor('schedule');
+      initSchedulePage();
     } else if (page === 'settings') {
       document.getElementById('page-settings').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -3939,6 +4072,7 @@ const PAGE_COLOR_KEYS = [
   { key: 'stocks',     label: '存股記錄' },
   { key: 'dad',        label: '爸爸帳本' },
   { key: 'settings',   label: '設定' },
+  { key: 'schedule',   label: '班表管理' },
 ];
 
 const PRESET_COLORS = [
@@ -4420,6 +4554,343 @@ window.goBack = function() {
   }
 };
 
+// ===========================
+// 📅 班表管理
+// ===========================
+
+let schYear, schMonth, schData = {};
+let schOtData = { entries: [] };
+let schOtType = 'overtime';
+let schOtHours = 1;
+let schModalDraft = {};
+const SCH_DEFAULT_TIMES = { early: { start:'07:00', end:'15:30' }, late: { start:'14:30', end:'23:00' } };
+let schTokenClient = null;
+
+function getSchShift(dateStr) {
+  const v = schData[dateStr];
+  if (!v) return null;
+  return typeof v === 'string' ? v : v.shift;
+}
+
+function getSchTimes(dateStr) {
+  const v = schData[dateStr];
+  const shift = getSchShift(dateStr);
+  if (!shift || shift === 'off') return null;
+  if (v && typeof v === 'object' && v.start && v.end) return { start: v.start, end: v.end };
+  return SCH_DEFAULT_TIMES[shift];
+}
+
+function schMonthKey() { return `${schYear}-${String(schMonth+1).padStart(2,'0')}`; }
+
+async function loadSchData() {
+  try {
+    const snap = await getDoc(doc(db, 'schedule', schMonthKey()));
+    schData = snap.exists() ? snap.data() : {};
+  } catch(e) {}
+  renderSchedule();
+}
+
+async function saveSchData() {
+  try { await setDoc(doc(db, 'schedule', schMonthKey()), schData); } catch(e) {}
+}
+
+function initSchedulePage() {
+  if (!schYear) {
+    const now = new Date();
+    schYear = now.getFullYear();
+    schMonth = now.getMonth();
+  }
+  loadSchData();
+  loadSchOtData();
+  initSchGoogleAuth();
+
+  document.getElementById('sch-prev').onclick = () => {
+    schMonth--; if (schMonth < 0) { schMonth = 11; schYear--; }
+    loadSchData();
+  };
+  document.getElementById('sch-next').onclick = () => {
+    schMonth++; if (schMonth > 11) { schMonth = 0; schYear++; }
+    loadSchData();
+  };
+}
+
+function renderSchedule() {
+  const title = document.getElementById('sch-month-title');
+  if (title) title.textContent = `${schYear} 年 ${schMonth+1} 月`;
+
+  const cal = document.getElementById('sch-calendar');
+  if (!cal) return;
+  cal.innerHTML = '';
+
+  const firstDayRaw = new Date(schYear, schMonth, 1).getDay();
+  const firstDay = firstDayRaw === 0 ? 6 : firstDayRaw - 1;
+  const daysInMonth = new Date(schYear, schMonth+1, 0).getDate();
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  let early=0, late=0, off=0;
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'sch-day empty';
+    cal.appendChild(el);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const shift = getSchShift(dateStr);
+    const dow = new Date(schYear, schMonth, d).getDay();
+    if (shift === 'early') early++;
+    else if (shift === 'late') late++;
+    else if (shift === 'off') off++;
+
+    const el = document.createElement('div');
+    el.className = 'sch-day' + (shift ? ` ${shift}` : '') + (dateStr === todayStr ? ' today' : '');
+    el.innerHTML = `<div class="sch-day-num">${d}</div>${shift ? `<div class="sch-day-label">${shift==='early'?'早':shift==='late'?'晚':'休'}</div>` : ''}`;
+    el.onclick = () => cycleSchShift(dateStr, el);
+    cal.appendChild(el);
+  }
+
+  const earlyEl = document.getElementById('sch-early');
+  const lateEl  = document.getElementById('sch-late');
+  const offEl   = document.getElementById('sch-off');
+  if (earlyEl) earlyEl.textContent = early;
+  if (lateEl)  lateEl.textContent  = late;
+  if (offEl)   offEl.textContent   = off;
+
+  const totalWorkDays = new Date(schYear, schMonth+1, 0).getDate();
+  const salary = appSettings.salary || 0;
+  const dailyWage = totalWorkDays > 0 ? Math.round(salary / totalWorkDays) : 0;
+  let workedDays = 0;
+  Object.keys(schData).forEach(dateStr => {
+    const shift = getSchShift(dateStr);
+    if (shift && shift !== 'off') {
+      const d = new Date(dateStr);
+      if (d.getFullYear() === schYear && d.getMonth() === schMonth && d < now) workedDays++;
+    }
+  });
+  const earned = Math.round(dailyWage * workedDays);
+  const dwEl = document.getElementById('sch-daily-wage');
+  const eeEl = document.getElementById('sch-earned');
+  if (dwEl) dwEl.textContent = `$${dailyWage.toLocaleString()}`;
+  if (eeEl) eeEl.textContent = `$${earned.toLocaleString()}`;
+}
+
+async function cycleSchShift(dateStr, el) {
+  const SHIFTS = [null, 'early', 'late', 'off'];
+  const current = getSchShift(dateStr);
+  const idx = SHIFTS.indexOf(current);
+  const next = SHIFTS[(idx + 1) % SHIFTS.length];
+  if (next === null) { delete schData[dateStr]; }
+  else { schData[dateStr] = next; }
+  await saveSchData();
+  renderSchedule();
+}
+
+// 加班補休
+async function loadSchOtData() {
+  try {
+    const snap = await getDoc(doc(db, 'overtime', 'balance'));
+    schOtData = snap.exists() ? snap.data() : { entries: [] };
+  } catch(e) {}
+}
+
+async function saveSchOtData() {
+  try { await setDoc(doc(db, 'overtime', 'balance'), schOtData); } catch(e) {}
+}
+
+window.openSchOvertimeModal = async function() {
+  await loadSchOtData();
+  renderSchOtModal();
+  document.getElementById('sch-overtime-modal').style.display = 'flex';
+};
+
+window.closeSchOvertimeModal = function() {
+  document.getElementById('sch-overtime-modal').style.display = 'none';
+};
+
+function renderSchOtModal() {
+  const entries = schOtData.entries || [];
+  let total = 0, used = 0;
+  entries.forEach(e => { if (e.type==='overtime') total += e.hours; else used += e.hours; });
+  const remain = total - used;
+  document.getElementById('sch-ot-total').textContent = total;
+  document.getElementById('sch-ot-used').textContent = used;
+  document.getElementById('sch-ot-remain').textContent = remain;
+  const list = document.getElementById('sch-ot-list');
+  if (list) {
+    list.innerHTML = entries.slice().reverse().map((e,i) => `
+      <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px;">
+        <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
+        <button onclick="deleteSchOtEntry(${entries.length-1-i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px;">×</button>
+      </div>
+    `).join('');
+  }
+}
+
+window.toggleSchOtType = function() {
+  schOtType = schOtType === 'overtime' ? 'compensatory' : 'overtime';
+  const btn = document.getElementById('sch-ot-type-btn');
+  if (btn) {
+    btn.textContent = schOtType === 'overtime' ? '加班' : '補休';
+    btn.style.background = schOtType === 'overtime' ? '#b8deca' : '#F9D3BE';
+    btn.style.color = schOtType === 'overtime' ? '#3a7a58' : '#a05030';
+  }
+};
+
+window.adjustSchOtHours = function(delta) {
+  schOtHours = Math.max(1, schOtHours + delta);
+  const el = document.getElementById('sch-ot-hours');
+  if (el) el.textContent = schOtHours;
+};
+
+window.addSchOtEntry = async function() {
+  const date = document.getElementById('sch-ot-date')?.value;
+  if (!date) { alert('請選擇日期'); return; }
+  if (!schOtData.entries) schOtData.entries = [];
+  schOtData.entries.push({ date, type: schOtType, hours: schOtHours });
+  await saveSchOtData();
+  renderSchOtModal();
+};
+
+window.deleteSchOtEntry = async function(i) {
+  schOtData.entries.splice(i, 1);
+  await saveSchOtData();
+  renderSchOtModal();
+};
+
+// 自訂時間
+window.openSchCustomTimeModal = function() {
+  renderSchCustomTimeModal();
+  document.getElementById('sch-custom-time-modal').style.display = 'flex';
+};
+
+window.closeSchCustomTimeModal = function() {
+  document.getElementById('sch-custom-time-modal').style.display = 'none';
+};
+
+function renderSchCustomTimeModal() {
+  const list = document.getElementById('sch-custom-time-list');
+  const sub  = document.getElementById('sch-custom-time-sub');
+  if (!list) return;
+  list.innerHTML = '';
+  schModalDraft = {};
+  const daysInMonth = new Date(schYear, schMonth+1, 0).getDate();
+  const weekNames = ['日','一','二','三','四','五','六'];
+  let count = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const shift = getSchShift(dateStr);
+    if (shift !== 'early' && shift !== 'late') continue;
+    count++;
+    const times = getSchTimes(dateStr);
+    schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
+    const dow = new Date(schYear, schMonth, d).getDay();
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid; grid-template-columns:80px 1fr; align-items:center; gap:8px; padding:8px 0; border-bottom:0.5px solid var(--border); font-size:12px;';
+    row.dataset.date = dateStr;
+    row.innerHTML = `
+      <span style="color:var(--text-sub);">${schMonth+1}/${d}（${weekNames[dow]}）</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="time" value="${times.start}" class="sch-start-input input-sm" style="width:90px; font-size:12px;" data-date="${dateStr}" data-field="start">
+        <span style="color:var(--text-dim);">–</span>
+        <input type="time" value="${times.end}" class="sch-end-input input-sm" style="width:90px; font-size:12px;" data-date="${dateStr}" data-field="end">
+      </div>
+    `;
+    list.appendChild(row);
+  }
+  if (sub) sub.textContent = `${schMonth+1} 月份，共 ${count} 個上班日`;
+}
+
+window.saveSchCustomTime = async function() {
+  const list = document.getElementById('sch-custom-time-list');
+  list.querySelectorAll('input[type="time"]').forEach(input => {
+    const dateStr = input.dataset.date;
+    const field   = input.dataset.field;
+    if (!schModalDraft[dateStr]) return;
+    schModalDraft[dateStr][field] = input.value;
+  });
+  for (const [dateStr, draft] of Object.entries(schModalDraft)) {
+    const def = SCH_DEFAULT_TIMES[draft.shift];
+    if (draft.start === def.start && draft.end === def.end) {
+      schData[dateStr] = draft.shift;
+    } else {
+      schData[dateStr] = { shift: draft.shift, start: draft.start, end: draft.end };
+    }
+  }
+  await saveSchData();
+  closeSchCustomTimeModal();
+  renderSchedule();
+};
+
+// Google 日曆同步
+function initSchGoogleAuth() {
+  if (!window.google) return;
+  schTokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: '728977309080-mb7vnvfuneeep41bpjggisbntgi3k1b3.apps.googleusercontent.com',
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+    callback: async (resp) => {
+      if (resp.error) return;
+      await doSchSync(resp.access_token);
+    }
+  });
+}
+
+async function doSchSync(token) {
+  const lastDay = new Date(schYear, schMonth+1, 0).getDate();
+  const monthStart = `${schYear}-${String(schMonth+1).padStart(2,'0')}-01`;
+  const monthEnd   = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  const searchRes = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${monthStart}T00:00:00%2B08:00&timeMax=${monthEnd}T23:59:59%2B08:00&singleEvents=true`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  const searchData = await searchRes.json();
+  for (const event of (searchData.items || [])) {
+    if (['早','晚','早班','晚班'].includes(event.summary)) {
+      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
+  }
+  let count = 0;
+  for (const [dateStr, value] of Object.entries(schData)) {
+    const shift = typeof value === 'string' ? value : value.shift;
+    if (shift === 'off' || !shift) continue;
+    const hasCustom = typeof value === 'object' && value.start && value.end;
+    const startTime = hasCustom ? value.start : (shift==='early' ? '07:00' : '14:30');
+    const endTime   = hasCustom ? value.end   : (shift==='early' ? '15:30' : '23:00');
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        summary: shift === 'early' ? '早' : '晚',
+        start: { dateTime: `${dateStr}T${startTime}:00`, timeZone: 'Asia/Taipei' },
+        end:   { dateTime: `${dateStr}T${endTime}:00`,   timeZone: 'Asia/Taipei' },
+        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 20 }] }
+      })
+    });
+    const created = await res.json();
+    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${created.id}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ colorId: '5' })
+    });
+    count++;
+  }
+  alert(`已同步 ${count} 筆班表到 Google 日曆！`);
+}
+
+window.syncSchToGoogle = function() {
+  if (!schTokenClient) {
+    initSchGoogleAuth();
+    setTimeout(() => {
+      if (schTokenClient) schTokenClient.requestAccessToken();
+      else alert('Google 尚未載入，請稍後再試');
+    }, 500);
+    return;
+  }
+  schTokenClient.requestAccessToken();
+};
+
 window.togglePresetCard = function() {
   const body = document.getElementById('preset-body');
   const icon = document.getElementById('preset-toggle-icon');
@@ -4438,5 +4909,6 @@ window.togglePresetCard = function() {
  
         
 </script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 </body>
 </html>
