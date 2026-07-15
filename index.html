@@ -791,6 +791,52 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <!-- 每個標的的明細 -->
       <div id="stock-targets-area"></div>
     </div>
+  <!-- 薪水設定子頁 -->
+  <div id="page-settings-salary" class="container" style="display:none;">
+    <h1>薪水設定</h1>
+    <div class="card settings-card">
+      <div class="settings-row">
+        <div class="settings-row-label">發薪日</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-salary-date" class="settings-input-sm" min="1" max="28" value="10"> 日
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">月薪</div>
+        <div class="settings-row-right">
+          $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveSettingsSalary()" style="width:100%; margin-top:1rem;">儲存</button>
+  </div>
+
+  <!-- 信用卡週期子頁 -->
+  <div id="page-settings-cc" class="container" style="display:none;">
+    <h1>信用卡週期</h1>
+    <div class="card settings-card">
+      <div class="settings-row">
+        <div class="settings-row-label">倩cube（國泰）</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-cathay-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">倩Costco（富邦）</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-fubon-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">騰cube</div>
+        <div class="settings-row-right">
+          每月 <input type="number" id="set-teng-day" class="settings-input-sm" min="1" max="28"> 日結帳
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveSettingsCC()" style="width:100%; margin-top:1rem;">儲存</button>
+  </div>
+
   <!-- 配色設定頁 -->
   <div id="page-color-settings" class="container" style="display:none;">
     <h1>🎨 配色設定</h1>
@@ -877,52 +923,15 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
   <div id="page-settings" class="container" style="display:none;">
     <h1>⚙️ 設定</h1>
 
-    <!-- 帳戶 -->
-    <div class="settings-section-label">帳戶</div>
     <div class="card settings-card">
-      <div class="settings-row">
-        <div class="settings-row-left">
-          <div class="settings-row-label">發薪日</div>
-          <div class="settings-row-sub">月結算以此日為基準</div>
-        </div>
-        <div class="settings-row-right">
-          每月 <input type="number" id="set-salary-date" class="settings-input-sm" min="1" max="28" value="10"> 日
-        </div>
+      <div class="settings-row" onclick="showPage('settings-salary')" style="cursor:pointer;">
+        <div class="settings-row-label">薪水設定</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">›</div>
       </div>
-      <div class="settings-row">
-        <div class="settings-row-label">月薪</div>
-        <div class="settings-row-right">
-          $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0">
-        </div>
+      <div class="settings-row" onclick="showPage('settings-cc')" style="cursor:pointer;">
+        <div class="settings-row-label">信用卡週期</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">›</div>
       </div>
-    </div>
-
-    <!-- 信用卡週期 -->
-    <div class="settings-section-label">信用卡週期</div>
-    <div class="card settings-card">
-      <div class="settings-row">
-        <div class="settings-row-label">倩cube（國泰）</div>
-        <div class="settings-row-right">
-          每月 <input type="number" id="set-cathay-day" class="settings-input-sm" min="1" max="28"> 日結帳
-        </div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-label">倩Costco（富邦）</div>
-        <div class="settings-row-right">
-          每月 <input type="number" id="set-fubon-day" class="settings-input-sm" min="1" max="28"> 日結帳
-        </div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-label">騰cube</div>
-        <div class="settings-row-right">
-          每月 <input type="number" id="set-teng-day" class="settings-input-sm" min="1" max="28"> 日結帳
-        </div>
-      </div>
-    </div>
-
-    <!-- 外觀 -->
-    <div class="settings-section-label">外觀</div>
-    <div class="card settings-card">
       <div class="settings-row" onclick="showPage('color-settings')" style="cursor:pointer;">
         <div class="settings-row-label">配色設定</div>
         <div class="settings-row-right" style="color:var(--text-dim);">
@@ -930,13 +939,8 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           ›
         </div>
       </div>
-    </div>
-
-    <!-- 分類管理 -->
-    <div class="settings-section-label">分類管理</div>
-    <div class="card settings-card">
       <div class="settings-row" onclick="showPage('category-manage')" style="cursor:pointer;">
-        <div class="settings-row-label">編輯支出分類</div>
+        <div class="settings-row-label">支出分類管理</div>
         <div class="settings-row-right" style="color:var(--text-dim);">›</div>
       </div>
     </div>
@@ -1517,6 +1521,22 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('fab').style.display = 'none';
       applyPageColor('settings');
       renderSettingsPage();
+    } else if (page === 'settings-salary') {
+      document.getElementById('page-settings-salary').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      const sd = document.getElementById('set-salary-date');
+      const sl = document.getElementById('set-salary');
+      if (sd) sd.value = appSettings.salaryDate || 10;
+      if (sl) sl.value = appSettings.salary || '';
+    } else if (page === 'settings-cc') {
+      document.getElementById('page-settings-cc').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      const cd = document.getElementById('set-cathay-day');
+      const fd = document.getElementById('set-fubon-day');
+      const td = document.getElementById('set-teng-day');
+      if (cd) cd.value = appSettings.cathayDay || 4;
+      if (fd) fd.value = appSettings.fubonDay || 3;
+      if (td) td.value = appSettings.tengDay || 4;
     } else if (page === 'color-settings') {
       document.getElementById('page-color-settings').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -4289,17 +4309,21 @@ function renderSettingsPage() {
   renderDevNotesList();
 }
 
-window.saveSettingsAll = async function() {
+window.saveSettingsSalary = async function() {
   const salaryDate = parseInt(document.getElementById('set-salary-date')?.value) || 10;
   const salary     = parseInt(document.getElementById('set-salary')?.value) || 0;
-  const cathayDay  = parseInt(document.getElementById('set-cathay-day')?.value) || 4;
-  const fubonDay   = parseInt(document.getElementById('set-fubon-day')?.value) || 3;
-  const tengDay    = parseInt(document.getElementById('set-teng-day')?.value) || 4;
-  const themeColor = document.getElementById('set-theme-color-hex')?.value || '#444441';
+  await saveAppSettings({ salaryDate, salary });
+  alert('已儲存！');
+  showPage('settings');
+};
 
-  await saveAppSettings({ salaryDate, salary, cathayDay, fubonDay, tengDay, themeColor });
-  applyThemeColor(themeColor);
-  alert('設定已儲存！');
+window.saveSettingsCC = async function() {
+  const cathayDay = parseInt(document.getElementById('set-cathay-day')?.value) || 4;
+  const fubonDay  = parseInt(document.getElementById('set-fubon-day')?.value) || 3;
+  const tengDay   = parseInt(document.getElementById('set-teng-day')?.value) || 4;
+  await saveAppSettings({ cathayDay, fubonDay, tengDay });
+  alert('已儲存！');
+  showPage('settings');
 };
 
 function applyThemeColor(color) {
