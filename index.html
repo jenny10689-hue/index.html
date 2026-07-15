@@ -465,6 +465,10 @@ body { background-color: var(--bg); color: var(--text); }
 
 /* 設定頁面 */
     .settings-section-label { font-size: 11px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.06em; margin: 14px 0 6px; }
+    .page-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+    .page-title-row h1 { margin-bottom: 0; }
+    .btn-back { background: none; border: none; cursor: pointer; color: var(--text-sub); font-size: 20px; padding: 4px 6px 4px 0; display: flex; align-items: center; line-height: 1; }
+    .btn-back:hover { color: var(--text); }
     .settings-card { padding: 0; }
     .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 0.5px solid var(--hover); }
     .settings-row:last-child { border-bottom: none; }
@@ -765,7 +769,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     </div>
 <!-- 存股頁面 -->
     <div id="page-stocks" class="container" style="display:none;">
-      <h1>📈 存股記錄</h1>
+      <div class="page-title-row"><button class="btn-back" onclick="showPage('ledger')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>📈 存股記錄</h1></div>
  
       <!-- 視角切換 -->
       <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
@@ -793,7 +797,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     </div>
   <!-- 薪水設定子頁 -->
   <div id="page-settings-salary" class="container" style="display:none;">
-    <h1>薪水設定</h1>
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>薪水設定</h1></div>
     <div class="card settings-card">
       <div class="settings-row">
         <div class="settings-row-label">發薪日</div>
@@ -813,7 +817,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
   <!-- 信用卡週期子頁 -->
   <div id="page-settings-cc" class="container" style="display:none;">
-    <h1>信用卡週期</h1>
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>信用卡週期</h1></div>
     <div class="card settings-card">
       <div class="settings-row">
         <div class="settings-row-label">倩cube（國泰）</div>
@@ -839,7 +843,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
   <!-- 配色設定頁 -->
   <div id="page-color-settings" class="container" style="display:none;">
-    <h1>🎨 配色設定</h1>
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>🎨 配色設定</h1></div>
     <div style="font-size:12px; color:var(--text-dim); margin-bottom:1rem;">每個頁面可以有不同的配色，切換頁面時自動套用。</div>
     <div class="card settings-card" id="color-page-list"></div>
   </div>
@@ -921,7 +925,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
   <!-- 設定頁 -->
   <div id="page-settings" class="container" style="display:none;">
-    <h1>⚙️ 設定</h1>
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>⚙️ 設定</h1></div>
 
     <div class="card settings-card">
       <div class="settings-row" onclick="showPage('settings-salary')" style="cursor:pointer;">
@@ -975,7 +979,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
   <!-- 帳本管理頁 -->
   <div id="page-ledger-manage" class="container" style="display:none;">
-    <h1>📒 帳本管理</h1>
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>📒 帳本管理</h1></div>
     <div class="card">
       <h2>我的帳本</h2>
       <div id="ledger-manage-list"></div>
@@ -1453,6 +1457,8 @@ window.toggleSidebar = function() {
   // ===========================
  
 window.showPage = function(page) {
+  pageHistory.push(page);
+  if (pageHistory.length > 20) pageHistory.shift();
   document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
   const pageKeyMap = {
     'home': 'home', 'cc-summary': 'cc', 'budget': 'budget', 'stocks': 'stocks',
@@ -4399,6 +4405,19 @@ window.deleteDevNote = async function() {
   await saveAppSettings({ devNotes: notes });
   closeDevNoteModal();
   renderDevNotesList();
+};
+
+let pageHistory = [];
+
+window.goBack = function() {
+  if (pageHistory.length > 1) {
+    pageHistory.pop();
+    const prev = pageHistory[pageHistory.length - 1];
+    pageHistory.pop();
+    showPage(prev);
+  } else {
+    showPage('home');
+  }
 };
 
 window.togglePresetCard = function() {
