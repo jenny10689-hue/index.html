@@ -4800,9 +4800,17 @@ window.openSchSingleDayTime = function(dateStr) {
     row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:center; padding:8px 0;';
     row.dataset.date = dateStr;
     row.innerHTML = `
-      <input type="text" value="${times.start}" class="input-sm" style="text-align:center; font-size:13px;" placeholder="07:00" data-date="${dateStr}" data-field="start">
-      <input type="text" value="${times.end}" class="input-sm" style="text-align:center; font-size:13px;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;">
+        <div style="font-size:11px; color:var(--text-dim);">上班</div>
+        <input type="text" value="${times.start}" class="input-sm" style="text-align:center; font-size:15px; width:100%;" placeholder="07:00" data-date="${dateStr}" data-field="start">
+      </div>
+      <div style="color:var(--text-dim); font-size:18px; padding-top:20px;">–</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;">
+        <div style="font-size:11px; color:var(--text-dim);">下班</div>
+        <input type="text" value="${times.end}" class="input-sm" style="text-align:center; font-size:15px; width:100%;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+      </div>
     `;
+    row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:8px 0; width:100%;';
     list.appendChild(row);
   }
   document.getElementById('sch-custom-time-modal').style.display = 'flex';
