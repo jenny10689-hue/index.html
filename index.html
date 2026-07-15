@@ -4813,33 +4813,34 @@ window.openSchSingleDayTime = function(dateStr) {
   const weekNames = ['日','一','二','三','四','五','六'];
   const label = `${d.getMonth()+1}/${d.getDate()}（${weekNames[d.getDay()]}）`;
 
-  const list = document.getElementById('sch-custom-time-list');
-  const sub  = document.getElementById('sch-custom-time-sub');
+  schModalDraft = {};
+  schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
+
+  const sub = document.getElementById('sch-custom-time-sub');
   if (sub) sub.textContent = label;
+
+  const list = document.getElementById('sch-custom-time-list');
   if (list) {
-    list.innerHTML = '';
-    schModalDraft = {};
-    schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
-    const row = document.createElement('div');
-    row.dataset.date = dateStr;
-    row.style.cssText = 'display:flex; align-items:center; flex-wrap:nowrap; gap:6px; padding:8px 0; width:100%; box-sizing:border-box; overflow:hidden;';
-    const startDiv = document.createElement('div');
-    startDiv.style.cssText = 'display:flex; align-items:center; gap:4px; flex:1; min-width:0;';
-    startDiv.innerHTML = `<input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:14px;flex:1;min-width:0;" placeholder="07:00" data-date="${dateStr}" data-field="start"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▲</button><button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▼</button></div>`;
-    const sep = document.createElement('span');
-    sep.textContent = '–';
-    sep.style.cssText = 'color:var(--text-dim);font-size:16px;flex-shrink:0;';
-    const endDiv = document.createElement('div');
-    endDiv.style.cssText = 'display:flex; align-items:center; gap:4px; flex:1; min-width:0;';
-    endDiv.innerHTML = `<input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:14px;flex:1;min-width:0;" placeholder="15:30" data-date="${dateStr}" data-field="end"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▲</button><button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▼</button></div>`;
-    row.appendChild(startDiv);
-    row.appendChild(sep);
-    row.appendChild(endDiv);
-    row.style.cssText = 'display:grid; grid-template-columns:minmax(0,80px) 1fr; align-items:center; gap:8px; padding:8px 0; width:100%; box-sizing:border-box;';
-    list.appendChild(row);
+    list.innerHTML = `
+      <table style="width:100%; border-collapse:collapse; margin:8px 0;">
+        <tr>
+          <td style="text-align:center; width:45%; padding:0 8px 0 0;">
+            <button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-dim);padding:6px;display:block;margin:0 auto;width:100%;">▲</button>
+            <input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:20px;font-weight:500;width:100%;" placeholder="07:00">
+            <button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-dim);padding:6px;display:block;margin:0 auto;width:100%;">▼</button>
+          </td>
+          <td style="text-align:center; font-size:22px; color:var(--text-dim); padding:0 4px; vertical-align:middle; width:10%;">–</td>
+          <td style="text-align:center; width:45%; padding:0 0 0 8px;">
+            <button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-dim);padding:6px;display:block;margin:0 auto;width:100%;">▲</button>
+            <input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:20px;font-weight:500;width:100%;" placeholder="15:30">
+            <button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-dim);padding:6px;display:block;margin:0 auto;width:100%;">▼</button>
+          </td>
+        </tr>
+      </table>
+    `;
   }
   document.getElementById('sch-custom-time-modal').style.display = 'flex';
-};
+};;
 
 window.openSchCustomTimeModal = function() {
   renderSchCustomTimeModal();
