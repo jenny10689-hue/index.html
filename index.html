@@ -198,7 +198,7 @@
     /* 從底部滑入 */
     .modal-sheet {
       background: #fff; border-radius: 16px 16px 0 0;
-      padding: 1.25rem 1.25rem 2rem; width: 100%; max-width: 600px;
+      padding: 1.25rem 1.25rem 2rem; width: 100%; max-width: 100%;
       max-height: 90vh; overflow-y: auto;
       animation: slideUp 0.2s ease;
     }
@@ -4846,7 +4846,7 @@ window.openSchSingleDayTime = function(dateStr) {
         </div>
       </div>
     `;
-    row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:8px 0; width:100%;';
+    row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:8px 0; width:100%; box-sizing:border-box;';
     list.appendChild(row);
   }
   document.getElementById('sch-custom-time-modal').style.display = 'flex';
@@ -4879,7 +4879,7 @@ function renderSchCustomTimeModal() {
     schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
     const dow = new Date(schYear, schMonth, d).getDay();
     const row = document.createElement('div');
-    row.style.cssText = 'display:grid; grid-template-columns:80px 1fr; align-items:center; gap:8px; padding:8px 0; border-bottom:0.5px solid var(--border); font-size:12px;';
+    row.style.cssText = 'display:grid; grid-template-columns:70px 1fr; align-items:center; gap:6px; padding:8px 0; border-bottom:0.5px solid var(--border); font-size:12px; width:100%; box-sizing:border-box;';
     row.dataset.date = dateStr;
     row.innerHTML = `
       <span style="color:var(--text-sub);">${schMonth+1}/${d}（${weekNames[dow]}）</span>
