@@ -1002,6 +1002,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <button class="sch-btn" onclick="openSchCustomTimeModal()">自訂時間</button>
       <button class="sch-btn primary" onclick="syncSchToGoogle()">傳送班表</button>
     </div>
+    <button onclick="saveSchData().then(()=>alert('已儲存！'))" style="width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:14px; font-weight:500; cursor:pointer; margin-bottom:1rem;">儲存班表</button>
 
     <!-- 加班補休 Modal -->
     <div id="sch-overtime-modal" class="modal-overlay" onclick="if(event.target===this)closeSchOvertimeModal()" style="display:none;">
@@ -1016,17 +1017,13 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div class="card" style="padding:10px;"><div id="sch-ot-remain" style="font-size:18px; font-weight:500; color:var(--text);">0</div><div style="font-size:11px; color:var(--text-dim);">餘(時)</div></div>
         </div>
         <div id="sch-ot-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;"></div>
-        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:6px;">
-          <input type="date" id="sch-ot-date" class="input-sm">
-          <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 14px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">加班</button>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button onclick="adjustSchOtHours(-0.5)" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">−</button>
-            <span id="sch-ot-hours" style="min-width:32px; text-align:center; font-size:14px; font-weight:500; color:var(--text);">1</span>
-            <button onclick="adjustSchOtHours(0.5)" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">＋</button>
-          </div>
-          <button onclick="addSchOtEntry()" style="padding:0 16px; height:36px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap;">新增</button>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+          <input type="date" id="sch-ot-date" class="input-sm" style="flex:1; min-width:0;">
+          <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 10px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; flex-shrink:0;">加班</button>
+          <button onclick="adjustSchOtHours(-0.5)" style="width:28px; height:28px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">−</button>
+          <span id="sch-ot-hours" style="min-width:24px; text-align:center; font-size:13px; font-weight:500; color:var(--text); flex-shrink:0;">1</span>
+          <button onclick="adjustSchOtHours(0.5)" style="width:28px; height:28px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">＋</button>
+          <button onclick="addSchOtEntry()" style="padding:6px 12px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; flex-shrink:0;">新增</button>
         </div>
       </div>
     </div>
