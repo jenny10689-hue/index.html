@@ -1016,15 +1016,17 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div class="card" style="padding:10px;"><div id="sch-ot-remain" style="font-size:18px; font-weight:500; color:var(--text);">0</div><div style="font-size:11px; color:var(--text-dim);">餘(時)</div></div>
         </div>
         <div id="sch-ot-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;"></div>
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <input type="date" id="sch-ot-date" class="input-sm" style="flex:1; min-width:120px;">
-          <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 12px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer;">加班</button>
-          <div style="display:flex; align-items:center; gap:0; border:0.5px solid var(--border); border-radius:8px; overflow:hidden; background:var(--card);">
-            <button onclick="adjustSchOtHours(-0.5)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:16px; color:var(--text-sub);">−</button>
-            <span id="sch-ot-hours" style="min-width:36px; text-align:center; font-size:13px; font-weight:500; color:var(--text); border-left:0.5px solid var(--border); border-right:0.5px solid var(--border); line-height:32px;">1</span>
-            <button onclick="adjustSchOtHours(0.5)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:16px; color:var(--text-sub);">＋</button>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:6px;">
+          <input type="date" id="sch-ot-date" class="input-sm">
+          <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 14px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">加班</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
+          <div style="display:flex; align-items:center; gap:0; border:0.5px solid var(--border); border-radius:8px; overflow:hidden; background:var(--card); height:36px;">
+            <button onclick="adjustSchOtHours(-0.5)" style="width:40px; height:36px; border:none; background:transparent; cursor:pointer; font-size:18px; color:var(--text-sub); flex-shrink:0;">−</button>
+            <span id="sch-ot-hours" style="flex:1; text-align:center; font-size:13px; font-weight:500; color:var(--text); border-left:0.5px solid var(--border); border-right:0.5px solid var(--border); line-height:36px;">1</span>
+            <button onclick="adjustSchOtHours(0.5)" style="width:40px; height:36px; border:none; background:transparent; cursor:pointer; font-size:18px; color:var(--text-sub); flex-shrink:0;">＋</button>
           </div>
-          <button onclick="addSchOtEntry()" style="padding:6px 14px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer;">新增</button>
+          <button onclick="addSchOtEntry()" style="padding:0 16px; height:36px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap;">新增</button>
         </div>
       </div>
     </div>
@@ -4724,7 +4726,7 @@ function renderSchOtModal() {
     list.innerHTML = entries.slice().reverse().map((e,i) => `
       <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px;">
         <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
-        <button onclick="deleteSchOtEntry(${entries.length-1-i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px;">×</button>
+        <button onclick="confirmDeleteSchOtEntry(${entries.length-1-i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">×</button>
       </div>
     `).join('');
   }
@@ -4754,6 +4756,15 @@ window.addSchOtEntry = async function() {
   schOtChanged = true;
   await saveSchOtData();
   renderSchOtModal();
+};
+
+window.confirmDeleteSchOtEntry = function(i) {
+  const entry = schOtData.entries[i];
+  if (!entry) return;
+  const typeLabel = entry.type === 'overtime' ? '加班' : '補休';
+  if (confirm(`確定要刪除「${entry.date} ${typeLabel} ${entry.hours}小時」嗎？`)) {
+    deleteSchOtEntry(i);
+  }
 };
 
 window.deleteSchOtEntry = async function(i) {
