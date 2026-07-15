@@ -4821,28 +4821,22 @@ window.openSchSingleDayTime = function(dateStr) {
     schModalDraft = {};
     schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
     const row = document.createElement('div');
-    row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:center; padding:8px 0;';
+    row.style.cssText = 'display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; padding:8px 0; width:100%;';
     row.dataset.date = dateStr;
     row.innerHTML = `
-      <div style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;">
-        <div style="font-size:11px; color:var(--text-dim);">上班</div>
-        <div style="display:flex; align-items:center; gap:4px; width:100%;">
-          <input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:15px;flex:1;min-width:0;" placeholder="07:00" data-date="${dateStr}" data-field="start">
-          <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
-            <button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
-            <button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
-          </div>
+      <div style="display:flex; align-items:center; gap:4px; min-width:0;">
+        <input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:14px;flex:1;min-width:0;" placeholder="07:00" data-date="${dateStr}" data-field="start">
+        <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
+          <button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+          <button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
         </div>
       </div>
-      <div style="color:var(--text-dim); font-size:18px; text-align:center;">–</div>
-      <div style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;">
-        <div style="font-size:11px; color:var(--text-dim);">下班</div>
-        <div style="display:flex; align-items:center; gap:4px; width:100%;">
-          <input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:15px;flex:1;min-width:0;" placeholder="15:30" data-date="${dateStr}" data-field="end">
-          <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
-            <button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
-            <button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
-          </div>
+      <span style="color:var(--text-dim); font-size:16px; flex-shrink:0;">–</span>
+      <div style="display:flex; align-items:center; gap:4px; min-width:0;">
+        <input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:14px;flex:1;min-width:0;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+        <div style="display:flex; flex-direction:column; gap:2px; flex-shrink:0;">
+          <button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+          <button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
         </div>
       </div>
     `;
