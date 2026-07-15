@@ -4591,7 +4591,7 @@ async function loadSchData() {
   renderSchedule();
 }
 
-async function saveSchData() {
+window.saveSchData = async function() {
   try { await setDoc(doc(db, 'schedule', schMonthKey()), schData); schDataChanged = false; } catch(e) {}
 }
 
