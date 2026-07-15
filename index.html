@@ -4648,6 +4648,16 @@ function renderSchedule() {
     el.className = 'sch-day' + (shift ? ` ${shift}` : '') + (dateStr === todayStr ? ' today' : '');
     el.innerHTML = `<div class="sch-day-num">${d}</div>${shift ? `<div class="sch-day-label">${shift==='early'?'早':shift==='late'?'晚':'休'}</div>` : ''}`;
     el.onclick = () => cycleSchShift(dateStr, el);
+    let pressTimer = null;
+    el.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => openSchSingleDayTime(dateStr), 600);
+    }, { passive: true });
+    el.addEventListener('touchend', () => clearTimeout(pressTimer));
+    el.addEventListener('mousedown', () => {
+      pressTimer = setTimeout(() => openSchSingleDayTime(dateStr), 600);
+    });
+    el.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    el.addEventListener('mouseleave', () => clearTimeout(pressTimer));
     cal.appendChild(el);
   }
 
@@ -4771,6 +4781,33 @@ window.deleteSchOtEntry = async function(i) {
 };
 
 // 自訂時間
+window.openSchSingleDayTime = function(dateStr) {
+  const shift = getSchShift(dateStr);
+  if (!shift || shift === 'off') return;
+  const times = getSchTimes(dateStr);
+  const d = new Date(dateStr);
+  const weekNames = ['日','一','二','三','四','五','六'];
+  const label = `${d.getMonth()+1}/${d.getDate()}（${weekNames[d.getDay()]}）`;
+
+  const list = document.getElementById('sch-custom-time-list');
+  const sub  = document.getElementById('sch-custom-time-sub');
+  if (sub) sub.textContent = label;
+  if (list) {
+    list.innerHTML = '';
+    schModalDraft = {};
+    schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:center; padding:8px 0;';
+    row.dataset.date = dateStr;
+    row.innerHTML = `
+      <input type="text" value="${times.start}" class="input-sm" style="text-align:center; font-size:13px;" placeholder="07:00" data-date="${dateStr}" data-field="start">
+      <input type="text" value="${times.end}" class="input-sm" style="text-align:center; font-size:13px;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+    `;
+    list.appendChild(row);
+  }
+  document.getElementById('sch-custom-time-modal').style.display = 'flex';
+};
+
 window.openSchCustomTimeModal = function() {
   renderSchCustomTimeModal();
   document.getElementById('sch-custom-time-modal').style.display = 'flex';
@@ -4803,9 +4840,9 @@ function renderSchCustomTimeModal() {
     row.innerHTML = `
       <span style="color:var(--text-sub);">${schMonth+1}/${d}（${weekNames[dow]}）</span>
       <div style="display:flex; align-items:center; gap:6px;">
-        <input type="time" value="${times.start}" class="sch-start-input input-sm" style="width:90px; font-size:12px;" data-date="${dateStr}" data-field="start">
+        <input type="text" value="${times.start}" class="sch-start-input input-sm" style="width:64px; font-size:13px; text-align:center;" placeholder="07:00" pattern="[0-9]{2}:[0-9]{2}" data-date="${dateStr}" data-field="start">
         <span style="color:var(--text-dim);">–</span>
-        <input type="time" value="${times.end}" class="sch-end-input input-sm" style="width:90px; font-size:12px;" data-date="${dateStr}" data-field="end">
+        <input type="text" value="${times.end}" class="sch-end-input input-sm" style="width:64px; font-size:13px; text-align:center;" placeholder="15:30" pattern="[0-9]{2}:[0-9]{2}" data-date="${dateStr}" data-field="end">
       </div>
     `;
     list.appendChild(row);
