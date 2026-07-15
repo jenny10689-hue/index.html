@@ -1021,10 +1021,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 14px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">加班</button>
         </div>
         <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;">
-          <div style="display:flex; align-items:center; gap:0; border:0.5px solid var(--border); border-radius:8px; overflow:hidden; background:var(--card); height:36px;">
-            <button onclick="adjustSchOtHours(-0.5)" style="width:40px; height:36px; border:none; background:transparent; cursor:pointer; font-size:18px; color:var(--text-sub); flex-shrink:0;">−</button>
-            <span id="sch-ot-hours" style="flex:1; text-align:center; font-size:13px; font-weight:500; color:var(--text); border-left:0.5px solid var(--border); border-right:0.5px solid var(--border); line-height:36px;">1</span>
-            <button onclick="adjustSchOtHours(0.5)" style="width:40px; height:36px; border:none; background:transparent; cursor:pointer; font-size:18px; color:var(--text-sub); flex-shrink:0;">＋</button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onclick="adjustSchOtHours(-0.5)" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">−</button>
+            <span id="sch-ot-hours" style="min-width:32px; text-align:center; font-size:14px; font-weight:500; color:var(--text);">1</span>
+            <button onclick="adjustSchOtHours(0.5)" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">＋</button>
           </div>
           <button onclick="addSchOtEntry()" style="padding:0 16px; height:36px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap;">新增</button>
         </div>
