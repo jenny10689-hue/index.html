@@ -4826,16 +4826,24 @@ window.openSchSingleDayTime = function(dateStr) {
     row.innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;">
         <div style="font-size:11px; color:var(--text-dim);">上班</div>
-        <button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-dim);padding:2px;">▲</button>
-        <input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:15px;width:100%;" placeholder="07:00" data-date="${dateStr}" data-field="start">
-        <button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-dim);padding:2px;">▼</button>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;">
+          <input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:15px;flex:1;" placeholder="07:00" data-date="${dateStr}" data-field="start">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+            <button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+          </div>
+        </div>
       </div>
-      <div style="color:var(--text-dim); font-size:18px; padding-top:36px;">–</div>
+      <div style="color:var(--text-dim); font-size:18px; padding-top:22px;">–</div>
       <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;">
         <div style="font-size:11px; color:var(--text-dim);">下班</div>
-        <button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-dim);padding:2px;">▲</button>
-        <input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:15px;width:100%;" placeholder="15:30" data-date="${dateStr}" data-field="end">
-        <button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-dim);padding:2px;">▼</button>
+        <div style="display:flex; align-items:center; gap:4px; width:100%;">
+          <input type="text" id="single-end-${dateStr}" value="${times.end}" class="input-sm" style="text-align:center;font-size:15px;flex:1;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+          <div style="display:flex; flex-direction:column; gap:2px;">
+            <button onclick="adjustSingleTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+            <button onclick="adjustSingleTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+          </div>
+        </div>
       </div>
     `;
     row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:8px 0; width:100%;';
@@ -4876,16 +4884,20 @@ function renderSchCustomTimeModal() {
     row.innerHTML = `
       <span style="color:var(--text-sub);">${schMonth+1}/${d}（${weekNames[dow]}）</span>
       <div style="display:flex; align-items:center; gap:6px;">
-        <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
-            <button onclick="adjustMonthTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
-            <input type="text" value="${times.start}" class="sch-start-input input-sm" style="width:58px;font-size:12px;text-align:center;" placeholder="07:00" data-date="${dateStr}" data-field="start">
-            <button onclick="adjustMonthTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+        <div style="display:flex; align-items:center; gap:2px;">
+            <input type="text" value="${times.start}" class="sch-start-input input-sm" style="width:52px;font-size:12px;text-align:center;" placeholder="07:00" data-date="${dateStr}" data-field="start">
+            <div style="display:flex; flex-direction:column; gap:1px;">
+              <button onclick="adjustMonthTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+              <button onclick="adjustMonthTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+            </div>
           </div>
           <span style="color:var(--text-dim);">–</span>
-          <div style="display:flex; flex-direction:column; align-items:center; gap:1px;">
-            <button onclick="adjustMonthTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
-            <input type="text" value="${times.end}" class="sch-end-input input-sm" style="width:58px;font-size:12px;text-align:center;" placeholder="15:30" data-date="${dateStr}" data-field="end">
-            <button onclick="adjustMonthTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <input type="text" value="${times.end}" class="sch-end-input input-sm" style="width:52px;font-size:12px;text-align:center;" placeholder="15:30" data-date="${dateStr}" data-field="end">
+            <div style="display:flex; flex-direction:column; gap:1px;">
+              <button onclick="adjustMonthTime('${dateStr}','end',30)" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0;line-height:1;">▲</button>
+              <button onclick="adjustMonthTime('${dateStr}','end',-30)" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0;line-height:1;">▼</button>
+            </div>
           </div>
       </div>
     `;
