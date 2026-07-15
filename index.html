@@ -4822,7 +4822,7 @@ window.openSchSingleDayTime = function(dateStr) {
     schModalDraft[dateStr] = { shift, start: times.start, end: times.end };
     const row = document.createElement('div');
     row.dataset.date = dateStr;
-    row.style.cssText = 'display:flex; align-items:center; gap:6px; padding:8px 0; width:100%;';
+    row.style.cssText = 'display:flex; align-items:center; flex-wrap:nowrap; gap:6px; padding:8px 0; width:100%; box-sizing:border-box; overflow:hidden;';
     const startDiv = document.createElement('div');
     startDiv.style.cssText = 'display:flex; align-items:center; gap:4px; flex:1; min-width:0;';
     startDiv.innerHTML = `<input type="text" id="single-start-${dateStr}" value="${times.start}" class="input-sm" style="text-align:center;font-size:14px;flex:1;min-width:0;" placeholder="07:00" data-date="${dateStr}" data-field="start"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><button onclick="adjustSingleTime('${dateStr}','start',30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▲</button><button onclick="adjustSingleTime('${dateStr}','start',-30)" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-dim);padding:0;line-height:1;">▼</button></div>`;
