@@ -1019,12 +1019,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <input type="date" id="sch-ot-date" class="input-sm" style="flex:1; min-width:120px;">
           <button id="sch-ot-type-btn" onclick="toggleSchOtType()" style="padding:6px 12px; border-radius:16px; border:none; background:#b8deca; color:#3a7a58; font-size:12px; font-weight:700; cursor:pointer;">加班</button>
-          <div style="display:flex; align-items:center; gap:4px;">
-            <button onclick="adjustSchOtHours(-1)" style="width:24px; height:24px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer;">−</button>
-            <span id="sch-ot-hours" style="min-width:28px; text-align:center; font-size:14px; font-weight:500;">1</span>
-            <button onclick="adjustSchOtHours(1)" style="width:24px; height:24px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer;">＋</button>
+          <div style="display:flex; align-items:center; gap:0; border:0.5px solid var(--border); border-radius:8px; overflow:hidden; background:var(--card);">
+            <button onclick="adjustSchOtHours(-0.5)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:16px; color:var(--text-sub);">−</button>
+            <span id="sch-ot-hours" style="min-width:36px; text-align:center; font-size:13px; font-weight:500; color:var(--text); border-left:0.5px solid var(--border); border-right:0.5px solid var(--border); line-height:32px;">1</span>
+            <button onclick="adjustSchOtHours(0.5)" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; font-size:16px; color:var(--text-sub);">＋</button>
           </div>
-          <button onclick="addSchOtEntry()" style="padding:6px 14px; border-radius:16px; border:none; background:#b8deca; color:#0a1a0f; font-size:13px; font-weight:700; cursor:pointer;">新增</button>
+          <button onclick="addSchOtEntry()" style="padding:6px 14px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer;">新增</button>
         </div>
       </div>
     </div>
@@ -4562,6 +4562,8 @@ let schYear, schMonth, schData = {};
 let schOtData = { entries: [] };
 let schOtType = 'overtime';
 let schOtHours = 1;
+let schOtChanged = false;
+let schDataChanged = false;
 let schModalDraft = {};
 const SCH_DEFAULT_TIMES = { early: { start:'07:00', end:'15:30' }, late: { start:'14:30', end:'23:00' } };
 let schTokenClient = null;
@@ -4591,7 +4593,7 @@ async function loadSchData() {
 }
 
 async function saveSchData() {
-  try { await setDoc(doc(db, 'schedule', schMonthKey()), schData); } catch(e) {}
+  try { await setDoc(doc(db, 'schedule', schMonthKey()), schData); schDataChanged = false; } catch(e) {}
 }
 
 function initSchedulePage() {
@@ -4682,6 +4684,7 @@ async function cycleSchShift(dateStr, el) {
   const next = SHIFTS[(idx + 1) % SHIFTS.length];
   if (next === null) { delete schData[dateStr]; }
   else { schData[dateStr] = next; }
+  schDataChanged = true;
   await saveSchData();
   renderSchedule();
 }
@@ -4695,7 +4698,7 @@ async function loadSchOtData() {
 }
 
 async function saveSchOtData() {
-  try { await setDoc(doc(db, 'overtime', 'balance'), schOtData); } catch(e) {}
+  try { await setDoc(doc(db, 'overtime', 'balance'), schOtData); schOtChanged = false; } catch(e) {}
 }
 
 window.openSchOvertimeModal = async function() {
@@ -4738,7 +4741,7 @@ window.toggleSchOtType = function() {
 };
 
 window.adjustSchOtHours = function(delta) {
-  schOtHours = Math.max(1, schOtHours + delta);
+  schOtHours = Math.max(0.5, Math.round((schOtHours + delta) * 2) / 2);
   const el = document.getElementById('sch-ot-hours');
   if (el) el.textContent = schOtHours;
 };
@@ -4748,6 +4751,7 @@ window.addSchOtEntry = async function() {
   if (!date) { alert('請選擇日期'); return; }
   if (!schOtData.entries) schOtData.entries = [];
   schOtData.entries.push({ date, type: schOtType, hours: schOtHours });
+  schOtChanged = true;
   await saveSchOtData();
   renderSchOtModal();
 };
@@ -4880,6 +4884,11 @@ async function doSchSync(token) {
 }
 
 window.syncSchToGoogle = function() {
+  if (schDataChanged) {
+    if (!confirm('班表有未儲存的變更，是否先儲存再同步？')) return;
+    saveSchData().then(() => schTokenClient ? schTokenClient.requestAccessToken() : alert('Google 尚未載入'));
+    return;
+  }
   if (!schTokenClient) {
     initSchGoogleAuth();
     setTimeout(() => {
