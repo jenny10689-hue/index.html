@@ -4732,6 +4732,9 @@ function renderSchedule() {
     el.className = 'sch-day' + (shift ? ` ${shift}` : '') + (dateStr === todayStr ? ' today' : '');
     el.innerHTML = `<div class="sch-day-num">${d}</div>${shift ? `<div class="sch-day-label">${shift==='early'?'早':shift==='late'?'晚':'休'}</div>` : ''}`;
     el.onclick = () => cycleSchShift(dateStr, el);
+    el.style.userSelect = 'none';
+    el.style.webkitUserSelect = 'none';
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
     let pressTimer = null;
     el.addEventListener('touchstart', () => {
       pressTimer = setTimeout(() => openSchSingleDayTime(dateStr), 600);
