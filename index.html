@@ -671,8 +671,8 @@ body { background-color: var(--bg); color: var(--text); }
       <div id="unsettled-summary" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border);">
         <div style="font-size:0.78rem; font-weight:500; color:var(--text-dim); margin-bottom:0.4rem;">📋 待結清</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-          <div style="font-size:0.82rem; color:#5f5e5a;">💛 待還倩：<strong style="color:#e67e22;">$<span id="unsettled-qian">0</span></strong></div>
-          <div style="font-size:0.82rem; color:#5f5e5a;">💚 待還騰：<strong style="color:#e67e22;">$<span id="unsettled-teng">0</span></strong></div>
+          <div id="unsettled-qian-btn" onclick="toggleSettledFilter('qian')" style="font-size:0.82rem; color:#5f5e5a; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s;">💛 待還倩：<strong style="color:#e67e22;">$<span id="unsettled-qian">0</span></strong></div>
+          <div id="unsettled-teng-btn" onclick="toggleSettledFilter('teng')" style="font-size:0.82rem; color:#5f5e5a; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s;">💚 待還騰：<strong style="color:#e67e22;">$<span id="unsettled-teng">0</span></strong></div>
         </div>
       </div>
     </div>
@@ -1441,6 +1441,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let ledgers  = [];
   let records  = [];
   let allLedgerRecords = [];
+  let settledFilter = null; // 'qian' | 'teng' | null
   let appSettings = {
     salaryDate: 10,
     salary: 0,
@@ -2699,9 +2700,16 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     const container = document.getElementById('record-list');
     container.innerHTML = '';
  
-    const filtered = activeFilter
+    const QIAN_PAYS = ['倩cube', '倩Costco', '倩現金'];
+    const TENG_PAYS = ['騰cube', '騰現金'];
+    let filtered = activeFilter
       ? records.filter(r => r.category === activeFilter)
       : records;
+    if (settledFilter === 'qian') {
+      filtered = allLedgerRecords.filter(r => r.type === 'expense' && !r.settled && QIAN_PAYS.includes(r.payment));
+    } else if (settledFilter === 'teng') {
+      filtered = allLedgerRecords.filter(r => r.type === 'expense' && !r.settled && TENG_PAYS.includes(r.payment));
+    }
  
     const totalIncome  = records.filter(r => r.type === 'income').reduce((s,r)  => s + r.amount, 0);
     const totalExpense = records.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
@@ -3960,6 +3968,7 @@ window.handleStockDateInput = function(input) {
 window.switchToLedgerType = function(type) {
   const ledger = ledgers.find(l => l.type === type);
   if (!ledger) return;
+  settledFilter = null;
   currentLedgerId = ledger.id;
   currentLedger   = ledger;
   activeFilter    = null;
@@ -5111,6 +5120,24 @@ function renderUnsettledSummary(allRecords) {
     if (htEl) htEl.textContent = tengTotal.toLocaleString();
   }
 }
+
+window.toggleSettledFilter = function(type) {
+  if (settledFilter === type) {
+    settledFilter = null;
+  } else {
+    settledFilter = type;
+    activeFilter = null;
+  }
+  // 更新按鈕樣式
+  const qBtn = document.getElementById('unsettled-qian-btn');
+  const tBtn = document.getElementById('unsettled-teng-btn');
+  if (qBtn) qBtn.style.background = settledFilter === 'qian' ? 'var(--hover)' : '';
+  if (tBtn) tBtn.style.background = settledFilter === 'teng' ? 'var(--hover)' : '';
+  // 更新下拉選單
+  const sel = document.querySelector('#filter-buttons select');
+  if (sel) sel.value = '';
+  render();
+};
 
 window.toggleSettled = async function(id, currentSettled) {
   if (!currentLedgerId) return;
