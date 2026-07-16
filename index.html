@@ -4804,7 +4804,6 @@ async function cycleSchShift(dateStr, el) {
     schData[dateStr] = SHIFTS[(idx + 1) % SHIFTS.length];
   }
   schDataChanged = true;
-  await saveSchData();
   renderSchedule();
 }
 
