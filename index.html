@@ -561,6 +561,12 @@ body { background-color: var(--bg); color: var(--text); }
       <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">💰 錢櫃餘額（手動更新）</div>
       <div style="font-size:1.6rem; font-weight:500; color:var(--text);" id="home-wallet-balance">$0</div>
       <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;" id="home-wallet-updated"></div>
+      <div id="home-unsettled" style="display:none; margin-top:8px; padding-top:8px; border-top:0.5px solid var(--border);">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <div style="font-size:11px; color:var(--text-sub);">💛 待還倩：<strong style="color:#e67e22;">$<span id="home-unsettled-qian">0</span></strong></div>
+          <div style="font-size:11px; color:var(--text-sub);">💚 待還騰：<strong style="color:#e67e22;">$<span id="home-unsettled-teng">0</span></strong></div>
+        </div>
+      </div>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
       <div style="font-size:0.72rem; font-weight:500; color:var(--text-dim); letter-spacing:0.06em;">本月支出</div>
@@ -660,6 +666,14 @@ body { background-color: var(--bg); color: var(--text); }
             </div>
             <button style="background:var(--accent); color:var(--accent-text); border:none; border-radius:8px; padding:0.4rem 1rem; cursor:pointer; font-size:0.85rem;" onclick="doTopup()">課金</button>
           </div>
+      </div>
+      <!-- 待結清摘要 -->
+      <div id="unsettled-summary" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border);">
+        <div style="font-size:0.78rem; font-weight:500; color:var(--text-dim); margin-bottom:0.4rem;">📋 待結清</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          <div style="font-size:0.82rem; color:#5f5e5a;">💛 待還倩：<strong style="color:#e67e22;">$<span id="unsettled-qian">0</span></strong></div>
+          <div style="font-size:0.82rem; color:#5f5e5a;">💚 待還騰：<strong style="color:#e67e22;">$<span id="unsettled-teng">0</span></strong></div>
+        </div>
       </div>
     </div>
  
@@ -2330,7 +2344,7 @@ async function saveUserSettings() {
       renderPieChart();
       if (currentLedger && currentLedger.type === 'shared') {
         updateWalletDisplay(allLedgerRecords);
- 
+        renderUnsettledSummary(allLedgerRecords);
       }
     });
   }
@@ -4047,6 +4061,15 @@ async function renderHomePage() {
   }
 
   renderHomeCCList();
+  // 共同帳本待結清摘要
+  const sharedLedgerForSettled = ledgers.find(l => l.type === 'shared');
+  if (sharedLedgerForSettled) {
+    try {
+      const snap = await getDocs(collection(db,'ledgers',sharedLedgerForSettled.id,'expenses'));
+      const allShared = snap.docs.map(d => d.data());
+      renderUnsettledSummary(allShared);
+    } catch(e) {}
+  }
 }
 
 async function renderHomeCCList() {
@@ -5027,6 +5050,44 @@ window.syncSchToGoogle = function() {
   }
   schTokenClient.requestAccessToken();
 };
+
+function renderUnsettledSummary(allRecords) {
+  const QIAN_PAYS = ['倩cube', '倩Costco', '倩現金'];
+  const TENG_PAYS = ['騰cube', '騰現金'];
+
+  const unsettledRecords = allRecords.filter(r =>
+    r.type === 'expense' && r.payment !== '錢櫃' && !r.settled
+  );
+
+  const qianTotal = unsettledRecords
+    .filter(r => QIAN_PAYS.includes(r.payment))
+    .reduce((s, r) => s + r.amount, 0);
+  const tengTotal = unsettledRecords
+    .filter(r => TENG_PAYS.includes(r.payment))
+    .reduce((s, r) => s + r.amount, 0);
+
+  const hasUnsettled = qianTotal > 0 || tengTotal > 0;
+
+  // 共同帳本頁摘要
+  const summaryEl = document.getElementById('unsettled-summary');
+  if (summaryEl) {
+    summaryEl.style.display = hasUnsettled ? 'block' : 'none';
+    const qEl = document.getElementById('unsettled-qian');
+    const tEl = document.getElementById('unsettled-teng');
+    if (qEl) qEl.textContent = qianTotal.toLocaleString();
+    if (tEl) tEl.textContent = tengTotal.toLocaleString();
+  }
+
+  // 首頁錢櫃卡片摘要
+  const homeUnsettled = document.getElementById('home-unsettled');
+  if (homeUnsettled) {
+    homeUnsettled.style.display = hasUnsettled ? 'block' : 'none';
+    const hqEl = document.getElementById('home-unsettled-qian');
+    const htEl = document.getElementById('home-unsettled-teng');
+    if (hqEl) hqEl.textContent = qianTotal.toLocaleString();
+    if (htEl) htEl.textContent = tengTotal.toLocaleString();
+  }
+}
 
 window.toggleSettled = async function(id, currentSettled) {
   if (!currentLedgerId) return;
