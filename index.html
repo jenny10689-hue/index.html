@@ -2753,9 +2753,9 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
             ${prestoredHtml}
           </div>
         </div>
-        <div class="record-right" style="display:flex; align-items:center; gap:8px;">
-          ${settledHtml}
-          <div>
+        <div class="record-right" style="display:grid; grid-template-columns:22px 1fr; align-items:center; gap:6px;">
+          <div>${settledHtml}</div>
+          <div style="text-align:right;">
             <div class="record-amount ${isExpense ? (needSettled && !item.settled ? 'amount-unsettled' : 'amount-expense') : 'amount-income'}">
               ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
             </div>
