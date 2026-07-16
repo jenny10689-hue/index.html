@@ -488,6 +488,11 @@ body { background-color: var(--bg); color: var(--text); }
     .settings-row-right { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-sub); }
     .settings-input-sm { font-size: 13px; color: var(--text); text-align: right; border: none; background: transparent; outline: none; width: 60px; }
 
+    /* 結清 checkbox */
+    .settled-check { width:18px; height:18px; border-radius:4px; border:1.5px solid var(--border); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--card); }
+    .settled-check.done { background:#2e7d32; border-color:#2e7d32; color:#fff; font-size:11px; }
+    .amount-unsettled { color:#e67e22 !important; }
+
     /* 快速輸入 toggle */
 .preset-toggle-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .preset-toggle-icon { font-size: 0.75rem; color: #888780; transition: transform 0.2s; }
@@ -2714,6 +2719,15 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const noteHtml = item.note
         ? `<span style="cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'inline':''; this.textContent=this.nextElementSibling.style.display==='none'?'📝':'📝'">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : '';
  
+      const isShared = currentLedger && currentLedger.type === 'shared';
+      const needSettled = isShared && isExpense && item.payment !== '錢櫃';
+      const settledHtml = needSettled ? `
+        <div class="settled-check ${item.settled ? 'done' : ''}"
+          onclick="toggleSettled('${item.id}', ${!!item.settled})"
+          title="${item.settled ? '已結清' : '未結清'}">
+          ${item.settled ? '✓' : ''}
+        </div>` : '';
+
       div.innerHTML = `
         <div class="record-icon" title="${item.category || ''}">${catEmoji}</div>
         <div class="record-body">
@@ -2725,12 +2739,15 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
             ${prestoredHtml}
           </div>
         </div>
-        <div class="record-right">
-          <div class="record-amount ${isExpense ? 'amount-expense' : 'amount-income'}">
-            ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
-          </div>
-          <div class="record-actions">
-            <button class="tag-btn" onclick="openEditRecord('${item.id}')">編輯</button>
+        <div class="record-right" style="display:flex; align-items:center; gap:8px;">
+          ${settledHtml}
+          <div>
+            <div class="record-amount ${isExpense ? (needSettled && !item.settled ? 'amount-unsettled' : 'amount-expense') : 'amount-income'}">
+              ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
+            </div>
+            <div class="record-actions">
+              <button class="tag-btn" onclick="openEditRecord('${item.id}')">編輯</button>
+            </div>
           </div>
         </div>
       `;
@@ -5009,6 +5026,17 @@ window.syncSchToGoogle = function() {
     return;
   }
   schTokenClient.requestAccessToken();
+};
+
+window.toggleSettled = async function(id, currentSettled) {
+  if (!currentLedgerId) return;
+  try {
+    await updateDoc(doc(db, 'ledgers', currentLedgerId, 'expenses', id), {
+      settled: !currentSettled,
+      settledAt: !currentSettled ? Date.now() : null,
+      settledBy: !currentSettled ? currentName : null
+    });
+  } catch(e) { console.warn('toggleSettled error', e); }
 };
 
 window.togglePresetCard = function() {
