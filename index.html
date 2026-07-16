@@ -2736,10 +2736,9 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const isShared = currentLedger && currentLedger.type === 'shared';
       const needSettled = isShared && isExpense && item.payment !== '錢櫃';
 
-      // grid 欄位：icon > body > amount > [預存?] > [checkbox?] > edit
-      const showPrestored = isExpense && isCreditCard && !isShared;
-      const cols = '32px 1fr 76px ' + (showPrestored ? '52px ' : '') + (needSettled ? '24px ' : '') + '44px';
-      div.style.cssText = `display:grid; grid-template-columns:${cols}; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;`;
+      // grid 欄位固定：icon(32) | body(1fr) | amount(76) | prestored(52) | checkbox(24) | edit(44)
+      // 全部列用同樣欄位，留空格不影響對齊
+      div.style.cssText = 'display:grid; grid-template-columns:32px 1fr 76px 52px 24px 44px; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;';
       div.className = '';
 
       // icon
@@ -2749,7 +2748,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       iconEl.textContent = catEmoji;
       div.appendChild(iconEl);
 
-      // body（名稱 + meta）
+      // body
       const bodyEl = document.createElement('div');
       bodyEl.style.cssText = 'min-width:0;';
       bodyEl.innerHTML = `<div style="font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
@@ -2767,25 +2766,26 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       amtEl.textContent = (isExpense ? '-' : '+') + '$' + item.amount.toLocaleString();
       div.appendChild(amtEl);
 
-      // 預存 tag（個人帳本信用卡才顯示）
-      if (showPrestored) {
-        const tagEl = document.createElement('div');
-        tagEl.style.cssText = 'text-align:center;';
+      // 預存（個人帳本信用卡才填，否則空白占位）
+      const tagEl = document.createElement('div');
+      tagEl.style.cssText = 'text-align:center;';
+      if (isExpense && isCreditCard && !isShared) {
         tagEl.innerHTML = `<span class="tag ${item.prestored ? 'tag-prestored' : ''}" onclick="togglePrestored('${item.id}', ${item.prestored})" style="font-size:0.7rem; white-space:nowrap; padding:2px 5px;">${item.prestored ? '✓已存' : '預存'}</span>`;
-        div.appendChild(tagEl);
       }
+      div.appendChild(tagEl);
 
-      // checkbox（共同帳本非錢櫃才有，放在編輯前）
+      // checkbox（共同帳本非錢櫃才填，否則空白占位）
+      const chkEl = document.createElement('div');
+      chkEl.style.cssText = 'text-align:center;';
       if (needSettled) {
-        const chk = document.createElement('div');
-        chk.className = 'settled-check' + (item.settled ? ' done' : '');
-        chk.title = item.settled ? '已結清' : '未結清';
-        chk.textContent = item.settled ? '✓' : '';
-        chk.onclick = () => toggleSettled(item.id, !!item.settled);
-        div.appendChild(chk);
+        chkEl.className = 'settled-check' + (item.settled ? ' done' : '');
+        chkEl.title = item.settled ? '已結清' : '未結清';
+        chkEl.textContent = item.settled ? '✓' : '';
+        chkEl.onclick = () => toggleSettled(item.id, !!item.settled);
       }
+      div.appendChild(chkEl);
 
-      // 編輯按鈕
+      // 編輯
       const editEl = document.createElement('div');
       editEl.style.cssText = 'text-align:center;';
       editEl.innerHTML = `<button class="tag-btn" onclick="openEditRecord('${item.id}')" style="font-size:0.72rem; padding:2px 6px;">編輯</button>`;
