@@ -5091,8 +5091,8 @@ window.toggleSchLock = function() {
   const toggle = document.getElementById('sch-lock-toggle');
   const knob   = document.getElementById('sch-lock-knob');
   const label  = document.getElementById('sch-lock-label');
-  if (toggle) toggle.style.background = schLocked ? '#ccc' : 'var(--accent)';
-  if (knob)   knob.style.left = schLocked ? '2px' : '18px';
+  if (toggle) toggle.style.background = schLocked ? 'var(--accent)' : '#ccc';
+  if (knob)   knob.style.left = schLocked ? '18px' : '2px';
   if (label)  label.textContent = schLocked ? '已鎖定' : '未鎖定';
 };
 
