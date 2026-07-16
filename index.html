@@ -957,8 +957,14 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
   <!-- 班表頁 -->
   <div id="page-schedule" class="container" style="display:none;">
     <div class="page-title-row">
-      <button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+      <button class="btn-back" onclick="schGoBack()" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
       <h1>📅 班表管理</h1>
+      <label style="display:flex; align-items:center; gap:6px; margin-left:auto; cursor:pointer; font-size:12px; color:var(--text-dim);">
+        <span id="sch-lock-label">已鎖定</span>
+        <div id="sch-lock-toggle" onclick="toggleSchLock()" style="width:36px; height:20px; border-radius:10px; background:#ccc; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;">
+          <div id="sch-lock-knob" style="width:16px; height:16px; border-radius:50%; background:#fff; position:absolute; top:2px; left:2px; transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+        </div>
+      </label>
     </div>
 
     <style>
@@ -1032,7 +1038,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <button class="sch-btn" onclick="openSchCustomTimeModal()">自訂時間</button>
       <button class="sch-btn primary" onclick="syncSchToGoogle()">傳送班表</button>
     </div>
-    <button onclick="saveSchData().then(()=>alert('已儲存！'))" style="width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:14px; font-weight:500; cursor:pointer; margin-bottom:1rem;">儲存班表</button>
+
 
     <!-- 加班補休 Modal -->
     <div id="sch-overtime-modal" class="modal-overlay" onclick="if(event.target===this)closeSchOvertimeModal()" style="display:none;">
@@ -4642,6 +4648,7 @@ window.goBack = function() {
 // ===========================
 
 let schYear, schMonth, schData = {};
+let schLocked = true;
 let schOtData = { entries: [] };
 let schOtType = 'overtime';
 let schOtHours = 1;
@@ -4688,6 +4695,13 @@ function initSchedulePage() {
   loadSchData();
   loadSchOtData();
   initSchGoogleAuth();
+  // 初始化鎖定 UI
+  const toggle = document.getElementById('sch-lock-toggle');
+  const knob   = document.getElementById('sch-lock-knob');
+  const label  = document.getElementById('sch-lock-label');
+  if (toggle) toggle.style.background = schLocked ? '#ccc' : 'var(--accent)';
+  if (knob)   knob.style.left = schLocked ? '2px' : '18px';
+  if (label)  label.textContent = schLocked ? '已鎖定' : '未鎖定';
 
   document.getElementById('sch-prev').onclick = () => {
     schMonth--; if (schMonth < 0) { schMonth = 11; schYear--; }
@@ -4774,6 +4788,7 @@ function renderSchedule() {
 }
 
 async function cycleSchShift(dateStr, el) {
+  if (schLocked) return;
   const SHIFTS = [null, 'early', 'late', 'off'];
   const current = getSchShift(dateStr);
   const idx = SHIFTS.indexOf(current);
@@ -4893,6 +4908,7 @@ window.adjustMonthTime = function(dateStr, field, delta) {
 };
 
 window.openSchSingleDayTime = function(dateStr) {
+  if (schLocked) return;
   const shift = getSchShift(dateStr);
   if (!shift || shift === 'off') return;
   const times = getSchTimes(dateStr);
@@ -4938,6 +4954,7 @@ window.openSchSingleDayTime = function(dateStr) {
 };;
 
 window.openSchCustomTimeModal = function() {
+  if (schLocked) { alert('請先解除鎖定才能修改時間'); return; }
   renderSchCustomTimeModal();
   document.getElementById('sch-custom-time-modal').style.display = 'flex';
 };
@@ -5068,6 +5085,27 @@ async function doSchSync(token) {
   }
   alert(`已同步 ${count} 筆班表到 Google 日曆！`);
 }
+
+window.toggleSchLock = function() {
+  schLocked = !schLocked;
+  const toggle = document.getElementById('sch-lock-toggle');
+  const knob   = document.getElementById('sch-lock-knob');
+  const label  = document.getElementById('sch-lock-label');
+  if (toggle) toggle.style.background = schLocked ? '#ccc' : 'var(--accent)';
+  if (knob)   knob.style.left = schLocked ? '2px' : '18px';
+  if (label)  label.textContent = schLocked ? '已鎖定' : '未鎖定';
+};
+
+window.schGoBack = async function() {
+  if (!schLocked && schDataChanged) {
+    const ans = confirm('班表未鎖定，可能被誤改，是否要鎖定？');
+    if (ans) {
+      schLocked = true;
+      await saveSchData();
+    }
+  }
+  showPage('home');
+};
 
 window.syncSchToGoogle = function() {
   if (schDataChanged) {
