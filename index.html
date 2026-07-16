@@ -2757,7 +2757,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       bodyEl.innerHTML = `<div style="font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
         <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px;">
           <span>${item.date}</span>
-          ${payEmoji ? `<span class="pay-badge" title="${payLabel}">${payEmoji}</span>` : ''}
+          ${payEmoji ? `<span class="pay-badge" style="cursor:pointer;" onclick="var s=this.nextElementSibling;s.style.display=s.style.display==='none'?'inline':'none';">${payEmoji}</span><span style="display:none; font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${payLabel}</span>` : ''}
           ${noteHtml}
         </div>`;
       div.appendChild(bodyEl);
