@@ -1031,6 +1031,16 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div class="sch-wage-lbl">本月已賺 🎉</div>
         </div>
       </div>
+      <!-- 加班補休摘要 -->
+      <div id="sch-ot-summary" style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:none;">
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">加班補休記錄</div>
+        <div id="sch-ot-summary-list"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; text-align:center; font-size:11px;">
+          <div style="color:var(--text-dim);">加班累積<br><strong style="color:#3a7a58; font-size:13px;" id="sch-ot-sum-total">0</strong>h</div>
+          <div style="color:var(--text-dim);">已補休<br><strong style="color:#a05030; font-size:13px;" id="sch-ot-sum-used">0</strong>h</div>
+          <div style="color:var(--text-dim);">餘<br><strong style="color:var(--text); font-size:13px;" id="sch-ot-sum-remain">0</strong>h</div>
+        </div>
+      </div>
     </div>
 
     <div class="sch-btn-row">
@@ -4791,6 +4801,7 @@ function renderSchedule() {
   const eeEl = document.getElementById('sch-earned');
   if (dwEl) dwEl.textContent = `$${dailyWage.toLocaleString()}`;
   if (eeEl) eeEl.textContent = `$${earned.toLocaleString()}`;
+  renderOtSummary();
 }
 
 async function cycleSchShift(dateStr, el) {
@@ -4813,10 +4824,56 @@ async function loadSchOtData() {
     const snap = await getDoc(doc(db, 'overtime', 'balance'));
     schOtData = snap.exists() ? snap.data() : { entries: [] };
   } catch(e) {}
+  renderOtSummary();
 }
 
 async function saveSchOtData() {
   try { await setDoc(doc(db, 'overtime', 'balance'), schOtData); schOtChanged = false; } catch(e) {}
+}
+
+function renderOtSummary() {
+  const entries = schOtData.entries || [];
+  const summaryEl = document.getElementById('sch-ot-summary');
+  const listEl    = document.getElementById('sch-ot-summary-list');
+  if (!summaryEl || !listEl) return;
+
+  if (entries.length === 0) {
+    summaryEl.style.display = 'none';
+    return;
+  }
+  summaryEl.style.display = 'block';
+
+  let total = 0, used = 0;
+  entries.forEach(e => { if (e.type==='overtime') total += e.hours; else used += e.hours; });
+  const remain = total - used;
+
+  const totEl = document.getElementById('sch-ot-sum-total');
+  const useEl = document.getElementById('sch-ot-sum-used');
+  const remEl = document.getElementById('sch-ot-sum-remain');
+  if (totEl) totEl.textContent = total;
+  if (useEl) useEl.textContent = used;
+  if (remEl) { remEl.textContent = remain; remEl.style.color = remain < 0 ? '#c0392b' : 'var(--text)'; }
+
+  // 最近五筆記錄
+  const recent = entries.slice(-5).reverse();
+  listEl.innerHTML = '';
+  let runTotal = 0, runUsed = 0;
+  // 先算到每筆的累積餘額（從舊到新）
+  const withBalance = entries.map(e => {
+    if (e.type === 'overtime') runTotal += e.hours;
+    else runUsed += e.hours;
+    return { ...e, remain: runTotal - runUsed };
+  }).slice(-5).reverse();
+
+  withBalance.forEach(e => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:6px; padding:3px 0; font-size:11px; color:var(--text-sub); border-bottom:0.5px solid var(--hover);';
+    row.innerHTML = `
+      <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
+      <span style="color:var(--text-dim);">餘 <strong style="color:var(--text);">${e.remain}h</strong></span>
+    `;
+    listEl.appendChild(row);
+  });
 }
 
 window.openSchOvertimeModal = async function() {
