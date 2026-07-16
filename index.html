@@ -2735,36 +2735,61 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
  
       const isShared = currentLedger && currentLedger.type === 'shared';
       const needSettled = isShared && isExpense && item.payment !== '錢櫃';
-      const settledHtml = needSettled ? `
-        <div class="settled-check ${item.settled ? 'done' : ''}"
-          onclick="toggleSettled('${item.id}', ${!!item.settled})"
-          title="${item.settled ? '已結清' : '未結清'}">
-          ${item.settled ? '✓' : ''}
-        </div>` : '';
 
-      div.innerHTML = `
-        <div class="record-icon" title="${item.category || ''}">${catEmoji}</div>
-        <div class="record-body">
-          <div class="record-name">${item.name}</div>
-          <div class="record-meta">
-            <span>${item.date}</span>
-            ${payEmoji ? `<span class="pay-badge" title="${payLabel}">${payEmoji}</span>` : ''}
-            ${noteHtml}
-            ${prestoredHtml}
-          </div>
-        </div>
-        <div class="record-right" style="display:grid; grid-template-columns:22px 1fr; align-items:center; gap:6px;">
-          <div>${settledHtml}</div>
-          <div style="text-align:right;">
-            <div class="record-amount ${isExpense ? (needSettled && !item.settled ? 'amount-unsettled' : 'amount-expense') : 'amount-income'}">
-              ${isExpense ? '-' : '+'}$${item.amount.toLocaleString()}
-            </div>
-            <div class="record-actions">
-              <button class="tag-btn" onclick="openEditRecord('${item.id}')">編輯</button>
-            </div>
-          </div>
-        </div>
-      `;
+      // grid 欄位：[checkbox?] [icon] [body] [amount] [tag] [edit]
+      const cols = (needSettled ? '24px ' : '') + '32px 1fr 76px 52px 44px';
+      div.style.cssText = `display:grid; grid-template-columns:${cols}; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;`;
+      div.className = '';
+
+      // checkbox（共同帳本非錢櫃才有）
+      if (needSettled) {
+        const chk = document.createElement('div');
+        chk.className = 'settled-check' + (item.settled ? ' done' : '');
+        chk.title = item.settled ? '已結清' : '未結清';
+        chk.textContent = item.settled ? '✓' : '';
+        chk.onclick = () => toggleSettled(item.id, !!item.settled);
+        div.appendChild(chk);
+      }
+
+      // icon
+      const iconEl = document.createElement('div');
+      iconEl.style.cssText = 'font-size:1.2rem; text-align:center;';
+      iconEl.title = item.category || '';
+      iconEl.textContent = catEmoji;
+      div.appendChild(iconEl);
+
+      // body（名稱 + meta）
+      const bodyEl = document.createElement('div');
+      bodyEl.style.cssText = 'min-width:0;';
+      bodyEl.innerHTML = `<div style="font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+        <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px;">
+          <span>${item.date}</span>
+          ${payEmoji ? `<span class="pay-badge" title="${payLabel}">${payEmoji}</span>` : ''}
+          ${noteHtml}
+        </div>`;
+      div.appendChild(bodyEl);
+
+      // 金額
+      const amtEl = document.createElement('div');
+      amtEl.style.cssText = 'text-align:right; font-size:0.88rem; font-weight:500; white-space:nowrap;';
+      amtEl.className = isExpense ? (needSettled && !item.settled ? 'amount-unsettled' : 'amount-expense') : 'amount-income';
+      amtEl.textContent = (isExpense ? '-' : '+') + '$' + item.amount.toLocaleString();
+      div.appendChild(amtEl);
+
+      // 預存 tag
+      const tagEl = document.createElement('div');
+      tagEl.style.cssText = 'text-align:center;';
+      if (isExpense && isCreditCard) {
+        tagEl.innerHTML = `<span class="tag ${item.prestored ? 'tag-prestored' : ''}" onclick="togglePrestored('${item.id}', ${item.prestored})" style="font-size:0.7rem; white-space:nowrap; padding:2px 5px;">${item.prestored ? '✓已存' : '預存'}</span>`;
+      }
+      div.appendChild(tagEl);
+
+      // 編輯按鈕
+      const editEl = document.createElement('div');
+      editEl.style.cssText = 'text-align:center;';
+      editEl.innerHTML = `<button class="tag-btn" onclick="openEditRecord('${item.id}')" style="font-size:0.72rem; padding:2px 6px;">編輯</button>`;
+      div.appendChild(editEl);
+
       container.appendChild(div);
     });
  
