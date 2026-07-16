@@ -2056,9 +2056,10 @@ async function saveUserSettings() {
   }
  
   function getPaymentOptions() {
-    if (!currentLedger) return PAYMENT_PERSONAL;
-    if (currentLedger.type === 'shared') return PAYMENT_SHARED;
-    if (currentLedger.type === 'dad')    return PAYMENT_DAD;
+    const ledger = modalSelectedLedger || currentLedger;
+    if (!ledger) return PAYMENT_PERSONAL;
+    if (ledger.type === 'shared') return PAYMENT_SHARED;
+    if (ledger.type === 'dad')    return PAYMENT_DAD;
     return PAYMENT_PERSONAL;
   }
  
