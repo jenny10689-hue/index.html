@@ -2736,20 +2736,11 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const isShared = currentLedger && currentLedger.type === 'shared';
       const needSettled = isShared && isExpense && item.payment !== '錢櫃';
 
-      // grid 欄位：[checkbox?] [icon] [body] [amount] [tag] [edit]
-      const cols = (needSettled ? '24px ' : '') + '32px 1fr 76px 52px 44px';
+      // grid 欄位：icon > body > amount > [預存?] > [checkbox?] > edit
+      const showPrestored = isExpense && isCreditCard && !isShared;
+      const cols = '32px 1fr 76px ' + (showPrestored ? '52px ' : '') + (needSettled ? '24px ' : '') + '44px';
       div.style.cssText = `display:grid; grid-template-columns:${cols}; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;`;
       div.className = '';
-
-      // checkbox（共同帳本非錢櫃才有）
-      if (needSettled) {
-        const chk = document.createElement('div');
-        chk.className = 'settled-check' + (item.settled ? ' done' : '');
-        chk.title = item.settled ? '已結清' : '未結清';
-        chk.textContent = item.settled ? '✓' : '';
-        chk.onclick = () => toggleSettled(item.id, !!item.settled);
-        div.appendChild(chk);
-      }
 
       // icon
       const iconEl = document.createElement('div');
@@ -2776,13 +2767,23 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       amtEl.textContent = (isExpense ? '-' : '+') + '$' + item.amount.toLocaleString();
       div.appendChild(amtEl);
 
-      // 預存 tag
-      const tagEl = document.createElement('div');
-      tagEl.style.cssText = 'text-align:center;';
-      if (isExpense && isCreditCard) {
+      // 預存 tag（個人帳本信用卡才顯示）
+      if (showPrestored) {
+        const tagEl = document.createElement('div');
+        tagEl.style.cssText = 'text-align:center;';
         tagEl.innerHTML = `<span class="tag ${item.prestored ? 'tag-prestored' : ''}" onclick="togglePrestored('${item.id}', ${item.prestored})" style="font-size:0.7rem; white-space:nowrap; padding:2px 5px;">${item.prestored ? '✓已存' : '預存'}</span>`;
+        div.appendChild(tagEl);
       }
-      div.appendChild(tagEl);
+
+      // checkbox（共同帳本非錢櫃才有，放在編輯前）
+      if (needSettled) {
+        const chk = document.createElement('div');
+        chk.className = 'settled-check' + (item.settled ? ' done' : '');
+        chk.title = item.settled ? '已結清' : '未結清';
+        chk.textContent = item.settled ? '✓' : '';
+        chk.onclick = () => toggleSettled(item.id, !!item.settled);
+        div.appendChild(chk);
+      }
 
       // 編輯按鈕
       const editEl = document.createElement('div');
