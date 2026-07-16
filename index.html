@@ -2736,9 +2736,12 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const isShared = currentLedger && currentLedger.type === 'shared';
       const needSettled = isShared && isExpense && item.payment !== '錢櫃';
 
-      // grid 欄位固定：icon(32) | body(1fr) | amount(76) | prestored(52) | checkbox(24) | edit(44)
-      // 全部列用同樣欄位，留空格不影響對齊
-      div.style.cssText = 'display:grid; grid-template-columns:32px 1fr 76px 52px 24px 44px; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;';
+      // 個人帳本：icon | body | amount | prestored | edit
+      // 共同帳本：icon | body | amount | checkbox  | edit
+      const cols = isShared
+        ? '32px 1fr 76px 24px 44px'
+        : '32px 1fr 76px 52px 44px';
+      div.style.cssText = `display:grid; grid-template-columns:${cols}; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;`;
       div.className = '';
 
       // icon
@@ -2766,24 +2769,18 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       amtEl.textContent = (isExpense ? '-' : '+') + '$' + item.amount.toLocaleString();
       div.appendChild(amtEl);
 
-      // 預存（個人帳本信用卡才填，否則空白占位）
-      const tagEl = document.createElement('div');
-      tagEl.style.cssText = 'text-align:center;';
-      if (isExpense && isCreditCard && !isShared) {
-        tagEl.innerHTML = `<span class="tag ${item.prestored ? 'tag-prestored' : ''}" onclick="togglePrestored('${item.id}', ${item.prestored})" style="font-size:0.7rem; white-space:nowrap; padding:2px 5px;">${item.prestored ? '✓已存' : '預存'}</span>`;
+      // 第四欄：個人帳本放預存，共同帳本放 checkbox
+      const col4 = document.createElement('div');
+      col4.style.cssText = 'text-align:center;';
+      if (!isShared && isExpense && isCreditCard) {
+        col4.innerHTML = `<span class="tag ${item.prestored ? 'tag-prestored' : ''}" onclick="togglePrestored('${item.id}', ${item.prestored})" style="font-size:0.7rem; white-space:nowrap; padding:2px 5px;">${item.prestored ? '✓已存' : '預存'}</span>`;
+      } else if (needSettled) {
+        col4.className = 'settled-check' + (item.settled ? ' done' : '');
+        col4.title = item.settled ? '已結清' : '未結清';
+        col4.textContent = item.settled ? '✓' : '';
+        col4.onclick = () => toggleSettled(item.id, !!item.settled);
       }
-      div.appendChild(tagEl);
-
-      // checkbox（共同帳本非錢櫃才填，否則空白占位）
-      const chkEl = document.createElement('div');
-      chkEl.style.cssText = 'text-align:center;';
-      if (needSettled) {
-        chkEl.className = 'settled-check' + (item.settled ? ' done' : '');
-        chkEl.title = item.settled ? '已結清' : '未結清';
-        chkEl.textContent = item.settled ? '✓' : '';
-        chkEl.onclick = () => toggleSettled(item.id, !!item.settled);
-      }
-      div.appendChild(chkEl);
+      div.appendChild(col4);
 
       // 編輯
       const editEl = document.createElement('div');
