@@ -997,6 +997,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       .sch-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1rem; }
       .sch-btn { padding:8px; font-size:12px; border:0.5px solid var(--border); border-radius:8px; background:var(--card); color:var(--text-sub); cursor:pointer; }
       .sch-btn.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
+      #sch-overtime-modal { background: transparent; }
     </style>
 
     <div class="sch-month-nav">
@@ -4950,10 +4951,10 @@ function renderSchOtModal() {
   document.getElementById('sch-ot-remain').textContent = remain;
   const list = document.getElementById('sch-ot-list');
   if (list) {
-    list.innerHTML = entries.slice().reverse().map((e,i) => `
+    list.innerHTML = entries.map((e,i) => `
       <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px;">
         <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
-        <button onclick="confirmDeleteSchOtEntry(${entries.length-1-i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">×</button>
+        <button onclick="confirmDeleteSchOtEntry(${i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">×</button>
       </div>
     `).join('');
   }
