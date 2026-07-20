@@ -4971,9 +4971,9 @@ function renderSchOtModal() {
   const settleEl = document.getElementById('sch-ot-settlements');
   if (settleEl) {
     settleEl.innerHTML = settlements.length === 0 ? '' : settlements.map(s => `
-      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); padding:2px 0;">
-        <span>${s.date} 結算 ${s.hours}h</span>
-        <span>$${Number(s.amount).toLocaleString()}（${s.forMonth} 入帳）</span>
+      <div style="display:grid; grid-template-columns:1fr auto; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); padding:2px 0;">
+        <span>${s.date} 結算 ${s.hours}h → $${Number(s.amount).toLocaleString()}（${s.forMonth} 入帳）</span>
+        <button onclick="undoSchOtSettlement('${s.id}')" style="background:none; border:0.5px solid var(--border); border-radius:6px; color:var(--text-sub); cursor:pointer; font-size:10px; padding:2px 6px;">還原</button>
       </div>
     `).join('');
   }
@@ -5016,14 +5016,34 @@ window.settleSchOt = async function() {
   const nm = new Date(now.getFullYear(), now.getMonth()+1, 1);
   const forMonth = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}`;
 
-  entries.forEach(e => { if (!e.settled) e.settled = true; });
+  const settlementId = String(Date.now());
+  entries.forEach(e => { if (!e.settled) { e.settled = true; e.settlementId = settlementId; } });
   if (!schOtData.settlements) schOtData.settlements = [];
-  schOtData.settlements.push({ date: todayStr, hours: remain, amount, forMonth });
+  schOtData.settlements.push({ id: settlementId, date: todayStr, hours: remain, amount, forMonth });
   schOtChanged = true;
   await saveSchOtData();
   renderSchOtModal();
   renderOtSummary();
   alert(`已結算 ${remain} 小時、$${amount.toLocaleString()}，將計入 ${forMonth} 預估實領`);
+};
+
+window.undoSchOtSettlement = async function(settlementId) {
+  const settlement = (schOtData.settlements || []).find(s => s.id === settlementId);
+  if (!settlement) return;
+  if (!confirm(`確定要還原「${settlement.date} 結算 ${settlement.hours}h / $${settlement.amount}」嗎？這些記錄會恢復成未結算狀態。`)) return;
+
+  const entries = schOtData.entries || [];
+  entries.forEach(e => {
+    if (e.settlementId === settlementId) {
+      e.settled = false;
+      delete e.settlementId;
+    }
+  });
+  schOtData.settlements = (schOtData.settlements || []).filter(s => s.id !== settlementId);
+  schOtChanged = true;
+  await saveSchOtData();
+  renderSchOtModal();
+  renderOtSummary();
 };
 
 window.toggleSchOtType = function() {
