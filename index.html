@@ -1079,6 +1079,8 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div class="card" style="padding:10px;"><div id="sch-ot-used" style="font-size:18px; font-weight:500; color:#a05030;">0</div><div style="font-size:11px; color:var(--text-dim);">已補休(時)</div></div>
           <div class="card" style="padding:10px;"><div id="sch-ot-remain" style="font-size:18px; font-weight:500; color:var(--text);">0</div><div style="font-size:11px; color:var(--text-dim);">餘(時)</div></div>
         </div>
+        <button onclick="settleSchOt()" style="width:100%; padding:8px; border-radius:8px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:12px; margin-bottom:8px; cursor:pointer;">結算加班費（每季一次）</button>
+        <div id="sch-ot-settlements" style="margin-bottom:8px;"></div>
         <div id="sch-ot-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;"></div>
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
           <input type="date" id="sch-ot-date" class="input-sm" style="flex:1; min-width:0;">
@@ -4906,7 +4908,7 @@ function renderOtSummary() {
   summaryEl.style.display = 'block';
 
   let total = 0, used = 0;
-  entries.forEach(e => { if (e.type==='overtime') total += e.hours; else used += e.hours; });
+  entries.forEach(e => { if (e.settled) return; if (e.type==='overtime') total += e.hours; else used += e.hours; });
   const remain = total - used;
 
   const totEl = document.getElementById('sch-ot-sum-total');
@@ -4951,7 +4953,7 @@ window.closeSchOvertimeModal = function() {
 function renderSchOtModal() {
   const entries = schOtData.entries || [];
   let total = 0, used = 0;
-  entries.forEach(e => { if (e.type==='overtime') total += e.hours; else used += e.hours; });
+  entries.forEach(e => { if (e.settled) return; if (e.type==='overtime') total += e.hours; else used += e.hours; });
   const remain = total - used;
   document.getElementById('sch-ot-total').textContent = total;
   document.getElementById('sch-ot-used').textContent = used;
@@ -4959,13 +4961,70 @@ function renderSchOtModal() {
   const list = document.getElementById('sch-ot-list');
   if (list) {
     list.innerHTML = entries.map((e,i) => `
-      <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px;">
-        <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
+      <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px; ${e.settled ? 'opacity:0.5;' : ''}">
+        <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h${e.settled ? ' <span style=\'color:var(--text-dim);\'>(已結算)</span>' : ''}</span>
         <button onclick="confirmDeleteSchOtEntry(${i})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:4px 6px;">×</button>
       </div>
     `).join('');
   }
+  const settlements = schOtData.settlements || [];
+  const settleEl = document.getElementById('sch-ot-settlements');
+  if (settleEl) {
+    settleEl.innerHTML = settlements.length === 0 ? '' : settlements.map(s => `
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); padding:2px 0;">
+        <span>${s.date} 結算 ${s.hours}h</span>
+        <span>$${Number(s.amount).toLocaleString()}（${s.forMonth} 入帳）</span>
+      </div>
+    `).join('');
+  }
 }
+
+function calcOtSettlementPay(hours) {
+  const now = new Date();
+  const totalWorkDays = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const salary = appSettings.salary || 0;
+  const dailyWage = totalWorkDays > 0 ? Math.round(salary / totalWorkDays) : 0;
+  const hourly = dailyWage / 8;
+  let pay;
+  if (hours <= 2) {
+    pay = hourly * hours * (4/3);
+  } else {
+    pay = hourly * 2 * (4/3) + hourly * (hours - 2) * (5/3);
+  }
+  return Math.round(pay);
+}
+
+window.settleSchOt = async function() {
+  const entries = schOtData.entries || [];
+  let total = 0, used = 0;
+  entries.forEach(e => {
+    if (e.settled) return;
+    if (e.type === 'overtime') total += e.hours;
+    else used += e.hours;
+  });
+  const remain = total - used;
+  if (remain <= 0) { alert('目前沒有加班餘額可以結算'); return; }
+
+  const suggested = calcOtSettlementPay(remain);
+  const input = prompt(`結算 ${remain} 小時加班，估算金額 $${suggested}（可修改，照薪資單為準）`, suggested);
+  if (input === null) return;
+  const amount = Number(input);
+  if (!amount || amount <= 0) { alert('請輸入有效金額'); return; }
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const nm = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const forMonth = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}`;
+
+  entries.forEach(e => { if (!e.settled) e.settled = true; });
+  if (!schOtData.settlements) schOtData.settlements = [];
+  schOtData.settlements.push({ date: todayStr, hours: remain, amount, forMonth });
+  schOtChanged = true;
+  await saveSchOtData();
+  renderSchOtModal();
+  renderOtSummary();
+  alert(`已結算 ${remain} 小時、$${amount.toLocaleString()}，將計入 ${forMonth} 預估實領`);
+};
 
 window.toggleSchOtType = function() {
   schOtType = schOtType === 'overtime' ? 'compensatory' : 'overtime';
@@ -4987,7 +5046,7 @@ window.addSchOtEntry = async function() {
   const date = document.getElementById('sch-ot-date')?.value;
   if (!date) { alert('請選擇日期'); return; }
   if (!schOtData.entries) schOtData.entries = [];
-  schOtData.entries.push({ date, type: schOtType, hours: schOtHours });
+  schOtData.entries.push({ date, type: schOtType, hours: schOtHours, settled: false });
   schOtChanged = true;
   await saveSchOtData();
   renderSchOtModal();
