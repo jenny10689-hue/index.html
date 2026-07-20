@@ -1043,6 +1043,14 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       </div>
     </div>
 
+    <div class="sch-wage-card" id="sch-payroll-card">
+      <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:12px; color:var(--text-sub); flex-shrink:0; width:56px;">勞健保</span>
+        <input type="number" id="sch-insurance-input" class="input-sm" placeholder="輸入本月金額" onchange="saveSchInsurance(this.value)" style="flex:1;">
+      </div>
+    </div>
+
     <div class="sch-btn-row">
       <button class="sch-btn" onclick="openSchLeaveModal()">請假</button>
       <button class="sch-btn" onclick="openSchOvertimeModal()">加班補休</button>
@@ -4706,6 +4714,7 @@ let schLeaveType = 'personal';
 let schLeaveHours = 8;
 let schLeavePayRate = 100;
 let schLeaveChanged = false;
+let schInsuranceData = { byMonth: {} };
 let schDataChanged = false;
 let schModalDraft = {};
 const SCH_DEFAULT_TIMES = { early: { start:'07:00', end:'15:30' }, late: { start:'14:30', end:'23:00' } };
@@ -4747,6 +4756,7 @@ function initSchedulePage() {
   }
   loadSchData();
   loadSchOtData();
+  loadSchInsuranceData();
   initSchGoogleAuth();
   // 初始化鎖定 UI
   const toggle = document.getElementById('sch-lock-toggle');
@@ -4845,6 +4855,7 @@ function renderSchedule() {
   if (dwEl) dwEl.textContent = `$${dailyWage.toLocaleString()}`;
   if (eeEl) eeEl.textContent = `$${earned.toLocaleString()}`;
   renderOtSummary();
+  renderSchInsurance();
 }
 
 async function cycleSchShift(dateStr, el) {
@@ -5140,6 +5151,46 @@ window.deleteSchLeaveEntry = async function(i) {
   schLeaveData.entries.splice(i, 1);
   await saveSchLeaveData();
   renderSchLeaveModal();
+};
+
+// 勞健保
+function schCurrentMonthKey() {
+  return `${schYear}-${String(schMonth+1).padStart(2,'0')}`;
+}
+
+async function loadSchInsuranceData() {
+  try {
+    const snap = await getDoc(doc(db, 'payroll', 'insurance'));
+    schInsuranceData = snap.exists() ? snap.data() : { byMonth: {} };
+  } catch(e) { console.error('勞健保讀取失敗', e); }
+  renderSchInsurance();
+}
+
+function renderSchInsurance() {
+  const input = document.getElementById('sch-insurance-input');
+  if (!input) return;
+  const byMonth = schInsuranceData.byMonth || {};
+  const key = schCurrentMonthKey();
+  if (byMonth[key] !== undefined) {
+    input.value = byMonth[key];
+    return;
+  }
+  // 本月還沒填，找最近一次有填過的月份當預設值
+  const keys = Object.keys(byMonth).filter(k => byMonth[k] !== undefined && byMonth[k] !== null).sort();
+  if (keys.length > 0) {
+    input.value = byMonth[keys[keys.length - 1]];
+  } else {
+    input.value = '';
+  }
+}
+
+window.saveSchInsurance = async function(value) {
+  const amount = Number(value) || 0;
+  if (!schInsuranceData.byMonth) schInsuranceData.byMonth = {};
+  schInsuranceData.byMonth[schCurrentMonthKey()] = amount;
+  try {
+    await setDoc(doc(db, 'payroll', 'insurance'), schInsuranceData);
+  } catch(e) { console.error('勞健保儲存失敗', e); alert('勞健保金額儲存失敗，請檢查網路後再試一次'); }
 };
 
 // 自訂時間
