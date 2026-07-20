@@ -994,7 +994,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       .sch-wage-item { text-align:center; }
       .sch-wage-num { font-size:18px; font-weight:500; color:var(--accent); }
       .sch-wage-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
-      .sch-btn-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:1rem; }
+      .sch-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1rem; }
       .sch-btn { padding:8px; font-size:12px; border:0.5px solid var(--border); border-radius:8px; background:var(--card); color:var(--text-sub); cursor:pointer; }
       .sch-btn.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
     </style>
@@ -1044,9 +1044,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     </div>
 
     <div class="sch-btn-row">
+      <button class="sch-btn" onclick="openSchLeaveModal()">請假</button>
       <button class="sch-btn" onclick="openSchOvertimeModal()">加班補休</button>
       <button class="sch-btn" onclick="openSchCustomTimeModal()">自訂時間</button>
-      <button class="sch-btn primary" onclick="syncSchToGoogle()">傳送班表</button>
+      <button class="sch-btn primary" onclick="syncSchToGoogle()" style="grid-column:1 / -1;">傳送班表</button>
     </div>
 
 
@@ -1071,6 +1072,43 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <button onclick="adjustSchOtHours(0.5)" style="width:28px; height:28px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:16px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">＋</button>
           <button onclick="addSchOtEntry()" style="padding:6px 12px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; flex-shrink:0;">新增</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 請假 Modal -->
+    <div id="sch-leave-modal" class="modal-overlay" onclick="if(event.target===this)closeSchLeaveModal()" style="display:none;">
+      <div class="modal-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:14px; font-weight:500;">請假記錄</div>
+          <button onclick="closeSchLeaveModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-dim);">×</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; text-align:center;">
+          <div class="card" style="padding:10px;"><div id="sch-leave-hours-total" style="font-size:16px; font-weight:500; color:var(--text);">0</div><div style="font-size:11px; color:var(--text-dim);">本月請假(h)</div></div>
+          <div class="card" style="padding:10px;"><div id="sch-leave-pay-total" style="font-size:16px; font-weight:500; color:#c0392b;">$0</div><div style="font-size:11px; color:var(--text-dim);">估算扣薪</div></div>
+          <div class="card" style="padding:10px;"><div id="sch-leave-attend-total" style="font-size:16px; font-weight:500; color:var(--text);">$0</div><div style="font-size:11px; color:var(--text-dim);">全勤扣款</div></div>
+        </div>
+        <div id="sch-leave-list" style="margin-bottom:12px; max-height:200px; overflow-y:auto;"></div>
+
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">新增一筆</div>
+        <input type="date" id="sch-leave-date" class="input-sm" style="width:100%; margin-bottom:8px; box-sizing:border-box;">
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <button id="sch-leave-type-personal" onclick="selectSchLeaveType('personal')" style="flex:1; padding:7px; border-radius:16px; border:none; font-size:12px; cursor:pointer;">事假</button>
+          <button id="sch-leave-type-sick" onclick="selectSchLeaveType('sick')" style="flex:1; padding:7px; border-radius:16px; border:none; font-size:12px; cursor:pointer;">病假</button>
+          <button id="sch-leave-type-period" onclick="selectSchLeaveType('period')" style="flex:1; padding:7px; border-radius:16px; border:none; font-size:12px; cursor:pointer;">生理假</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
+          <span style="font-size:12px; color:var(--text-sub); flex-shrink:0;">時數</span>
+          <button onclick="adjustSchLeaveHours(-0.5)" style="width:26px; height:26px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:15px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">−</button>
+          <span id="sch-leave-hours" style="min-width:22px; text-align:center; font-size:13px; font-weight:500; color:var(--text); flex-shrink:0;">8</span>
+          <button onclick="adjustSchLeaveHours(0.5)" style="width:26px; height:26px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:15px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center;">＋</button>
+          <span style="margin-left:auto; font-size:12px; color:var(--text-sub); flex-shrink:0;">扣款</span>
+          <button id="sch-leave-payrate-btn" onclick="toggleSchLeavePayRate()" style="padding:5px 10px; border-radius:14px; border:none; font-size:11px; font-weight:700; cursor:pointer; flex-shrink:0;">全扣</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+          <span style="font-size:12px; color:var(--text-sub); flex-shrink:0;">全勤扣款</span>
+          <input type="number" id="sch-leave-attend" class="input-sm" placeholder="下月看薪資單再填" style="flex:1;">
+        </div>
+        <button onclick="addSchLeaveEntry()" style="width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:var(--accent-text); font-size:13px; font-weight:500; cursor:pointer;">新增</button>
       </div>
     </div>
 
@@ -4663,6 +4701,11 @@ let schOtData = { entries: [] };
 let schOtType = 'overtime';
 let schOtHours = 1;
 let schOtChanged = false;
+let schLeaveData = { entries: [] };
+let schLeaveType = 'personal';
+let schLeaveHours = 8;
+let schLeavePayRate = 100;
+let schLeaveChanged = false;
 let schDataChanged = false;
 let schModalDraft = {};
 const SCH_DEFAULT_TIMES = { early: { start:'07:00', end:'15:30' }, late: { start:'14:30', end:'23:00' } };
@@ -4944,6 +4987,159 @@ window.deleteSchOtEntry = async function(i) {
   schOtData.entries.splice(i, 1);
   await saveSchOtData();
   renderSchOtModal();
+};
+
+// 請假記錄
+const SCH_LEAVE_TYPES = {
+  personal: { label: '事假', defaultRate: 100 },
+  sick:     { label: '病假', defaultRate: 50 },
+  period:   { label: '生理假', defaultRate: 50 }
+};
+
+async function loadSchLeaveData() {
+  try {
+    const snap = await getDoc(doc(db, 'leave', 'balance'));
+    schLeaveData = snap.exists() ? snap.data() : { entries: [] };
+  } catch(e) {}
+}
+
+async function saveSchLeaveData() {
+  try { await setDoc(doc(db, 'leave', 'balance'), schLeaveData); schLeaveChanged = false; } catch(e) {}
+}
+
+function schCurrentDailyWage() {
+  const totalWorkDays = new Date(schYear, schMonth+1, 0).getDate();
+  const salary = appSettings.salary || 0;
+  return totalWorkDays > 0 ? Math.round(salary / totalWorkDays) : 0;
+}
+
+window.openSchLeaveModal = async function() {
+  await loadSchLeaveData();
+  schLeaveType = 'personal';
+  schLeaveHours = 8;
+  schLeavePayRate = SCH_LEAVE_TYPES.personal.defaultRate;
+  updateSchLeaveTypeButtons();
+  updateSchLeavePayRateBtn();
+  const hoursEl = document.getElementById('sch-leave-hours');
+  if (hoursEl) hoursEl.textContent = schLeaveHours;
+  const attendEl = document.getElementById('sch-leave-attend');
+  if (attendEl) attendEl.value = '';
+  renderSchLeaveModal();
+  document.getElementById('sch-leave-modal').style.display = 'flex';
+};
+
+window.closeSchLeaveModal = function() {
+  document.getElementById('sch-leave-modal').style.display = 'none';
+};
+
+function renderSchLeaveModal() {
+  const entries = schLeaveData.entries || [];
+  const monthPrefix = `${schYear}-${String(schMonth+1).padStart(2,'0')}`;
+  const monthEntries = entries.filter(e => e.date && e.date.startsWith(monthPrefix));
+
+  let hoursTotal = 0, payTotal = 0, attendTotal = 0;
+  monthEntries.forEach(e => {
+    hoursTotal += e.hours || 0;
+    payTotal += e.estAmount || 0;
+    attendTotal += e.attendDeduction || 0;
+  });
+
+  const hEl = document.getElementById('sch-leave-hours-total');
+  const pEl = document.getElementById('sch-leave-pay-total');
+  const aEl = document.getElementById('sch-leave-attend-total');
+  if (hEl) hEl.textContent = hoursTotal;
+  if (pEl) pEl.textContent = `$${Math.round(payTotal).toLocaleString()}`;
+  if (aEl) aEl.textContent = `$${Math.round(attendTotal).toLocaleString()}`;
+
+  const list = document.getElementById('sch-leave-list');
+  if (list) {
+    list.innerHTML = monthEntries.map((e) => {
+      const idx = entries.indexOf(e);
+      const typeInfo = SCH_LEAVE_TYPES[e.type] || { label: e.type };
+      const rateLabel = e.payRate === 100 ? '全扣' : e.payRate === 0 ? '全薪' : '半薪';
+      return `
+      <div style="display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; padding:6px 0; border-bottom:0.5px solid var(--border); font-size:12px;">
+        <span>${e.date} <span style="color:#a05030;">${typeInfo.label}</span> ${e.hours}h ${rateLabel}${e.attendDeduction ? ` 全勤扣$${e.attendDeduction}` : ''}</span>
+        <span style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#c0392b;">扣$${Math.round(e.estAmount||0).toLocaleString()}</span>
+          <button onclick="confirmDeleteSchLeaveEntry(${idx})" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:2px 4px;">×</button>
+        </span>
+      </div>`;
+    }).join('');
+  }
+}
+
+window.selectSchLeaveType = function(type) {
+  schLeaveType = type;
+  schLeavePayRate = SCH_LEAVE_TYPES[type].defaultRate;
+  updateSchLeaveTypeButtons();
+  updateSchLeavePayRateBtn();
+};
+
+function updateSchLeaveTypeButtons() {
+  Object.keys(SCH_LEAVE_TYPES).forEach(key => {
+    const btn = document.getElementById(`sch-leave-type-${key}`);
+    if (!btn) return;
+    const active = key === schLeaveType;
+    btn.style.background = active ? '#F9D3BE' : '#e8e6df';
+    btn.style.color = active ? '#a05030' : '#5f5e5a';
+    btn.style.fontWeight = active ? '700' : '400';
+  });
+}
+
+window.toggleSchLeavePayRate = function() {
+  schLeavePayRate = schLeavePayRate === 100 ? 50 : schLeavePayRate === 50 ? 0 : 100;
+  updateSchLeavePayRateBtn();
+};
+
+function updateSchLeavePayRateBtn() {
+  const btn = document.getElementById('sch-leave-payrate-btn');
+  if (!btn) return;
+  const label = schLeavePayRate === 100 ? '全扣' : schLeavePayRate === 0 ? '全薪' : '半薪';
+  btn.textContent = label;
+  btn.style.background = schLeavePayRate === 100 ? '#F9D3BE' : schLeavePayRate === 0 ? '#b8deca' : '#f0e0c8';
+  btn.style.color = schLeavePayRate === 100 ? '#a05030' : schLeavePayRate === 0 ? '#3a7a58' : '#8a6a1f';
+}
+
+window.adjustSchLeaveHours = function(delta) {
+  schLeaveHours = Math.max(0.5, Math.round((schLeaveHours + delta) * 2) / 2);
+  const el = document.getElementById('sch-leave-hours');
+  if (el) el.textContent = schLeaveHours;
+};
+
+window.addSchLeaveEntry = async function() {
+  const date = document.getElementById('sch-leave-date')?.value;
+  if (!date) { alert('請選擇日期'); return; }
+  const attendInput = document.getElementById('sch-leave-attend');
+  const attendDeduction = Number(attendInput?.value) || 0;
+  const dailyWage = schCurrentDailyWage();
+  const hourlyWage = dailyWage / 8;
+  const estAmount = Math.round(hourlyWage * schLeaveHours * (schLeavePayRate / 100));
+
+  if (!schLeaveData.entries) schLeaveData.entries = [];
+  schLeaveData.entries.push({
+    date, type: schLeaveType, hours: schLeaveHours,
+    payRate: schLeavePayRate, estAmount, attendDeduction
+  });
+  schLeaveChanged = true;
+  await saveSchLeaveData();
+  if (attendInput) attendInput.value = '';
+  renderSchLeaveModal();
+};
+
+window.confirmDeleteSchLeaveEntry = function(i) {
+  const entry = schLeaveData.entries[i];
+  if (!entry) return;
+  const typeInfo = SCH_LEAVE_TYPES[entry.type] || { label: entry.type };
+  if (confirm(`確定要刪除「${entry.date} ${typeInfo.label} ${entry.hours}小時」嗎？`)) {
+    deleteSchLeaveEntry(i);
+  }
+};
+
+window.deleteSchLeaveEntry = async function(i) {
+  schLeaveData.entries.splice(i, 1);
+  await saveSchLeaveData();
+  renderSchLeaveModal();
 };
 
 // 自訂時間
