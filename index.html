@@ -204,6 +204,13 @@
         max-width: 90vw !important;
         max-height: 85vh !important;
       }
+      #sch-overtime-modal { align-items: flex-end !important; }
+      #sch-overtime-modal .modal-sheet {
+        border-radius: 16px 16px 0 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 90vh !important;
+      }
     }
  
     /* 從底部滑入 */
@@ -4918,7 +4925,7 @@ function renderOtSummary() {
     if (e.type === 'overtime') runTotal += e.hours;
     else runUsed += e.hours;
     return { ...e, remain: runTotal - runUsed };
-  }).slice(-5).reverse();
+  }).slice(-5);
 
   withBalance.forEach(e => {
     const row = document.createElement('div');
