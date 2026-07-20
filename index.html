@@ -1057,6 +1057,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <span style="font-size:12px; color:var(--text-sub); flex-shrink:0; width:56px;">勞健保</span>
         <input type="number" id="sch-insurance-input" class="input-sm" placeholder="輸入本月金額" onchange="saveSchInsurance(this.value)" style="flex:1;">
       </div>
+      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:baseline;">
+        <span style="font-size:12px; color:var(--text-sub);">預估實領</span>
+        <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent);">$0</span>
+      </div>
     </div>
 
     <div class="sch-btn-row">
@@ -4767,6 +4771,7 @@ function initSchedulePage() {
   loadSchData();
   loadSchOtData();
   loadSchInsuranceData();
+  loadSchLeaveData();
   initSchGoogleAuth();
   // 初始化鎖定 UI
   const toggle = document.getElementById('sch-lock-toggle');
@@ -4866,6 +4871,37 @@ function renderSchedule() {
   if (eeEl) eeEl.textContent = `$${earned.toLocaleString()}`;
   renderOtSummary();
   renderSchInsurance();
+  renderSchTakeHome();
+}
+
+function renderSchTakeHome() {
+  const el = document.getElementById('sch-takehome-amount');
+  if (!el) return;
+  const monthKey = schCurrentMonthKey();
+  const salary = appSettings.salary || 0;
+
+  const byMonth = (schInsuranceData && schInsuranceData.byMonth) || {};
+  let insurance = byMonth[monthKey];
+  if (insurance === undefined) {
+    const keys = Object.keys(byMonth).filter(k => byMonth[k] !== undefined && byMonth[k] !== null).sort();
+    insurance = keys.length > 0 ? byMonth[keys[keys.length - 1]] : 0;
+  }
+
+  const leaveEntries = (schLeaveData && schLeaveData.entries) || [];
+  let leaveDeduct = 0, attendDeduct = 0;
+  leaveEntries.forEach(e => {
+    if (e.date && e.date.startsWith(monthKey)) {
+      leaveDeduct += e.estAmount || 0;
+      attendDeduct += e.attendDeduction || 0;
+    }
+  });
+
+  const settlements = (schOtData && schOtData.settlements) || [];
+  let otIncome = 0;
+  settlements.forEach(s => { if (s.forMonth === monthKey) otIncome += s.amount || 0; });
+
+  const takeHome = Math.round(salary - insurance - leaveDeduct - attendDeduct + otIncome);
+  el.textContent = `$${takeHome.toLocaleString()}`;
 }
 
 async function cycleSchShift(dateStr, el) {
@@ -4889,6 +4925,7 @@ async function loadSchOtData() {
     schOtData = snap.exists() ? snap.data() : { entries: [] };
   } catch(e) {}
   renderOtSummary();
+  renderSchTakeHome();
 }
 
 async function saveSchOtData() {
@@ -5024,6 +5061,7 @@ window.settleSchOt = async function() {
   await saveSchOtData();
   renderSchOtModal();
   renderOtSummary();
+  renderSchTakeHome();
   alert(`已結算 ${remain} 小時、$${amount.toLocaleString()}，將計入 ${forMonth} 預估實領`);
 };
 
@@ -5044,6 +5082,7 @@ window.undoSchOtSettlement = async function(settlementId) {
   await saveSchOtData();
   renderSchOtModal();
   renderOtSummary();
+  renderSchTakeHome();
 };
 
 window.toggleSchOtType = function() {
@@ -5099,6 +5138,7 @@ async function loadSchLeaveData() {
     const snap = await getDoc(doc(db, 'leave', 'balance'));
     schLeaveData = snap.exists() ? snap.data() : { entries: [] };
   } catch(e) {}
+  renderSchTakeHome();
 }
 
 async function saveSchLeaveData() {
@@ -5223,6 +5263,7 @@ window.addSchLeaveEntry = async function() {
   await saveSchLeaveData();
   if (attendInput) attendInput.value = '';
   renderSchLeaveModal();
+  renderSchTakeHome();
 };
 
 window.confirmDeleteSchLeaveEntry = function(i) {
@@ -5238,6 +5279,7 @@ window.deleteSchLeaveEntry = async function(i) {
   schLeaveData.entries.splice(i, 1);
   await saveSchLeaveData();
   renderSchLeaveModal();
+  renderSchTakeHome();
 };
 
 // 勞健保
@@ -5251,6 +5293,7 @@ async function loadSchInsuranceData() {
     schInsuranceData = snap.exists() ? snap.data() : { byMonth: {} };
   } catch(e) { console.error('勞健保讀取失敗', e); }
   renderSchInsurance();
+  renderSchTakeHome();
 }
 
 function renderSchInsurance() {
@@ -5278,6 +5321,7 @@ window.saveSchInsurance = async function(value) {
   try {
     await setDoc(doc(db, 'payroll', 'insurance'), schInsuranceData);
   } catch(e) { console.error('勞健保儲存失敗', e); alert('勞健保金額儲存失敗，請檢查網路後再試一次'); }
+  renderSchTakeHome();
 };
 
 // 自訂時間
