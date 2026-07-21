@@ -1057,9 +1057,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <span style="font-size:12px; color:var(--text-sub); flex-shrink:0; width:56px;">勞健保</span>
         <input type="number" id="sch-insurance-input" class="input-sm" placeholder="輸入本月金額" onchange="saveSchInsurance(this.value)" style="flex:1;">
       </div>
-      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:flex; justify-content:space-between; align-items:baseline;">
-        <span style="font-size:12px; color:var(--text-sub);">預估實領</span>
-        <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent);">$0</span>
+      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:12px; color:var(--text-sub);">預估實領</span>
+          <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent);">$0</span>
+        </div>
+        <div id="sch-takehome-formula" style="font-size:11px; color:var(--text-dim); margin-top:2px; text-align:right;"></div>
       </div>
     </div>
 
@@ -4902,6 +4905,16 @@ function renderSchTakeHome() {
 
   const takeHome = Math.round(salary - insurance - leaveDeduct - attendDeduct + otIncome);
   el.textContent = `$${takeHome.toLocaleString()}`;
+
+  const formulaEl = document.getElementById('sch-takehome-formula');
+  if (formulaEl) {
+    const parts = [`月薪$${Math.round(salary).toLocaleString()}`];
+    if (insurance) parts.push(`−勞健保$${Math.round(insurance).toLocaleString()}`);
+    if (leaveDeduct) parts.push(`−請假$${Math.round(leaveDeduct).toLocaleString()}`);
+    if (attendDeduct) parts.push(`−全勤$${Math.round(attendDeduct).toLocaleString()}`);
+    if (otIncome) parts.push(`+加班$${Math.round(otIncome).toLocaleString()}`);
+    formulaEl.textContent = parts.join(' ');
+  }
 }
 
 async function cycleSchShift(dateStr, el) {
