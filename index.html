@@ -536,19 +536,14 @@ body { background-color: var(--bg); color: var(--text); }
   #page-cc-summary [style*="font-size:0.68rem"] { font-size: 9pt !important; }
 }
 
-/* 簡約勾選框：白底黑勾 */
-input[type=checkbox].cc-check {
-  appearance: none; -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border: 1.5px solid #000; border-radius: 3px;
-  background: #fff; position: relative; cursor: pointer; margin: 0;
+/* 信用卡勾選框：跟共同帳本結清勾選框同款，但顏色跟隨主題色 */
+.cc-check-box {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid var(--border); cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--card); font-size: 11px;
 }
-input[type=checkbox].cc-check:checked::after {
-  content: ''; position: absolute; left: 4px; top: 1px;
-  width: 4px; height: 8px;
-  border: solid #000; border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
+.cc-check-box.checked { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 
   </style>
 </head>
@@ -3189,7 +3184,7 @@ renderReconcile(reconcileId, total, showSaved);
           <span onclick="openEditRecord('${r.id}')" style="font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;">${r.date.slice(5).replace('-','/')}　${r.name}</span>
           <span class="amount-expense" onclick="openEditRecord('${r.id}')" style="font-size:0.82rem; text-align:right; cursor:pointer;">$${r.amount.toLocaleString()}</span>
           <span style="display:flex; justify-content:center;">
-            <input type="checkbox" class="cc-check" ${r.prestored ? 'checked' : ''} onchange="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})">
+            <span class="cc-check-box ${r.prestored ? 'checked' : ''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})">${r.prestored ? '\u2713' : ''}</span>
           </span>
         </div>
       `).join('');
