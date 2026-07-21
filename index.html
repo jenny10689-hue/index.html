@@ -2877,16 +2877,13 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
  
       const div = document.createElement('div');
 
-      const noteHtml = item.note
-        ? `<span style="cursor:pointer;" onclick="event.stopPropagation(); var s=this.nextElementSibling;s.style.display=s.style.display==='none'?'inline':'none';">📝</span><span style="display:none; font-size:0.75rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${item.note}</span>` : '';
- 
       const isShared = isSharedLedger;
       const needSettled = isShared && isExpense && item.payment !== '錢櫃';
 
       div.style.cssText = `display:grid; grid-template-columns:${listCols}; align-items:center; gap:6px; padding:0.5rem 0; border-bottom:1px solid #f1efe8;`;
       div.className = '';
 
-      // icon
+      // icon（點這裡才開編輯）
       const iconEl = document.createElement('div');
       iconEl.style.cssText = 'font-size:1.2rem; text-align:center; cursor:pointer;';
       iconEl.title = item.category || '';
@@ -2894,25 +2891,31 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       iconEl.onclick = () => openEditRecord(item.id);
       div.appendChild(iconEl);
 
-      // body
+      // body（點這裡切換顯示付款方式+備註，兩個綁在一起）
       const bodyEl = document.createElement('div');
       bodyEl.style.cssText = 'min-width:0; cursor:pointer;';
-      bodyEl.onclick = () => openEditRecord(item.id);
       const shortDate = item.date.slice(5).replace('-','/');
       bodyEl.innerHTML = `<div style="font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
-        <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px; flex-wrap:wrap;">
+        <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px;">
           <span>${shortDate}</span>
-          ${payEmoji ? `<span class="pay-badge" style="cursor:pointer;" onclick="event.stopPropagation(); var s=this.nextElementSibling;s.style.display=s.style.display==='none'?'inline':'none';">${payEmoji}</span><span style="display:none; font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px; margin-left:2px;">${payLabel}</span>` : ''}
-          ${noteHtml}
+          ${payEmoji ? `<span>${payEmoji}</span>` : ''}
+          ${item.note ? `<span>📝</span>` : ''}
+        </div>
+        <div class="rec-detail" style="display:none; flex-wrap:wrap; gap:4px; margin-top:2px;">
+          ${item.payment ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${payLabel}</span>` : ''}
+          ${item.note ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${item.note}</span>` : ''}
         </div>`;
+      bodyEl.onclick = () => {
+        const d = bodyEl.querySelector('.rec-detail');
+        if (d) d.style.display = d.style.display === 'none' ? 'flex' : 'none';
+      };
       div.appendChild(bodyEl);
 
       // 金額
       const amtEl = document.createElement('div');
-      amtEl.style.cssText = 'text-align:right; font-size:0.88rem; font-weight:500; white-space:nowrap; cursor:pointer;';
+      amtEl.style.cssText = 'text-align:right; font-size:0.88rem; font-weight:500; white-space:nowrap;';
       amtEl.className = isExpense ? (needSettled && !item.settled ? 'amount-unsettled' : 'amount-expense') : 'amount-income';
       amtEl.textContent = (isExpense ? '-' : '+') + '$' + item.amount.toLocaleString();
-      amtEl.onclick = () => openEditRecord(item.id);
       div.appendChild(amtEl);
 
       // 第四欄：個人帳本放預存(勾選框)，共同帳本放結清(勾選框)
