@@ -530,6 +530,10 @@ body { background-color: var(--bg); color: var(--text); }
   [style*="font-size:0.8rem"]  { font-size: 11.4pt !important; }
   [style*="font-size:13px"]    { font-size: 11.6pt !important; }
   [style*="font-size:0.82rem"] { font-size: 11.8pt !important; }
+
+  /* 信用卡頁面記錄列表：全站規則會把 0.82rem/0.68rem 拉到 11.8pt/10.2pt，這裡太密集顯得過大，縮小一點 */
+  #page-cc-summary [style*="font-size:0.82rem"] { font-size: 10pt !important; }
+  #page-cc-summary [style*="font-size:0.68rem"] { font-size: 9pt !important; }
 }
 
   </style>
