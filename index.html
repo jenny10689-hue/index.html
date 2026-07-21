@@ -536,6 +536,20 @@ body { background-color: var(--bg); color: var(--text); }
   #page-cc-summary [style*="font-size:0.68rem"] { font-size: 9pt !important; }
 }
 
+/* 簡約勾選框：白底黑勾 */
+input[type=checkbox].cc-check {
+  appearance: none; -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 1.5px solid #000; border-radius: 3px;
+  background: #fff; position: relative; cursor: pointer; margin: 0;
+}
+input[type=checkbox].cc-check:checked::after {
+  content: ''; position: absolute; left: 4px; top: 1px;
+  width: 4px; height: 8px;
+  border: solid #000; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
   </style>
 </head>
 <body>
@@ -3179,7 +3193,7 @@ renderReconcile(reconcileId, total, showSaved);
           <span class="amount-expense" style="font-size:0.82rem; text-align:right;">$${r.amount.toLocaleString()}</span>
           <span style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
             <span style="width:32px; display:flex; justify-content:center;">
-              <input type="checkbox" ${r.prestored ? 'checked' : ''} onchange="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
+              <input type="checkbox" class="cc-check" ${r.prestored ? 'checked' : ''} onchange="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})">
             </span>
             <span onclick="openEditRecord('${r.id}')" style="width:32px; display:flex; justify-content:center; cursor:pointer;">
               <i class="ti ti-tool" aria-hidden="true" style="font-size:15px; color:#000;"></i>
