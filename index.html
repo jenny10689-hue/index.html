@@ -5,12 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Iansui&display=swap">
+<style>
+  @import url("https://fontsapi.zeoseven.com/303/main/result.css");
+  @font-face {
+    font-family: 'cwTeXYen';
+    font-style: normal;
+    font-weight: 500;
+    src: url(https://fonts.gstatic.com/ea/cwtexyen/v3/cwTeXYen-zhonly.woff2) format('woff2'),
+         url(https://fonts.gstatic.com/ea/cwtexyen/v3/cwTeXYen-zhonly.woff) format('woff'),
+         url(https://fonts.gstatic.com/ea/cwtexyen/v3/cwTeXYen-zhonly.ttf) format('truetype');
+  }
+</style>
   <title>我的記帳本</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
  
     body {
-      font-family: sans-serif;
+      font-family: var(--font-family, sans-serif);
       background-color: #f1efe8;
       color: #2c2c2a;
       min-height: 100vh;
@@ -238,7 +250,7 @@
     .input-sm {
       flex: 1; padding: 0.45rem 0.65rem; font-size: 0.9rem;
       border: 1px solid #d3d1c7; border-radius: 8px;
-      background: #f1efe8; color: #2c2c2a; outline: none; font-family: sans-serif;
+      background: #f1efe8; color: #2c2c2a; outline: none; font-family: var(--font-family, sans-serif);
     }
     .input-sm:focus { border-color: #888780; background: #fff; }
     textarea.input-sm { resize: vertical; min-height: 56px; }
@@ -435,7 +447,7 @@ button:hover { background: var(--hover); }
     }
   /* 配色主題 */
 :root {
-  --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff;
+  --bg: #f1efe8; --sidebar: #ffffff; --card: #ffffff; --font-family: sans-serif;
   --border: #d3d1c7; --text: #2c2c2a; --text-sub: #5f5e5a;
   --text-dim: #888780; --hover: #f1efe8; --input-bg: #f1efe8; --accent-text: #ffffff;
   --accent: #444441; --accent2: #2c2c2a;
@@ -873,6 +885,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <button class="btn-primary" onclick="saveSettingsSalary()" style="width:100%; margin-top:1rem;">儲存</button>
   </div>
 
+  <!-- 字體設定子頁 -->
+  <div id="page-settings-font" class="container" style="display:none;">
+    <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>字體設定</h1></div>
+    <div class="card settings-card" id="font-settings-list"></div>
+  </div>
+
   <!-- 信用卡週期子頁 -->
   <div id="page-settings-cc" class="container" style="display:none;">
     <div class="page-title-row"><button class="btn-back" onclick="showPage('settings')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>信用卡週期</h1></div>
@@ -1195,6 +1213,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       </div>
       <div class="settings-row" onclick="showPage('category-manage')" style="cursor:pointer;">
         <div class="settings-row-label">支出分類管理</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">›</div>
+      </div>
+      <div class="settings-row" onclick="showPage('font-settings')" style="cursor:pointer;">
+        <div class="settings-row-label">字體設定</div>
         <div class="settings-row-right" style="color:var(--text-dim);">›</div>
       </div>
     </div>
@@ -1668,6 +1690,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       await loadAppSettings();
       await loadPageColors();
       await loadFavColors();
+      await loadFontSetting();
       loadLedgers();
     } else {
       document.getElementById('login-screen').style.display = 'flex';
@@ -1796,6 +1819,10 @@ if (currentLedger && currentLedger.type === 'dad') {
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
       loadSchInsuranceData();
+    } else if (page === 'font-settings') {
+      document.getElementById('page-settings-font').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      renderFontSettingsList();
     } else if (page === 'settings-cc') {
       document.getElementById('page-settings-cc').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -4743,6 +4770,50 @@ window.goBack = function() {
 
 let schYear, schMonth, schData = {};
 let schLocked = true;
+let appFontKey = 'system';
+const FONT_OPTIONS = {
+  system:   { label: '系統預設',   stack: 'sans-serif' },
+  iansui:   { label: '芫荽體',     stack: "'Iansui', sans-serif" },
+  gensen:   { label: '源泉圓體',   stack: "'GenSenRounded2 TC', sans-serif" },
+  cwtexyen: { label: '圓體',       stack: "'cwTeXYen', sans-serif" },
+  jhenghei: { label: '微軟正黑體', stack: "'Microsoft JhengHei', sans-serif" }
+};
+
+function applyFontSetting(key) {
+  const opt = FONT_OPTIONS[key] || FONT_OPTIONS.system;
+  document.documentElement.style.setProperty('--font-family', opt.stack);
+}
+
+async function loadFontSetting() {
+  try {
+    const snap = await getDoc(doc(db, 'appearance', 'font'));
+    appFontKey = snap.exists() ? (snap.data().key || 'system') : 'system';
+  } catch(e) { appFontKey = 'system'; }
+  applyFontSetting(appFontKey);
+}
+
+function renderFontSettingsList() {
+  const el = document.getElementById('font-settings-list');
+  if (!el) return;
+  el.innerHTML = Object.keys(FONT_OPTIONS).map(key => {
+    const opt = FONT_OPTIONS[key];
+    const active = key === appFontKey;
+    return `
+      <div class="settings-row" onclick="selectFontOption('${key}')" style="cursor:pointer;">
+        <div class="settings-row-label" style="font-family:${opt.stack};">${opt.label}</div>
+        <div class="settings-row-right" style="color:var(--accent);">${active ? '<i class=\"ti ti-check\" aria-hidden=\"true\"></i>' : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+window.selectFontOption = async function(key) {
+  appFontKey = key;
+  applyFontSetting(key);
+  renderFontSettingsList();
+  try {
+    await setDoc(doc(db, 'appearance', 'font'), { key });
+  } catch(e) { console.error('字體設定儲存失敗', e); alert('字體設定儲存失敗，請檢查網路後再試一次'); }
+};
 let schOtData = { entries: [] };
 let schOtType = 'overtime';
 let schOtHours = 1;
