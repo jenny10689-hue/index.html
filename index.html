@@ -3164,16 +3164,30 @@ renderReconcile(reconcileId, total, showSaved);
     function renderRecRows(recs) {
       if (recs.length === 0) return '<div style="font-size:0.78rem; color:var(--text-dim); padding:0.5rem 0;">無記錄</div>';
       const sorted = [...recs].sort((a,b) => b.date.localeCompare(a.date) || (b.createdAt||0) - (a.createdAt||0));
-      return sorted.map(r => `
+      const header = `
+        <div style="display:grid; grid-template-columns:1fr 64px 88px; align-items:center; padding:0 0 4px; gap:4px; font-size:0.68rem; color:var(--text-dim); border-bottom:0.5px solid var(--border); margin-bottom:2px;">
+          <span></span>
+          <span></span>
+          <span style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
+            <span style="width:32px; text-align:center;">預存</span>
+            <span style="width:32px; text-align:center;">編輯</span>
+          </span>
+        </div>`;
+      const rows = sorted.map(r => `
         <div style="display:grid; grid-template-columns:1fr 64px 88px; align-items:center; padding:0.4rem 0; border-bottom:0.5px solid var(--border); gap:4px;">
           <span style="font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.date.slice(5).replace('-','/')}　${r.name}</span>
           <span class="amount-expense" style="font-size:0.82rem; text-align:right;">$${r.amount.toLocaleString()}</span>
           <span style="display:flex; align-items:center; gap:4px; justify-content:flex-end;">
-            <span class="tag ${r.prestored?'tag-prestored':''}" onclick="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="font-size:0.68rem; min-width:40px; text-align:center;">${r.prestored ? '✓已存' : '預存'}</span>
-            <span onclick="openEditRecord('${r.id}')" style="font-size:0.68rem; cursor:pointer; color:var(--text-dim); padding:2px 6px; border:0.5px solid var(--border); border-radius:4px;">編輯</span>
+            <span style="width:32px; display:flex; justify-content:center;">
+              <input type="checkbox" ${r.prestored ? 'checked' : ''} onchange="togglePrestoredCC('${r.id}','${r.ledgerId}',${r.prestored})" style="width:16px; height:16px; cursor:pointer; accent-color:var(--accent);">
+            </span>
+            <span onclick="openEditRecord('${r.id}')" style="width:32px; display:flex; justify-content:center; cursor:pointer;">
+              <i class="ti ti-tool" aria-hidden="true" style="font-size:15px; color:#000;"></i>
+            </span>
           </span>
         </div>
       `).join('');
+      return header + rows;
     }
 
     // 手機：Tab 切換；電腦：左右兩欄
