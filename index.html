@@ -849,6 +849,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
+      <div class="settings-row">
+        <div class="settings-row-label">勞健保（本月）</div>
+        <div class="settings-row-right">
+          $ <input type="number" id="sch-insurance-input" class="settings-input-sm" placeholder="0" onchange="saveSchInsurance(this.value)" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
+        </div>
+      </div>
     </div>
     <button class="btn-primary" onclick="saveSettingsSalary()" style="width:100%; margin-top:1rem;">儲存</button>
   </div>
@@ -967,6 +973,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <button class="btn-back" onclick="schGoBack()" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
       <h1>📅 班表管理</h1>
       <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+        <button onclick="showPage('settings-salary')" aria-label="薪水設定" style="width:26px; height:26px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">⚙️</button>
         <button onclick="openSchCustomTimeModal()" style="padding:4px 10px; border-radius:14px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">自訂時間</button>
         <button onclick="syncSchToGoogle()" style="padding:4px 10px; border-radius:14px; border:none; background:var(--accent); color:var(--accent-text); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">傳送班表</button>
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--text-dim); flex-shrink:0;">
@@ -1001,7 +1008,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       .sch-stat-num { font-size:20px; font-weight:500; color:var(--text); }
       .sch-stat-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
       .sch-wage-card { background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
-      .sch-wage-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .sch-wage-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
       .sch-wage-item { text-align:center; }
       .sch-wage-num { font-size:18px; font-weight:500; color:var(--accent); }
       .sch-wage-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
@@ -1009,6 +1016,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       .sch-btn { padding:8px; font-size:12px; border:0.5px solid var(--border); border-radius:8px; background:var(--card); color:var(--text-sub); cursor:pointer; }
       .sch-btn.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
       #sch-overtime-modal { background: transparent; }
+      #sch-overtime-modal .modal-sheet { background: var(--card); box-shadow: 0 -4px 20px rgba(0,0,0,0.15); }
     </style>
 
     <div class="sch-month-nav">
@@ -1035,6 +1043,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <div class="sch-wage-card">
       <div class="sch-wage-row">
         <div class="sch-wage-item">
+          <div class="sch-wage-num" id="sch-ot-remain-summary">0h</div>
+          <div class="sch-wage-lbl">加班剩餘</div>
+        </div>
+        <div class="sch-wage-item">
           <div class="sch-wage-num" id="sch-daily-wage">$0</div>
           <div class="sch-wage-lbl">日薪</div>
         </div>
@@ -1043,25 +1055,11 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div class="sch-wage-lbl">本月已賺 🎉</div>
         </div>
       </div>
-      <!-- 加班補休摘要 -->
-      <div id="sch-ot-summary" style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:none;">
-        <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">加班補休記錄</div>
-        <div id="sch-ot-summary-list"></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:8px; text-align:center; font-size:11px;">
-          <div style="color:var(--text-dim);">加班累積<br><strong style="color:#3a7a58; font-size:13px;" id="sch-ot-sum-total">0</strong>h</div>
-          <div style="color:var(--text-dim);">已補休<br><strong style="color:#a05030; font-size:13px;" id="sch-ot-sum-used">0</strong>h</div>
-          <div style="color:var(--text-dim);">餘<br><strong style="color:var(--text); font-size:13px;" id="sch-ot-sum-remain">0</strong>h</div>
-        </div>
-      </div>
     </div>
 
     <div class="sch-wage-card" id="sch-payroll-card">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:12px; color:var(--text-sub); flex-shrink:0; width:56px;">勞健保</span>
-        <input type="number" id="sch-insurance-input" class="input-sm" placeholder="輸入本月金額" onchange="saveSchInsurance(this.value)" style="flex:1;">
-      </div>
-      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:flex; align-items:baseline; gap:6px;">
+      <div style="display:flex; align-items:baseline; gap:6px;">
         <span style="font-size:12px; color:var(--text-sub); flex-shrink:0;">預估實領</span>
         <span id="sch-takehome-formula" style="font-size:11px; color:var(--text-dim); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
         <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent); flex-shrink:0;">$0</span>
@@ -1775,6 +1773,7 @@ if (currentLedger && currentLedger.type === 'dad') {
       const sl = document.getElementById('set-salary');
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
+      loadSchInsuranceData();
     } else if (page === 'settings-cc') {
       document.getElementById('page-settings-cc').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -4947,47 +4946,13 @@ async function saveSchOtData() {
 
 function renderOtSummary() {
   const entries = schOtData.entries || [];
-  const summaryEl = document.getElementById('sch-ot-summary');
-  const listEl    = document.getElementById('sch-ot-summary-list');
-  if (!summaryEl || !listEl) return;
-
-  if (entries.length === 0) {
-    summaryEl.style.display = 'none';
-    return;
-  }
-  summaryEl.style.display = 'block';
-
+  const el = document.getElementById('sch-ot-remain-summary');
+  if (!el) return;
   let total = 0, used = 0;
   entries.forEach(e => { if (e.settled) return; if (e.type==='overtime') total += e.hours; else used += e.hours; });
   const remain = total - used;
-
-  const totEl = document.getElementById('sch-ot-sum-total');
-  const useEl = document.getElementById('sch-ot-sum-used');
-  const remEl = document.getElementById('sch-ot-sum-remain');
-  if (totEl) totEl.textContent = total;
-  if (useEl) useEl.textContent = used;
-  if (remEl) { remEl.textContent = remain; remEl.style.color = remain < 0 ? '#c0392b' : 'var(--text)'; }
-
-  // 最近五筆記錄
-  const recent = entries.slice(-5).reverse();
-  listEl.innerHTML = '';
-  let runTotal = 0, runUsed = 0;
-  // 先算到每筆的累積餘額（從舊到新）
-  const withBalance = entries.map(e => {
-    if (e.type === 'overtime') runTotal += e.hours;
-    else runUsed += e.hours;
-    return { ...e, remain: runTotal - runUsed };
-  }).slice(-5);
-
-  withBalance.forEach(e => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:6px; padding:3px 0; font-size:11px; color:var(--text-sub); border-bottom:0.5px solid var(--hover);';
-    row.innerHTML = `
-      <span>${e.date} <span style="color:${e.type==='overtime'?'#3a7a58':'#a05030'};">${e.type==='overtime'?'加班':'補休'}</span> ${e.hours}h</span>
-      <span style="color:var(--text-dim);">餘 <strong style="color:var(--text);">${e.remain}h</strong></span>
-    `;
-    listEl.appendChild(row);
-  });
+  el.textContent = `${remain}h`;
+  el.style.color = remain < 0 ? '#c0392b' : 'var(--accent)';
 }
 
 window.openSchOvertimeModal = async function() {
@@ -5297,7 +5262,9 @@ window.deleteSchLeaveEntry = async function(i) {
 
 // 勞健保
 function schCurrentMonthKey() {
-  return `${schYear}-${String(schMonth+1).padStart(2,'0')}`;
+  const y = schYear || new Date().getFullYear();
+  const m = (schMonth !== undefined && schMonth !== null) ? schMonth : new Date().getMonth();
+  return `${y}-${String(m+1).padStart(2,'0')}`;
 }
 
 async function loadSchInsuranceData() {
