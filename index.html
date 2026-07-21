@@ -966,12 +966,16 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <div class="page-title-row">
       <button class="btn-back" onclick="schGoBack()" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
       <h1>📅 班表管理</h1>
-      <label style="display:flex; align-items:center; gap:6px; margin-left:auto; cursor:pointer; font-size:12px; color:var(--text-dim);">
-        <span id="sch-lock-label">已鎖定</span>
-        <div id="sch-lock-toggle" onclick="toggleSchLock()" style="width:36px; height:20px; border-radius:10px; background:var(--accent); position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;">
-          <div id="sch-lock-knob" style="width:16px; height:16px; border-radius:50%; background:#fff; position:absolute; top:2px; left:18px; transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-        </div>
-      </label>
+      <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
+        <button onclick="openSchCustomTimeModal()" style="padding:4px 10px; border-radius:14px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">自訂時間</button>
+        <button onclick="syncSchToGoogle()" style="padding:4px 10px; border-radius:14px; border:none; background:var(--accent); color:var(--accent-text); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">傳送班表</button>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--text-dim); flex-shrink:0;">
+          <span id="sch-lock-label">已鎖定</span>
+          <div id="sch-lock-toggle" onclick="toggleSchLock()" style="width:36px; height:20px; border-radius:10px; background:var(--accent); position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;">
+            <div id="sch-lock-knob" style="width:16px; height:16px; border-radius:50%; background:#fff; position:absolute; top:2px; left:18px; transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+          </div>
+        </label>
+      </div>
     </div>
 
     <style>
@@ -1057,20 +1061,15 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <span style="font-size:12px; color:var(--text-sub); flex-shrink:0; width:56px;">勞健保</span>
         <input type="number" id="sch-insurance-input" class="input-sm" placeholder="輸入本月金額" onchange="saveSchInsurance(this.value)" style="flex:1;">
       </div>
-      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border);">
-        <div style="display:flex; justify-content:space-between; align-items:baseline;">
-          <span style="font-size:12px; color:var(--text-sub);">預估實領</span>
-          <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent);">$0</span>
-        </div>
-        <div id="sch-takehome-formula" style="font-size:11px; color:var(--text-dim); margin-top:2px; text-align:right;"></div>
+      <div style="margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); display:flex; align-items:baseline; gap:6px;">
+        <span style="font-size:12px; color:var(--text-sub); flex-shrink:0;">預估實領</span>
+        <span id="sch-takehome-formula" style="font-size:11px; color:var(--text-dim); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+        <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent); flex-shrink:0;">$0</span>
       </div>
-    </div>
-
-    <div class="sch-btn-row">
-      <button class="sch-btn" onclick="openSchLeaveModal()">請假</button>
-      <button class="sch-btn" onclick="openSchOvertimeModal()">加班補休</button>
-      <button class="sch-btn" onclick="openSchCustomTimeModal()">自訂時間</button>
-      <button class="sch-btn primary" onclick="syncSchToGoogle()" style="grid-column:1 / -1;">傳送班表</button>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+        <button class="sch-btn" onclick="openSchLeaveModal()">請假</button>
+        <button class="sch-btn" onclick="openSchOvertimeModal()">加班補休</button>
+      </div>
     </div>
 
 
