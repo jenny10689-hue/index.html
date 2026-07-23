@@ -1448,9 +1448,9 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       <!-- 計算：股價 × 股數 = 成本 -->
       <div class="form-row-compact">
         <span class="form-label">計算</span>
-        <input type="number" class="input-sm" id="stock-price"  placeholder="股價" step="0.01" style="width:80px; flex:none;">
-        <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">×</span>
         <input type="number" class="input-sm" id="stock-shares" placeholder="股數" style="width:80px; flex:none;">
+        <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">×</span>
+        <input type="number" class="input-sm" id="stock-price"  placeholder="股價" step="0.01" style="width:80px; flex:none;">
         <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">=</span>
 <div style="background:var(--input-bg); border-radius:8px; padding:0.45rem 0.75rem; font-size:0.88rem; color:var(--text-sub); white-space:nowrap; flex:1; text-align:center;">
           <strong style="color:var(--text);">$<span id="stock-cost-display">0</span></strong>
@@ -3550,8 +3550,8 @@ const table = document.createElement('table');
           <tr style="color:#888780; font-size:0.75rem;">
             <th style="text-align:left; padding:0.3rem 0.25rem; width:85px;">日期</th>
             <th style="text-align:left; padding:0.3rem 0.25rem; width:35px;">歸屬</th>
-            <th style="text-align:right; padding:0.3rem 0.25rem; width:50px;">股價</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:35px;">股數</th>
+            <th style="text-align:right; padding:0.3rem 0.25rem; width:50px;">股價</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">成本</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">拿取</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:40px;"></th>
@@ -3564,8 +3564,8 @@ const table = document.createElement('table');
         tr.innerHTML = `
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border);">${r.date}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); color:var(--text-dim);">${r.owner === 'qian' ? '我' : '爸爸'}</td>
-          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.price}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">${r.shares}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.price}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${Math.ceil(r.cost).toLocaleString()}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.taken.toLocaleString()}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">
