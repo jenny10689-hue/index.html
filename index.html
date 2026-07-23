@@ -2619,6 +2619,7 @@ window.openAddRecord = function() {
       deleteRecord(editingRecordId);
     }
     closeRecordModal();
+    refreshCCIfVisible();
   };
  
   window.submitRecord = async function() {
@@ -2651,6 +2652,7 @@ window.openAddRecord = function() {
     }
  
     closeRecordModal();
+    refreshCCIfVisible();
   };
  
  
@@ -2701,6 +2703,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       }
     }
     closeConfirmModal();
+    refreshCCIfVisible();
   };
  
  
@@ -3114,7 +3117,7 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
           </div>
           <div class="cc-recon-field">
             <label>現金預存</label>
-            <input type="number" placeholder="輸入金額"
+            <input type="number" placeholder="輸入金額" step="100"
               value="${cash}"
               onchange="saveReconcile('${reconcileId}','cash',this.value)">
           </div>
@@ -3126,6 +3129,13 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
     `;
   }
  
+  function refreshCCIfVisible() {
+    const ccPage = document.getElementById('page-cc-summary');
+    if (ccPage && ccPage.style.display !== 'none') {
+      renderCCSummary();
+    }
+  }
+
   async function renderCCSummary() {
     await loadReconcileData();
  
