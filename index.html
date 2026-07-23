@@ -1632,6 +1632,12 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     { name:'家用品', emoji:'🧴' },
     { name:'旅遊', emoji:'✈️' },
   ];
+
+  // 爸爸帳本支出分類
+  let dadExpenseCategories = [
+    { name:'股票', emoji:'💹' },
+    { name:'電話費', emoji:'📞' },
+  ];
  
   // 支付方式
   const PAYMENT_PERSONAL = [
@@ -1965,21 +1971,25 @@ async function updateLedgerUI() {
     const isValid = (arr) =>
       Array.isArray(arr) && arr.length > 0 && arr[0].name && arr[0].emoji;
  
+    let currentLedgerCats;
     if (currentLedger.type === 'shared') {
-      expenseCategories = isValid(currentLedger.expenseCategories)
+      sharedExpenseCategories = isValid(currentLedger.expenseCategories)
         ? currentLedger.expenseCategories : defaultShared;
+      currentLedgerCats = sharedExpenseCategories;
     } else if (currentLedger.type === 'dad') {
-      expenseCategories = isValid(currentLedger.expenseCategories)
+      dadExpenseCategories = isValid(currentLedger.expenseCategories)
         ? currentLedger.expenseCategories : defaultDad;
+      currentLedgerCats = dadExpenseCategories;
     } else {
       expenseCategories = isValid(currentLedger.expenseCategories)
         ? currentLedger.expenseCategories : defaultPersonal;
+      currentLedgerCats = expenseCategories;
     }
  
-    // 如果帳本還沒有分類，自動存一份進去
+    // 如果帳本還沒有分類，自動存一份進去（存到該帳本自己的分類，不會互相污染）
     if (!isValid(currentLedger.expenseCategories)) {
-      await updateDoc(doc(db,'ledgers',currentLedgerId), { expenseCategories });
-      currentLedger.expenseCategories = expenseCategories;
+      await updateDoc(doc(db,'ledgers',currentLedgerId), { expenseCategories: currentLedgerCats });
+      currentLedger.expenseCategories = currentLedgerCats;
     }
  
     // 常用支出改成每個帳本各自獨立
@@ -2126,6 +2136,7 @@ async function saveUserSettings() {
     const ledger = modalSelectedLedger || currentLedger;
     if (currentType === 'income') return incomeCategories;
     if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
+    if (ledger && ledger.type === 'dad') return dadExpenseCategories;
     return expenseCategories;
   }
  
@@ -2244,7 +2255,7 @@ async function saveUserSettings() {
   }
  
   function getCatEmoji(catName) {
-    const all = [...expenseCategories, ...incomeCategories, ...sharedExpenseCategories];
+    const all = [...expenseCategories, ...incomeCategories, ...sharedExpenseCategories, ...dadExpenseCategories];
     const found = all.find(c => c.name === catName);
     return found ? found.emoji : '📌';
   }
@@ -2832,8 +2843,9 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     const container = document.getElementById('filter-buttons');
     container.innerHTML = '';
  
-    const cats = currentLedger && currentLedger.type === 'shared'
-      ? sharedExpenseCategories : expenseCategories;
+    const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
+      : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
+      : expenseCategories;
  
     const select = document.createElement('select');
     select.style.cssText = 'flex:1; padding:0.35rem 0.6rem; font-size:0.88rem; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text); outline:none;';
@@ -2974,8 +2986,9 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
  
   function renderPieChart() {
     const expenseRecords = records.filter(r => r.type === 'expense');
-    const cats = currentLedger && currentLedger.type === 'shared'
-      ? sharedExpenseCategories : expenseCategories;
+    const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
+      : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
+      : expenseCategories;
  
     const data = {};
     cats.forEach(c => { data[c.name] = 0; });
