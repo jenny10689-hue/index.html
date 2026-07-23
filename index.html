@@ -3545,32 +3545,31 @@ window.openCategoryModalFromRecord = function() {
       // 明細表格
 const table = document.createElement('table');
       table.style.cssText = 'width:100%; table-layout:fixed; font-size:0.82rem; border-collapse:collapse;';
+      const showOwner = stockView === 'combined';
       table.innerHTML = `
         <thead>
           <tr style="color:#888780; font-size:0.75rem;">
-            <th style="text-align:left; padding:0.3rem 0.25rem; width:85px;">日期</th>
-            <th style="text-align:left; padding:0.3rem 0.25rem; width:35px;">歸屬</th>
+            <th style="text-align:left; padding:0.3rem 0.25rem; width:60px;">日期</th>
+            ${showOwner ? '<th style="text-align:left; padding:0.3rem 0.25rem; width:35px;">歸屬</th>' : ''}
             <th style="text-align:right; padding:0.3rem 0.25rem; width:35px;">股數</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:50px;">股價</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">成本</th>
             <th style="text-align:right; padding:0.3rem 0.25rem; width:65px;">拿取</th>
-            <th style="text-align:right; padding:0.3rem 0.25rem; width:40px;"></th>
           </tr>
         </thead>
       `;
       const tbody = document.createElement('tbody');
       records.forEach(function(r) {
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => openEditStockFromTable(r.id);
         tr.innerHTML = `
-          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border);">${r.date}</td>
-          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); color:var(--text-dim);">${r.owner === 'qian' ? '我' : '爸爸'}</td>
+          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border);">${r.date.slice(5).replace('-','/')}</td>
+          ${showOwner ? `<td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); color:var(--text-dim);">${r.owner === 'qian' ? '我' : '爸爸'}</td>` : ''}
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">${r.shares}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.price}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${Math.ceil(r.cost).toLocaleString()}</td>
           <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">$${r.taken.toLocaleString()}</td>
-          <td style="padding:0.35rem 0.25rem; border-bottom:1px solid var(--border); text-align:right;">
-            <button class="tag-btn" onclick="openEditStockFromTable('${r.id}')">編輯</button>
-          </td>
         `;
         tbody.appendChild(tr);
       });
