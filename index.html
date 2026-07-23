@@ -2530,11 +2530,7 @@ window.openAddRecord = function() {
     editingRecordId = null;
     deletingRecordSource = null;
  
-    if (currentLedger && (currentLedger.type === 'personal' || currentLedger.type === 'shared')) {
-      modalSelectedLedger = currentLedger;
-    } else {
-      modalSelectedLedger = ledgers.find(l => l.type === 'personal') || currentLedger;
-    }
+    modalSelectedLedger = currentLedger || ledgers.find(l => l.type === 'personal');
  
     document.getElementById('ledger-switch-arrows').style.display = 'flex';
     renderModalLedgerTitle();
@@ -2570,7 +2566,7 @@ window.openAddRecord = function() {
   }
  
   window.switchModalLedger = function(direction) {
-    const switchable = ledgers.filter(l => l.type === 'personal' || l.type === 'shared');
+    const switchable = ledgers.filter(l => l.type === 'personal' || l.type === 'shared' || l.type === 'dad');
     if (switchable.length < 2) return;
     let idx = switchable.findIndex(l => l.id === modalSelectedLedger?.id);
     if (idx === -1) idx = 0;
