@@ -1237,6 +1237,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <!-- 開發者筆記 -->
     <div class="settings-section-label">開發者筆記</div>
     <div class="card settings-card">
+      <div style="display:flex; gap:6px; padding:10px 14px 0;">
+        <button id="dev-note-tab-pending" onclick="switchDevNoteTab('pending')" style="flex:1; padding:6px; border-radius:14px; border:none; background:var(--accent); color:var(--accent-text); font-size:12px; cursor:pointer;">待處理</button>
+        <button id="dev-note-tab-done" onclick="switchDevNoteTab('done')" style="flex:1; padding:6px; border-radius:14px; border:none; background:transparent; color:var(--text-sub); font-size:12px; cursor:pointer;">已完成</button>
+      </div>
       <div id="dev-notes-list"></div>
       <div class="settings-row" onclick="openDevNoteEdit(-1)" style="cursor:pointer; color:var(--text-dim);">
         <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
@@ -4651,6 +4655,7 @@ window.handleColorPickerOverlay = function(e) {
 // ===========================
 
 let editingNoteIndex = -1;
+let devNoteTab = 'pending';
 
 function renderSettingsPage() {
   // 帶入當前設定值
@@ -4707,11 +4712,14 @@ function renderDevNotesList() {
   const list = document.getElementById('dev-notes-list');
   if (!list) return;
   const notes = appSettings.devNotes || [];
-  if (notes.length === 0) {
-    list.innerHTML = '<div style="font-size:12px; color:var(--text-dim); padding:10px 14px;">尚無筆記</div>';
+  const filtered = notes
+    .map((note, i) => ({ note, i }))
+    .filter(x => devNoteTab === 'done' ? x.note.done : !x.note.done);
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="font-size:12px; color:var(--text-dim); padding:10px 14px;">${devNoteTab === 'done' ? '尚無已完成項目' : '尚無待處理項目'}</div>`;
     return;
   }
-  list.innerHTML = notes.map((note, i) => `
+  list.innerHTML = filtered.map(({note, i}) => `
     <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:0.5px solid var(--hover);">
       <div onclick="toggleDevNote(${i})" style="width:17px; height:17px; border-radius:4px; border:1.5px solid ${note.done ? '#444441' : '#d3d1c7'}; background:${note.done ? '#444441' : 'transparent'}; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:10px;">${note.done ? '✓' : ''}</div>
       <div style="flex:1; font-size:12px; color:${note.done ? '#b4b2a9' : 'var(--text-sub)'}; text-decoration:${note.done ? 'line-through' : 'none'}; cursor:pointer;" onclick="openDevNoteEdit(${i})">${note.text}</div>
@@ -4719,6 +4727,21 @@ function renderDevNotesList() {
     </div>
   `).join('');
 }
+
+window.switchDevNoteTab = function(tab) {
+  devNoteTab = tab;
+  const pendingBtn = document.getElementById('dev-note-tab-pending');
+  const doneBtn = document.getElementById('dev-note-tab-done');
+  if (pendingBtn) {
+    pendingBtn.style.background = tab === 'pending' ? 'var(--accent)' : 'transparent';
+    pendingBtn.style.color = tab === 'pending' ? 'var(--accent-text)' : 'var(--text-sub)';
+  }
+  if (doneBtn) {
+    doneBtn.style.background = tab === 'done' ? 'var(--accent)' : 'transparent';
+    doneBtn.style.color = tab === 'done' ? 'var(--accent-text)' : 'var(--text-sub)';
+  }
+  renderDevNotesList();
+};
 
 window.toggleDevNote = async function(i) {
   const notes = appSettings.devNotes || [];
