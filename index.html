@@ -1434,9 +1434,9 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       </div>
  
       <!-- 股票 -->
-      <div>
-        <div style="font-size:0.8rem; color:#888780; margin-bottom:0.4rem;">股票</div>
-        <select id="stock-target" class="input-sm" style="width:100%;"></select>
+      <div style="display:grid; grid-template-columns:36px 1fr; align-items:center; gap:0.5rem; min-width:0;">
+        <span style="font-size:0.8rem; color:#888780;">股票</span>
+        <select id="stock-target" class="input-sm" style="width:100%; min-width:0;"></select>
       </div>
  
       <!-- 日期 -->
@@ -1447,7 +1447,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
  
       <!-- 計算：股數 × 股價 = 成本 -->
       <div class="form-row-compact" style="min-width:0;">
-        <span class="form-label" style="flex-shrink:0;">計算</span>
+        <span class="form-label" style="flex-shrink:0; width:32px;">計算</span>
         <input type="number" class="input-sm" id="stock-shares" placeholder="股數" style="flex:1; min-width:0;">
         <span style="font-size:0.9rem; color:#888780; flex-shrink:0;">×</span>
         <input type="number" class="input-sm" id="stock-price"  placeholder="股價" step="0.01" style="flex:1; min-width:0;">
