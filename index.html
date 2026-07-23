@@ -48,7 +48,6 @@
  
     #sidebar.collapsed { width: 56px; padding: 1rem 0.5rem; }
     #sidebar.collapsed #sidebar-logo-text,
-    #sidebar.collapsed #sidebar-user,
     #sidebar.collapsed .sidebar-label,
     #sidebar.collapsed h2 { display: none; }
     #sidebar.collapsed .sidebar-item { padding: 0.6rem; justify-content: center; }
@@ -57,7 +56,6 @@
     #sidebar-logo { font-size: 1.1rem; font-weight: 500; color: #2c2c2a; white-space: nowrap; }
     #toggle-sidebar { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #888780; padding: 0.2rem 0.4rem; flex-shrink: 0; }
     #toggle-sidebar:hover { color: #2c2c2a; background: none; }
-    #sidebar-user { font-size: 0.8rem; color: #888780; padding: 0.25rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #sidebar h2 { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.05em; margin: 0.75rem 0 0.3rem; padding-left: 0.5rem; white-space: nowrap; }
  
     .sidebar-item {
@@ -425,7 +423,6 @@ button:hover { background: var(--hover); }
       }
  
       /* 使用者名稱和選單項目預設隱藏，展開才顯示 */
-      #sidebar-user { width: 100%; padding: 0.5rem 0.25rem 0.25rem; }
       #sidebar h2 { padding-left: 0.25rem; }
  
       .sidebar-item {
@@ -572,7 +569,6 @@ body { background-color: var(--bg); color: var(--text); }
     <div id="sidebar-logo">💰 <span id="sidebar-logo-text">記帳本</span></div>
     <button id="toggle-sidebar" onclick="toggleSidebar()">☰</button>
   </div>
-  <div id="sidebar-user"></div>
   <h2>帳本</h2>
   <button class="sidebar-item" id="btn-home" onclick="showPage('home')"><span class="sidebar-icon">🏠</span><span class="sidebar-label">首頁</span></button>
   <div id="ledger-menu"></div>
@@ -1719,7 +1715,6 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       document.getElementById('sidebar').style.display = 'flex';
       document.getElementById('main').style.display = 'block';
       document.getElementById('fab').style.display = 'flex';
-      document.getElementById('sidebar-user').textContent = '👤 ' + currentName;
       const suBottom = document.getElementById('sidebar-user-bottom');
       if (suBottom) suBottom.textContent = '👤 ' + currentName;
  
