@@ -894,6 +894,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           $ <input type="number" id="sch-insurance-input" class="settings-input-sm" placeholder="0" onchange="saveSchInsurance(this.value)" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
+      <div class="settings-row">
+        <div class="settings-row-label">全勤（本月）</div>
+        <div class="settings-row-right">
+          $ <input type="number" id="sch-attendance-input" class="settings-input-sm" placeholder="0" onchange="saveSchAttendance(this.value)" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
+        </div>
+      </div>
     </div>
     <button class="btn-primary" onclick="saveSettingsSalary()" style="width:100%; margin-top:1rem;">儲存</button>
   </div>
@@ -1112,11 +1118,21 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
     <div class="sch-wage-card" id="sch-payroll-card">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
-      <div style="display:flex; align-items:baseline; gap:6px;">
-        <span style="font-size:12px; color:var(--text-sub); flex-shrink:0;">預估實領</span>
-        <span id="sch-takehome-formula" style="font-size:11px; color:var(--text-dim); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-        <span id="sch-takehome-amount" style="font-size:18px; font-weight:500; color:var(--accent); flex-shrink:0;">$0</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:4px; text-align:center;">
+        <div style="font-size:10px; color:var(--text-dim); min-width:0;">本薪</div>
+        <div style="font-size:10px; color:var(--text-dim); min-width:0;">＋全勤</div>
+        <div style="font-size:10px; color:var(--text-dim); min-width:0;">－勞健保</div>
+        <div style="font-size:10px; color:var(--text-dim); min-width:0;">－請假</div>
+        <div style="font-size:10px; color:var(--text-dim); min-width:0;">＝預計實領</div>
       </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:4px; text-align:center; margin-top:2px;">
+        <div id="sch-pay-base" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-attend" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-insurance" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-leave" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-takehome-amount" style="font-size:13px; font-weight:600; color:var(--accent); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+      </div>
+      <div style="font-size:10px; color:var(--text-dim); margin-top:8px; line-height:1.4;">⚠️ 全勤計算方式待確認：實際請假應依比例扣全勤，但確切比例尚未確認，目前先加全額估算。</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
         <button class="sch-btn" onclick="openSchLeaveModal()" style="background:var(--accent); color:var(--accent-text); border-color:var(--accent);">請假</button>
         <button class="sch-btn" onclick="openSchOvertimeModal()" style="background:var(--accent); color:var(--accent-text); border-color:var(--accent);">加班補休</button>
@@ -1836,6 +1852,7 @@ if (currentLedger && currentLedger.type === 'dad') {
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
       loadSchInsuranceData();
+      loadSchAttendanceData();
     } else if (page === 'font-settings') {
       document.getElementById('page-settings-font').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -4877,6 +4894,7 @@ let schLeaveHours = 8;
 let schLeavePayRate = 100;
 let schLeaveChanged = false;
 let schInsuranceData = { byMonth: {} };
+let schAttendanceData = { byMonth: {} };
 let schDataChanged = false;
 let schModalDraft = {};
 const SCH_DEFAULT_TIMES = { early: { start:'07:00', end:'15:30' }, late: { start:'14:30', end:'23:00' } };
@@ -4919,6 +4937,7 @@ function initSchedulePage() {
   loadSchData();
   loadSchOtData();
   loadSchInsuranceData();
+  loadSchAttendanceData();
   loadSchLeaveData();
   initSchGoogleAuth();
   // 初始化鎖定 UI
@@ -5023,43 +5042,38 @@ function renderSchedule() {
 }
 
 function renderSchTakeHome() {
-  const el = document.getElementById('sch-takehome-amount');
-  if (!el) return;
+  const totalEl = document.getElementById('sch-takehome-amount');
+  if (!totalEl) return;
   const monthKey = schCurrentMonthKey();
   const salary = appSettings.salary || 0;
 
-  const byMonth = (schInsuranceData && schInsuranceData.byMonth) || {};
-  let insurance = byMonth[monthKey];
-  if (insurance === undefined) {
+  function monthValueOrLatest(byMonth) {
+    if (!byMonth) return 0;
+    if (byMonth[monthKey] !== undefined && byMonth[monthKey] !== null) return byMonth[monthKey];
     const keys = Object.keys(byMonth).filter(k => byMonth[k] !== undefined && byMonth[k] !== null).sort();
-    insurance = keys.length > 0 ? byMonth[keys[keys.length - 1]] : 0;
+    return keys.length > 0 ? byMonth[keys[keys.length - 1]] : 0;
   }
+
+  const insurance   = monthValueOrLatest(schInsuranceData && schInsuranceData.byMonth);
+  const attendance  = monthValueOrLatest(schAttendanceData && schAttendanceData.byMonth);
 
   const leaveEntries = (schLeaveData && schLeaveData.entries) || [];
-  let leaveDeduct = 0, attendDeduct = 0;
+  let leaveDeduct = 0;
   leaveEntries.forEach(e => {
-    if (e.date && e.date.startsWith(monthKey)) {
-      leaveDeduct += e.estAmount || 0;
-      attendDeduct += e.attendDeduction || 0;
-    }
+    if (e.date && e.date.startsWith(monthKey)) leaveDeduct += e.estAmount || 0;
   });
 
-  const settlements = (schOtData && schOtData.settlements) || [];
-  let otIncome = 0;
-  settlements.forEach(s => { if (s.forMonth === monthKey) otIncome += s.amount || 0; });
+  const takeHome = Math.round(salary + attendance - insurance - leaveDeduct);
 
-  const takeHome = Math.round(salary - insurance - leaveDeduct - attendDeduct + otIncome);
-  el.textContent = `$${takeHome.toLocaleString()}`;
-
-  const formulaEl = document.getElementById('sch-takehome-formula');
-  if (formulaEl) {
-    const parts = [`月薪$${Math.round(salary).toLocaleString()}`];
-    if (insurance) parts.push(`−勞健保$${Math.round(insurance).toLocaleString()}`);
-    if (leaveDeduct) parts.push(`−請假$${Math.round(leaveDeduct).toLocaleString()}`);
-    if (attendDeduct) parts.push(`−全勤$${Math.round(attendDeduct).toLocaleString()}`);
-    if (otIncome) parts.push(`+加班$${Math.round(otIncome).toLocaleString()}`);
-    formulaEl.textContent = parts.join(' ');
-  }
+  const baseEl = document.getElementById('sch-pay-base');
+  const attendEl = document.getElementById('sch-pay-attend');
+  const insEl = document.getElementById('sch-pay-insurance');
+  const leaveEl = document.getElementById('sch-pay-leave');
+  if (baseEl) baseEl.textContent = `$${Math.round(salary).toLocaleString()}`;
+  if (attendEl) attendEl.textContent = `$${Math.round(attendance).toLocaleString()}`;
+  if (insEl) insEl.textContent = `$${Math.round(insurance).toLocaleString()}`;
+  if (leaveEl) leaveEl.textContent = `$${Math.round(leaveDeduct).toLocaleString()}`;
+  totalEl.textContent = `$${takeHome.toLocaleString()}`;
 }
 
 async function cycleSchShift(dateStr, el) {
@@ -5421,6 +5435,42 @@ async function loadSchInsuranceData() {
   renderSchInsurance();
   renderSchTakeHome();
 }
+
+async function loadSchAttendanceData() {
+  try {
+    const snap = await getDoc(doc(db, 'payroll', 'attendance'));
+    schAttendanceData = snap.exists() ? snap.data() : { byMonth: {} };
+  } catch(e) { console.error('全勤讀取失敗', e); }
+  renderSchAttendanceInput();
+  renderSchTakeHome();
+}
+
+function renderSchAttendanceInput() {
+  const input = document.getElementById('sch-attendance-input');
+  if (!input) return;
+  const byMonth = schAttendanceData.byMonth || {};
+  const key = schCurrentMonthKey();
+  if (byMonth[key] !== undefined) {
+    input.value = byMonth[key];
+    return;
+  }
+  const keys = Object.keys(byMonth).filter(k => byMonth[k] !== undefined && byMonth[k] !== null).sort();
+  if (keys.length > 0) {
+    input.value = byMonth[keys[keys.length - 1]];
+  } else {
+    input.value = '';
+  }
+}
+
+window.saveSchAttendance = async function(value) {
+  const amount = Number(value) || 0;
+  if (!schAttendanceData.byMonth) schAttendanceData.byMonth = {};
+  schAttendanceData.byMonth[schCurrentMonthKey()] = amount;
+  try {
+    await setDoc(doc(db, 'payroll', 'attendance'), schAttendanceData);
+  } catch(e) { console.error('全勤儲存失敗', e); alert('全勤金額儲存失敗，請檢查網路後再試一次'); }
+  renderSchTakeHome();
+};
 
 function renderSchInsurance() {
   const input = document.getElementById('sch-insurance-input');
