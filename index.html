@@ -2641,6 +2641,22 @@ window.openAddRecord = function() {
     refreshCCIfVisible();
   };
  
+  function formatModTime(ts) {
+    const d = new Date(ts);
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${mm}/${dd} ${hh}:${mi}`;
+  }
+
+  window.setApprovalStatus = async function(id, status, isAlreadyThatStatus) {
+    const newStatus = isAlreadyThatStatus ? 'pending' : status;
+    try {
+      await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',id), { approvalStatus: newStatus });
+    } catch(e) { console.error('核准/駁回狀態更新失敗', e); }
+  };
+
   window.submitRecord = async function() {
     const name   = document.getElementById('rec-name').value.trim();
     const amount = document.getElementById('rec-amount').value;
@@ -2657,6 +2673,7 @@ window.openAddRecord = function() {
       payment: currentType === 'expense' ? selectedPay : '',
       date, note, type: currentType,
       addedBy: currentName, addedByEmail: currentEmail,
+      updatedAt: Date.now(),
     };
  
     if (editingRecordId) {
@@ -2922,15 +2939,29 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const bodyEl = document.createElement('div');
       bodyEl.style.cssText = 'min-width:0; cursor:pointer;';
       const shortDate = item.date.slice(5).replace('-','/');
+      const statusDot = isShared && item.approvalStatus === 'approved'
+        ? `<span style="font-size:0.68rem; color:#2e7d32;">●已核准</span>`
+        : isShared && item.approvalStatus === 'rejected'
+        ? `<span style="font-size:0.68rem; color:#c0392b;">●已駁回</span>` : '';
+
       bodyEl.innerHTML = `<div style="font-size:0.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
-        <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px;">
+        <div style="font-size:0.72rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; margin-top:2px; flex-wrap:wrap;">
           <span>${shortDate}</span>
           ${payEmoji ? `<span>${payEmoji}</span>` : ''}
           ${item.note ? `<span>📝</span>` : ''}
+          ${statusDot}
         </div>
         <div class="rec-detail" style="display:none; flex-wrap:wrap; gap:4px; margin-top:2px;">
           ${item.payment ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${payLabel}</span>` : ''}
           ${item.note ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${item.note}</span>` : ''}
+          ${isShared ? `
+          <div style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px; padding-top:4px; border-top:0.5px dashed var(--border);">
+            <span style="font-size:0.68rem; color:var(--text-dim);">${item.addedBy || ''}${item.updatedAt ? ' · ' + formatModTime(item.updatedAt) : ''}</span>
+            <span style="display:flex; gap:4px; flex-shrink:0;">
+              <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','approved',${item.approvalStatus === 'approved'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'approved' ? '#2e7d32' : 'var(--hover)'}; color:${item.approvalStatus === 'approved' ? '#fff' : 'var(--text-dim)'};">核准</button>
+              <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','rejected',${item.approvalStatus === 'rejected'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'rejected' ? '#c0392b' : 'var(--hover)'}; color:${item.approvalStatus === 'rejected' ? '#fff' : 'var(--text-dim)'};">駁回</button>
+            </span>
+          </div>` : ''}
         </div>`;
       bodyEl.onclick = () => {
         const d = bodyEl.querySelector('.rec-detail');
