@@ -2673,17 +2673,22 @@ window.openAddRecord = function() {
       payment: currentType === 'expense' ? selectedPay : '',
       date, note, type: currentType,
       addedBy: currentName, addedByEmail: currentEmail,
-      updatedAt: Date.now(),
     };
- 
+    const now = Date.now();
+
     if (editingRecordId) {
-      // 編輯模式
-      await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',editingRecordId), data);
+      // 編輯模式：只更新「最後修改」，不動「建立者/建立時間」
+      await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',editingRecordId), {
+        ...data,
+        lastEditBy: currentName, lastEditByEmail: currentEmail, lastEditAt: now,
+      });
     } else {
       // 新增模式：用彈窗暫存帳本（若有切換過），否則用目前主畫面帳本
       const targetLedgerId = modalSelectedLedger ? modalSelectedLedger.id : currentLedgerId;
       await addDoc(collection(db,'ledgers',targetLedgerId,'expenses'), {
-        ...data, prestored: false, readyToPay: false
+        ...data, prestored: false, readyToPay: false,
+        createdBy: currentName, createdByEmail: currentEmail, createdAt: now,
+        lastEditBy: currentName, lastEditByEmail: currentEmail, lastEditAt: now,
       });
     }
  
@@ -2954,14 +2959,26 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         <div class="rec-detail" style="display:none; flex-wrap:wrap; gap:4px; margin-top:2px;">
           ${item.payment ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${payLabel}</span>` : ''}
           ${item.note ? `<span style="font-size:0.72rem; color:var(--text-dim); background:var(--hover); padding:1px 6px; border-radius:4px;">${item.note}</span>` : ''}
-          ${isShared ? `
-          <div style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px; padding-top:4px; border-top:0.5px dashed var(--border);">
-            <span style="font-size:0.68rem; color:var(--text-dim);">${item.addedBy || ''}${item.updatedAt ? ' · ' + formatModTime(item.updatedAt) : ''}</span>
-            <span style="display:flex; gap:4px; flex-shrink:0;">
-              <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','approved',${item.approvalStatus === 'approved'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'approved' ? '#2e7d32' : 'var(--hover)'}; color:${item.approvalStatus === 'approved' ? '#fff' : 'var(--text-dim)'};">核准</button>
-              <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','rejected',${item.approvalStatus === 'rejected'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'rejected' ? '#c0392b' : 'var(--hover)'}; color:${item.approvalStatus === 'rejected' ? '#fff' : 'var(--text-dim)'};">駁回</button>
-            </span>
-          </div>` : ''}
+          ${isShared ? (function() {
+            const isRealEdit = item.lastEditAt && item.createdAt && item.lastEditAt > item.createdAt + 1000;
+            const modLabel = item.createdAt ? (isRealEdit ? '更新' : '新增') : '';
+            const modBy = isRealEdit ? (item.lastEditBy || item.addedBy || '') : (item.createdBy || item.addedBy || '');
+            const modAt = isRealEdit ? item.lastEditAt : (item.createdAt || item.updatedAt);
+            const modText = `${modBy}${modAt ? ' · ' + formatModTime(modAt) : ''}${modLabel ? ' ' + modLabel : ''}`;
+            const canModerate = item.createdByEmail && item.createdByEmail !== currentEmail;
+            const actionHtml = canModerate
+              ? `<span style="display:flex; gap:4px; flex-shrink:0;">
+                  <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','approved',${item.approvalStatus === 'approved'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'approved' ? '#2e7d32' : 'var(--hover)'}; color:${item.approvalStatus === 'approved' ? '#fff' : 'var(--text-dim)'};">核准</button>
+                  <button onclick="event.stopPropagation(); setApprovalStatus('${item.id}','rejected',${item.approvalStatus === 'rejected'})" style="font-size:0.68rem; padding:2px 8px; border-radius:10px; border:none; cursor:pointer; background:${item.approvalStatus === 'rejected' ? '#c0392b' : 'var(--hover)'}; color:${item.approvalStatus === 'rejected' ? '#fff' : 'var(--text-dim)'};">駁回</button>
+                </span>`
+              : (item.approvalStatus === 'approved' ? `<span style="font-size:0.68rem; color:#2e7d32;">已核准</span>`
+                : item.approvalStatus === 'rejected' ? `<span style="font-size:0.68rem; color:#c0392b;">已駁回</span>`
+                : `<span style="font-size:0.68rem; color:var(--text-dim);">待對方確認</span>`);
+            return `<div style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px; padding-top:4px; border-top:0.5px dashed var(--border);">
+                <span style="font-size:0.68rem; color:var(--text-dim);">${modText}</span>
+                ${actionHtml}
+              </div>`;
+          })() : ''}
         </div>`;
       bodyEl.onclick = () => {
         const d = bodyEl.querySelector('.rec-detail');
