@@ -1677,6 +1677,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let pendingDeleteId  = null;
   let invitingLedgerId = null;
   let editingRecordId  = null;
+  let editingRecordLedgerId = null;
   let deletingRecordSource = null;
   let modalSelectedLedger = null;
   let selectedCat      = null;
@@ -2592,6 +2593,7 @@ window.openAddRecord = function() {
     const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id) || allLedgerRecords.find(r => r.id === id);
     if (!record) return;
     editingRecordId = id;
+    editingRecordLedgerId = record.ledgerId || currentLedgerId;
  
     const isDadRecord = currentLedger && currentLedger.type === 'dad';
     deletingRecordSource = isDadRecord ? { type: 'dad', stockId: record.stockId || '' } : { type: 'normal' };
@@ -2625,6 +2627,7 @@ window.openAddRecord = function() {
   window.closeRecordModal = function() {
     document.getElementById('record-modal').classList.remove('show');
     editingRecordId = null;
+    editingRecordLedgerId = null;
     selectedCat = null;
     selectedPay = null;
     deletingRecordSource = null;
@@ -2677,8 +2680,9 @@ window.openAddRecord = function() {
     const now = Date.now();
 
     if (editingRecordId) {
-      // 編輯模式：只更新「最後修改」，不動「建立者/建立時間」
-      await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',editingRecordId), {
+      // 編輯模式：只更新「最後修改」，不動「建立者/建立時間」；用這筆記錄實際所屬的帳本，不是目前主畫面帳本
+      const saveLedgerId = editingRecordLedgerId || currentLedgerId;
+      await updateDoc(doc(db,'ledgers',saveLedgerId,'expenses',editingRecordId), {
         ...data,
         lastEditBy: currentName, lastEditByEmail: currentEmail, lastEditAt: now,
       });
@@ -2732,15 +2736,17 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         document.getElementById('confirm-delete-btn').dataset.deleteType = '';
       } else if (deleteType === 'dadExpense') {
         // 刪除爸爸帳本記錄，如果有 stockId 也同步刪存股
-        const expSnap = await getDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        const delLedgerId1 = editingRecordLedgerId || currentLedgerId;
+        const expSnap = await getDoc(doc(db,'ledgers',delLedgerId1,'expenses',pendingDeleteId));
         if (expSnap.exists() && expSnap.data().stockId) {
           await deleteDoc(doc(db,'users',currentUid,'stocks',expSnap.data().stockId));
         }
-        await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        await deleteDoc(doc(db,'ledgers',delLedgerId1,'expenses',pendingDeleteId));
         document.getElementById('confirm-delete-btn').dataset.deleteType = '';
       } else {
-        // 一般刪除支出記錄
-        await deleteDoc(doc(db,'ledgers',currentLedgerId,'expenses',pendingDeleteId));
+        // 一般刪除支出記錄：用這筆記錄實際所屬的帳本，不是目前主畫面帳本
+        const delLedgerId2 = editingRecordLedgerId || currentLedgerId;
+        await deleteDoc(doc(db,'ledgers',delLedgerId2,'expenses',pendingDeleteId));
       }
     }
     closeConfirmModal();
