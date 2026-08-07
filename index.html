@@ -5065,6 +5065,7 @@ window.openDevNoteEdit = function(i) {
   if (input) input.value = i === -1 ? '' : (notes[i]?.text || '');
   if (delBtn) delBtn.style.display = i === -1 ? 'none' : 'block';
   if (modal) modal.style.display = 'flex';
+  if (input) setTimeout(() => input.focus(), 50);
 };
 
 window.closeDevNoteModal = function() {
