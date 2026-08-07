@@ -1738,6 +1738,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let unsubscribeRecords = null;
   let unsubscribeLedgers = null;
   let currentPage = 'ledger';
+  let ledgersFirstLoadDone = false;
  
  
   // ===========================
@@ -1968,7 +1969,31 @@ const personalId = `personal_${currentUid}`;
       updateLedgerUI();
       if (currentPage === 'ledger') listenRecords();
       if (currentPage === 'home') renderHomePage();
+      if (!ledgersFirstLoadDone) {
+        ledgersFirstLoadDone = true;
+        restoreInitialPage();
+      }
     });
+  }
+
+  function restoreInitialPage() {
+    let restoredPage = null, savedLedgerId = null;
+    try {
+      restoredPage = sessionStorage.getItem('lastPage');
+      savedLedgerId = sessionStorage.getItem('lastLedgerId');
+    } catch(e) {}
+    if (restoredPage === 'ledger') {
+      const savedLedger = savedLedgerId ? ledgers.find(l => l.id === savedLedgerId) : null;
+      if (savedLedger) {
+        currentLedgerId = savedLedger.id;
+        currentLedger   = savedLedger;
+        activeFilter    = null;
+        updateLedgerUI();
+        showPage('ledger');
+        return;
+      }
+    }
+    showPage(restoredPage || 'home');
   }
  
 function renderLedgerMenu() {
@@ -2158,27 +2183,7 @@ await loadStockTargets();
     updateMonthLabel();
     updateCCMonthLabel();
     updateBudgetMonthLabel();
-
-    // 重新整理頁面要停留在原本頁面，關掉App整個重開才回首頁（sessionStorage 在關閉分頁/App 後會清空）
-    let restoredPage = null;
-    try { restoredPage = sessionStorage.getItem('lastPage'); } catch(e) {}
-    if (restoredPage === 'ledger') {
-      const savedLedgerId = sessionStorage.getItem('lastLedgerId');
-      const savedLedger = savedLedgerId ? ledgers.find(l => l.id === savedLedgerId) : null;
-      if (savedLedger) {
-        currentLedgerId = savedLedger.id;
-        currentLedger   = savedLedger;
-        activeFilter    = null;
-        await updateLedgerUI();
-        showPage('ledger');
-      } else {
-        showPage('home');
-      }
-    } else if (restoredPage) {
-      showPage(restoredPage);
-    } else {
-      showPage('home');
-    }
+    // 頁面還原改到 loadLedgers() 第一次載入完成後才做，見 restoreInitialPage()
   }
  
 async function saveUserSettings() {
