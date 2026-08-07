@@ -1349,9 +1349,16 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
  
     <div class="form-compact">
       <!-- 類型 -->
-      <div class="type-tabs">
-        <button class="type-tab active-expense" id="tab-expense" onclick="setType('expense')">支出</button>
-        <button class="type-tab" id="tab-income" onclick="setType('income')">收入</button>
+      <div class="type-tabs" style="justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:0.4rem;">
+          <button class="type-tab active-expense" id="tab-expense" onclick="setType('expense')">支出</button>
+          <button class="type-tab" id="tab-income" onclick="setType('income')">收入</button>
+        </div>
+        <div id="billing-period-row" style="display:none; align-items:center; gap:4px; flex-shrink:0;">
+          <button type="button" onclick="shiftBillingMonth(-1)" style="width:22px; height:22px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:12px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0;">‹</button>
+          <span id="billing-period-label" style="font-size:0.8rem; color:var(--text-sub); min-width:56px; text-align:center; white-space:nowrap;">2026/08</span>
+          <button type="button" onclick="shiftBillingMonth(1)" style="width:22px; height:22px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:12px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0;">›</button>
+        </div>
       </div>
  
       <!-- 日期 + 名稱 平均分配，金額縮小成一半 -->
@@ -1388,12 +1395,6 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
         </div>
       </div>
 
-      <!-- 信用卡帳單期別（只有選信用卡付款時顯示） -->
-      <div id="billing-period-row" class="form-row-compact" style="display:none;">
-        <div class="form-label">帳單期別</div>
-        <div id="billing-period-picker" style="display:flex; gap:6px; flex:1; min-width:0;"></div>
-      </div>
- 
       <!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
       <div id="note-row" class="form-row-compact" style="display:none; align-items:flex-start;">
         <div class="form-label" style="margin-top:0.5rem;">備註</div>
@@ -1681,8 +1682,8 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
 
   window.renderBillingPeriodPicker = function() {
     const row = document.getElementById('billing-period-row');
-    const picker = document.getElementById('billing-period-picker');
-    if (!row || !picker) return;
+    const label = document.getElementById('billing-period-label');
+    if (!row || !label) return;
     const dateVal = document.getElementById('rec-date').value;
     const cutoffDay = currentType === 'expense' ? ccCutoffDayForPayment(selectedPay) : null;
     if (!cutoffDay || !dateVal) {
@@ -1690,23 +1691,16 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       return;
     }
     row.style.display = 'flex';
-    const autoLabel = ccAutoPeriodLabel(dateVal, cutoffDay);
-    if (!selectedBillingMonth) selectedBillingMonth = autoLabel;
-    const [ay, am] = autoLabel.split('-').map(Number);
-    const options = [-1, 0, 1].map(delta => {
-      let m = am + delta, y = ay;
-      if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
-      return `${y}-${String(m).padStart(2,'0')}`;
-    });
-    picker.innerHTML = options.map(label => {
-      const mm = Number(label.split('-')[1]);
-      const active = label === selectedBillingMonth;
-      return `<button type="button" onclick="selectBillingMonth('${label}')" style="flex:1; min-width:0; padding:6px; border-radius:8px; border:0.5px solid var(--border); cursor:pointer; background:${active ? 'var(--accent)' : 'var(--card)'}; color:${active ? 'var(--accent-text)' : 'var(--text-sub)'}; font-size:0.78rem;">${mm}月期</button>`;
-    }).join('');
+    if (!selectedBillingMonth) selectedBillingMonth = ccAutoPeriodLabel(dateVal, cutoffDay);
+    label.textContent = selectedBillingMonth.replace('-', '/');
   };
 
-  window.selectBillingMonth = function(label) {
-    selectedBillingMonth = label;
+  window.shiftBillingMonth = function(delta) {
+    if (!selectedBillingMonth) return;
+    let [y, m] = selectedBillingMonth.split('-').map(Number);
+    m += delta;
+    if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+    selectedBillingMonth = `${y}-${String(m).padStart(2,'0')}`;
     renderBillingPeriodPicker();
   };
  
