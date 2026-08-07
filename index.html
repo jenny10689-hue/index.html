@@ -882,13 +882,13 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         </div>
       </div>
       <div class="settings-row">
-        <div class="settings-row-label">勞健保（本月）</div>
+        <div class="settings-row-label">勞健保（<span id="settings-payroll-month-label"></span>）</div>
         <div class="settings-row-right">
           $ <input type="number" id="sch-insurance-input" class="settings-input-sm" placeholder="0" onchange="saveSchInsurance(this.value)" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
       <div class="settings-row">
-        <div class="settings-row-label">全勤（本月）</div>
+        <div class="settings-row-label">全勤（<span id="settings-payroll-month-label2"></span>）</div>
         <div class="settings-row-right">
           $ <input type="number" id="sch-attendance-input" class="settings-input-sm" placeholder="0" onchange="saveSchAttendance(this.value)" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
@@ -5696,11 +5696,30 @@ async function loadSchAttendanceData() {
   renderSchTakeHome();
 }
 
+function settingsCurrentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function settingsCurrentMonthLabel() {
+  const now = new Date();
+  return `${now.getFullYear()}年${now.getMonth() + 1}月`;
+}
+
+function updateSettingsPayrollMonthLabels() {
+  const label = settingsCurrentMonthLabel();
+  const l1 = document.getElementById('settings-payroll-month-label');
+  const l2 = document.getElementById('settings-payroll-month-label2');
+  if (l1) l1.textContent = label;
+  if (l2) l2.textContent = label;
+}
+
 function renderSchAttendanceInput() {
   const input = document.getElementById('sch-attendance-input');
   if (!input) return;
+  updateSettingsPayrollMonthLabels();
   const byMonth = schAttendanceData.byMonth || {};
-  const key = schCurrentMonthKey();
+  const key = settingsCurrentMonthKey();
   if (byMonth[key] !== undefined) {
     input.value = byMonth[key];
     return;
@@ -5716,7 +5735,7 @@ function renderSchAttendanceInput() {
 window.saveSchAttendance = async function(value) {
   const amount = Number(value) || 0;
   if (!schAttendanceData.byMonth) schAttendanceData.byMonth = {};
-  schAttendanceData.byMonth[schCurrentMonthKey()] = amount;
+  schAttendanceData.byMonth[settingsCurrentMonthKey()] = amount;
   try {
     await setDoc(doc(db, 'payroll', 'attendance'), schAttendanceData);
   } catch(e) { console.error('全勤儲存失敗', e); alert('全勤金額儲存失敗，請檢查網路後再試一次'); }
@@ -5726,8 +5745,9 @@ window.saveSchAttendance = async function(value) {
 function renderSchInsurance() {
   const input = document.getElementById('sch-insurance-input');
   if (!input) return;
+  updateSettingsPayrollMonthLabels();
   const byMonth = schInsuranceData.byMonth || {};
-  const key = schCurrentMonthKey();
+  const key = settingsCurrentMonthKey();
   if (byMonth[key] !== undefined) {
     input.value = byMonth[key];
     return;
@@ -5744,7 +5764,7 @@ function renderSchInsurance() {
 window.saveSchInsurance = async function(value) {
   const amount = Number(value) || 0;
   if (!schInsuranceData.byMonth) schInsuranceData.byMonth = {};
-  schInsuranceData.byMonth[schCurrentMonthKey()] = amount;
+  schInsuranceData.byMonth[settingsCurrentMonthKey()] = amount;
   try {
     await setDoc(doc(db, 'payroll', 'insurance'), schInsuranceData);
   } catch(e) { console.error('勞健保儲存失敗', e); alert('勞健保金額儲存失敗，請檢查網路後再試一次'); }
