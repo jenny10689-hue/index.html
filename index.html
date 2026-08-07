@@ -1387,6 +1387,12 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
           <div class="emoji-picker" id="pay-picker" style="display:contents;"></div>
         </div>
       </div>
+
+      <!-- 信用卡帳單期別（只有選信用卡付款時顯示） -->
+      <div id="billing-period-row" class="form-row-compact" style="display:none;">
+        <div class="form-label">帳單期別</div>
+        <div id="billing-period-picker" style="display:flex; gap:6px; flex:1; min-width:0;"></div>
+      </div>
  
       <!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
       <div id="note-row" class="form-row-compact" style="display:none; align-items:flex-start;">
@@ -1657,6 +1663,52 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   const CC_CATHAY_QIAN = ['倩cube'];
   const CC_FUBON       = ['倩Costco'];
   const CC_TENG        = ['騰cube'];
+  let selectedBillingMonth = null;
+
+  function ccCutoffDayForPayment(pay) {
+    if (!pay) return null;
+    if (CC_FUBON.includes(pay)) return appSettings.fubonDay || 3;
+    if (CC_CATHAY_QIAN.includes(pay) || CC_TENG.includes(pay)) return appSettings.cathayDay || 4;
+    return null;
+  }
+
+  function ccAutoPeriodLabel(dateStr, cutoffDay) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    let py = y, pm = m;
+    if (d >= cutoffDay) { pm += 1; if (pm > 12) { pm = 1; py++; } }
+    return `${py}-${String(pm).padStart(2,'0')}`;
+  }
+
+  window.renderBillingPeriodPicker = function() {
+    const row = document.getElementById('billing-period-row');
+    const picker = document.getElementById('billing-period-picker');
+    if (!row || !picker) return;
+    const dateVal = document.getElementById('rec-date').value;
+    const cutoffDay = currentType === 'expense' ? ccCutoffDayForPayment(selectedPay) : null;
+    if (!cutoffDay || !dateVal) {
+      row.style.display = 'none';
+      return;
+    }
+    row.style.display = 'flex';
+    const autoLabel = ccAutoPeriodLabel(dateVal, cutoffDay);
+    if (!selectedBillingMonth) selectedBillingMonth = autoLabel;
+    const [ay, am] = autoLabel.split('-').map(Number);
+    const options = [-1, 0, 1].map(delta => {
+      let m = am + delta, y = ay;
+      if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+      return `${y}-${String(m).padStart(2,'0')}`;
+    });
+    picker.innerHTML = options.map(label => {
+      const mm = Number(label.split('-')[1]);
+      const active = label === selectedBillingMonth;
+      return `<button type="button" onclick="selectBillingMonth('${label}')" style="flex:1; min-width:0; padding:6px; border-radius:8px; border:0.5px solid var(--border); cursor:pointer; background:${active ? 'var(--accent)' : 'var(--card)'}; color:${active ? 'var(--accent-text)' : 'var(--text-sub)'}; font-size:0.78rem;">${mm}月期</button>`;
+    }).join('');
+  };
+
+  window.selectBillingMonth = function(label) {
+    selectedBillingMonth = label;
+    renderBillingPeriodPicker();
+  };
  
   let presets = [];
  
@@ -2224,7 +2276,7 @@ async function saveUserSettings() {
       el.className = 'emoji-option' + (selectedPay === pay.name ? ' selected' : '');
       el.innerHTML = `${pay.emoji}<span class="emoji-tooltip">${pay.label}</span>`;
       el.title = pay.label;
-      el.onclick = function() { selectedPay = pay.name; renderPayPicker(); };
+      el.onclick = function() { selectedPay = pay.name; renderPayPicker(); renderBillingPeriodPicker(); };
       container.appendChild(el);
     });
   }
@@ -2539,6 +2591,8 @@ window.openAddRecord = function() {
     document.getElementById('rec-amount').value = '';
     document.getElementById('rec-note').value   = '';
     setTodayDate();
+    document.getElementById('rec-date').oninput = renderBillingPeriodPicker;
+    selectedBillingMonth = null;
  
     currentType = 'expense';
     document.getElementById('tab-expense').className = 'type-tab active-expense';
@@ -2607,6 +2661,8 @@ window.openAddRecord = function() {
     document.getElementById('rec-name').value   = record.name;
     document.getElementById('rec-amount').value = record.amount;
     document.getElementById('rec-date').value   = record.date;
+    document.getElementById('rec-date').oninput = renderBillingPeriodPicker;
+    selectedBillingMonth = record.billingMonth || null;
     document.getElementById('rec-note').value   = record.note || '';
  
     currentType = record.type || 'expense';
@@ -2621,6 +2677,7 @@ window.openAddRecord = function() {
  
     renderCatPicker();
     renderPayPicker();
+    renderBillingPeriodPicker();
     document.getElementById('record-modal').classList.add('show');
   };
  
@@ -2628,6 +2685,7 @@ window.openAddRecord = function() {
     document.getElementById('record-modal').classList.remove('show');
     editingRecordId = null;
     editingRecordLedgerId = null;
+    selectedBillingMonth = null;
     selectedCat = null;
     selectedPay = null;
     deletingRecordSource = null;
@@ -2671,11 +2729,13 @@ window.openAddRecord = function() {
     if (currentType === 'expense' && !selectedPay) { alert('請選擇支付方式！'); return; }
     if (!currentLedgerId) { alert('請先選擇帳本！'); return; }
  
+    const billingCutoff = currentType === 'expense' ? ccCutoffDayForPayment(selectedPay) : null;
     const data = {
       name, amount: Number(amount), category: selectedCat,
       payment: currentType === 'expense' ? selectedPay : '',
       date, note, type: currentType,
       addedBy: currentName, addedByEmail: currentEmail,
+      billingMonth: billingCutoff ? (selectedBillingMonth || ccAutoPeriodLabel(date, billingCutoff)) : null,
     };
     const now = Date.now();
 
@@ -3238,7 +3298,12 @@ renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QI
   }
  
 function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId, showSaved) {
-      const filtered    = allRecords.filter(r => r.type==='expense' && paymentNames.includes(r.payment) && r.date>=startDate && r.date<=endDate);
+      const periodLabel = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
+      const filtered    = allRecords.filter(r => {
+        if (r.type !== 'expense' || !paymentNames.includes(r.payment)) return false;
+        if (r.billingMonth) return r.billingMonth === periodLabel;
+        return r.date >= startDate && r.date <= endDate;
+      });
     const total       = filtered.reduce((s,r) => s+r.amount, 0);
     const prestored   = filtered.filter(r => r.prestored).reduce((s,r) => s+r.amount, 0);
     const unprestored = total - prestored;
