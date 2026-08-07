@@ -881,6 +881,13 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
+      <div class="settings-row" style="align-items:flex-start;">
+        <div class="settings-row-label" style="margin-top:0.4rem;">預算起始日</div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" id="budget-start-payday-btn" onclick="setBudgetStartMode('payday')" class="btn-sm">發薪日</button>
+          <button type="button" id="budget-start-first-btn" onclick="setBudgetStartMode('first')" class="btn-sm">每月1日</button>
+        </div>
+      </div>
       <div class="settings-row">
         <div class="settings-row-label">勞健保（<span id="settings-payroll-month-label"></span>）</div>
         <div class="settings-row-right">
@@ -1903,6 +1910,7 @@ if (currentLedger && currentLedger.type === 'dad') {
       const sl = document.getElementById('set-salary');
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
+      updateBudgetStartModeButtons(appSettings.budgetStartMode || 'first');
       loadSchInsuranceData();
       loadSchAttendanceData();
     } else if (page === 'font-settings') {
@@ -2885,11 +2893,18 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       ? ledgers.find(l => l.type === 'shared')
       : ledgers.find(l => l.type === 'personal');
  
-    // 撈該月支出
+    // 撈該月支出：依照「預算起始日」設定，決定這個月實際對應的日期範圍
     let monthExpense = {};
     if (ledger) {
-      const startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-01`;
-      const endDate   = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-31`;
+      let startDate, endDate;
+      if (appSettings.budgetStartMode === 'payday') {
+        const startDay = appSettings.salaryDate || 10;
+        startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-${String(startDay).padStart(2,'0')}`;
+        endDate   = getCycleEnd(budgetYear, budgetMonth, startDay);
+      } else {
+        startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-01`;
+        endDate   = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-31`;
+      }
       const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
       snap.docs.forEach(d => {
         const r = d.data();
@@ -4961,6 +4976,18 @@ function renderSettingsPage() {
 
   renderDevNotesList();
 }
+
+function updateBudgetStartModeButtons(mode) {
+  const payBtn = document.getElementById('budget-start-payday-btn');
+  const firstBtn = document.getElementById('budget-start-first-btn');
+  if (payBtn) { payBtn.className = mode === 'payday' ? 'btn-sm btn-primary' : 'btn-sm'; }
+  if (firstBtn) { firstBtn.className = mode === 'first' ? 'btn-sm btn-primary' : 'btn-sm'; }
+}
+
+window.setBudgetStartMode = async function(mode) {
+  updateBudgetStartModeButtons(mode);
+  await saveAppSettings({ budgetStartMode: mode });
+};
 
 window.saveSettingsSalary = async function() {
   const salaryDate = parseInt(document.getElementById('set-salary-date')?.value) || 10;
