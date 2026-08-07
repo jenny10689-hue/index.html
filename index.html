@@ -2156,16 +2156,31 @@ await loadStockTargets();
   }
  
 async function saveUserSettings() {
-    // 分類存到帳本裡
-    if (currentLedgerId) {
-      await updateDoc(doc(db,'ledgers',currentLedgerId), {
-        expenseCategories
-      });
-    }
-    // 收入分類、預算還是存在使用者設定（常用支出改存帳本，見 savePresets）
+    // 只存收入分類、預算（支出分類改由 saveCatManageCategories 依帳本各自存，避免寫錯帳本）
     await setDoc(doc(db,'users',currentUid), {
       incomeCategories, budgets
     }, { merge:true });
+  }
+
+  function getCatManageCategories() {
+    if (catTabType === 'income') return incomeCategories;
+    const ledger = modalSelectedLedger || currentLedger;
+    if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
+    if (ledger && ledger.type === 'dad') return dadExpenseCategories;
+    return expenseCategories;
+  }
+
+  async function saveCatManageCategories() {
+    if (catTabType === 'income') {
+      await setDoc(doc(db,'users',currentUid), { incomeCategories }, { merge:true });
+      return;
+    }
+    const ledger = modalSelectedLedger || currentLedger;
+    const targetLedgerId = ledger ? ledger.id : currentLedgerId;
+    if (!targetLedgerId) return;
+    const cats = getCatManageCategories();
+    await updateDoc(doc(db,'ledgers',targetLedgerId), { expenseCategories: cats });
+    if (ledger) ledger.expenseCategories = cats;
   }
  
   async function savePresets() {
@@ -3418,7 +3433,7 @@ window.openCategoryModalFromRecord = function() {
   function renderCatList() {
     const container = document.getElementById('cat-list');
     container.innerHTML = '';
-    const cats = catTabType === 'income' ? incomeCategories : expenseCategories;
+    const cats = getCatManageCategories();
     cats.forEach(function(cat, idx) {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid #f1efe8;';
@@ -3433,12 +3448,9 @@ window.openCategoryModalFromRecord = function() {
   }
  
   window.removeCategory = async function(idx) {
-    if (catTabType === 'income') {
-      incomeCategories.splice(idx, 1);
-    } else {
-      expenseCategories.splice(idx, 1);
-    }
-    await saveUserSettings();
+    const cats = getCatManageCategories();
+    cats.splice(idx, 1);
+    await saveCatManageCategories();
     renderCatList();
   };
  
@@ -3447,17 +3459,13 @@ window.openCategoryModalFromRecord = function() {
     const emoji = document.getElementById('new-cat-emoji').value.trim();
     if (!name || !emoji) { alert('請填寫分類名稱和 emoji！'); return; }
  
-    if (catTabType === 'income') {
-      if (incomeCategories.find(c => c.name === name)) { alert('已存在！'); return; }
-      incomeCategories.push({ name, emoji });
-    } else {
-      if (expenseCategories.find(c => c.name === name)) { alert('已存在！'); return; }
-      expenseCategories.push({ name, emoji });
-    }
+    const cats = getCatManageCategories();
+    if (cats.find(c => c.name === name)) { alert('已存在！'); return; }
+    cats.push({ name, emoji });
  
     document.getElementById('new-cat-input').value  = '';
     document.getElementById('new-cat-emoji').value  = '';
-    await saveUserSettings();
+    await saveCatManageCategories();
     renderCatList();
   };
  
