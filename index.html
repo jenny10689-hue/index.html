@@ -759,21 +759,21 @@ body { background-color: var(--bg); color: var(--text); }
     </h1>
     <div class="card">
       <h2>國泰世華（倩cube 🌳）</h2>
-      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月4日 ～ 本月3日</p>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：本月4日 ～ 下月3日</p>
       <div class="cc-summary-row" id="cc-cathay-summary"></div>
       <div id="cc-cathay-detail"></div>
       <div id="recon-cathay"></div>
     </div>
     <div class="card">
       <h2>富邦好市多（倩Costco ©️）</h2>
-      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月3日 ～ 本月2日</p>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：本月3日 ～ 下月2日</p>
       <div class="cc-summary-row" id="cc-fubon-summary"></div>
       <div id="cc-fubon-detail"></div>
       <div id="recon-fubon"></div>
     </div>
     <div class="card">
       <h2>騰cube 🌳 追蹤（從錢櫃拿給騰）</h2>
-      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：上月4日 ～ 本月3日</p>
+      <p style="font-size:0.78rem; color:#888780; margin-bottom:0.75rem;">帳單週期：本月4日 ～ 下月3日</p>
       <div class="cc-summary-row" id="cc-teng-summary"></div>
       <div id="cc-teng-detail"></div>
       <div id="recon-teng"></div>
@@ -1676,7 +1676,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   function ccAutoPeriodLabel(dateStr, cutoffDay) {
     const [y, m, d] = dateStr.split('-').map(Number);
     let py = y, pm = m;
-    if (d >= cutoffDay) { pm += 1; if (pm > 12) { pm = 1; py++; } }
+    if (d < cutoffDay) { pm -= 1; if (pm < 1) { pm = 12; py--; } }
     return `${py}-${String(pm).padStart(2,'0')}`;
   }
 
@@ -1713,8 +1713,8 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   const now = new Date();
   let currentYear  = now.getFullYear();
   let currentMonth = now.getMonth() + 1;
-  let ccYear  = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
-  let ccMonth = (now.getMonth() + 2 > 12) ? 1 : now.getMonth() + 2;
+  let ccYear  = now.getFullYear();
+  let ccMonth = now.getMonth() + 1;
   let budgetYear  = now.getFullYear();
   let budgetMonth = now.getMonth() + 1;
   let budgetLedgerType = 'personal';
@@ -3268,10 +3268,10 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
   async function renderCCSummary() {
     await loadReconcileData();
  
-    const cathayStart = getCycleStart(ccYear, ccMonth, appSettings.cathayDay);
-    const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.cathayDay - 1).padStart(2,'0')}`;
-    const fubonStart  = getCycleStart(ccYear, ccMonth, appSettings.fubonDay);
-    const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
+    const cathayStart = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.cathayDay).padStart(2,'0')}`;
+    const cathayEnd   = getCycleEnd(ccYear, ccMonth, appSettings.cathayDay);
+    const fubonStart  = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.fubonDay).padStart(2,'0')}`;
+    const fubonEnd    = getCycleEnd(ccYear, ccMonth, appSettings.fubonDay);
  
     allLedgerRecords = [];
     for (const ledger of ledgers) {
@@ -3289,6 +3289,12 @@ renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QI
     let y = year, m = month - 1;
     if (m < 1) { m = 12; y--; }
     return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+
+  function getCycleEnd(year, month, day) {
+    let y = year, m = month + 1;
+    if (m > 12) { m = 1; y++; }
+    return `${y}-${String(m).padStart(2,'0')}-${String(day - 1).padStart(2,'0')}`;
   }
  
 function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId, showSaved) {
@@ -4402,10 +4408,10 @@ async function renderHomePage() {
 async function renderHomeCCList() {
   const container = document.getElementById('home-cc-list');
   if (!container) return;
-  const cathayStart = getCycleStart(ccYear, ccMonth, 4);
-  const cathayEnd   = `${ccYear}-${String(ccMonth).padStart(2,'0')}-03`;
-  const fubonStart  = getCycleStart(ccYear, ccMonth, 3);
-  const fubonEnd    = `${ccYear}-${String(ccMonth).padStart(2,'0')}-02`;
+  const cathayStart = `${ccYear}-${String(ccMonth).padStart(2,'0')}-04`;
+  const cathayEnd   = getCycleEnd(ccYear, ccMonth, 4);
+  const fubonStart  = `${ccYear}-${String(ccMonth).padStart(2,'0')}-03`;
+  const fubonEnd    = getCycleEnd(ccYear, ccMonth, 3);
   let allRecords = [];
   for (const ledger of ledgers) {
     try { const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses')); snap.docs.forEach(d => allRecords.push({ ...d.data(), id:d.id })); } catch(e) {}
