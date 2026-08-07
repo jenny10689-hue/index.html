@@ -1818,6 +1818,12 @@ window.toggleSidebar = function() {
 window.showPage = function(page) {
   pageHistory.push(page);
   if (pageHistory.length > 20) pageHistory.shift();
+  try {
+    sessionStorage.setItem('lastPage', page);
+    if (page === 'ledger' && currentLedgerId) {
+      sessionStorage.setItem('lastLedgerId', currentLedgerId);
+    }
+  } catch(e) {}
   document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
   const pageKeyMap = {
     'home': 'home', 'cc-summary': 'cc', 'budget': 'budget', 'stocks': 'stocks',
@@ -2152,7 +2158,27 @@ await loadStockTargets();
     updateMonthLabel();
     updateCCMonthLabel();
     updateBudgetMonthLabel();
-    showPage('home');
+
+    // 重新整理頁面要停留在原本頁面，關掉App整個重開才回首頁（sessionStorage 在關閉分頁/App 後會清空）
+    let restoredPage = null;
+    try { restoredPage = sessionStorage.getItem('lastPage'); } catch(e) {}
+    if (restoredPage === 'ledger') {
+      const savedLedgerId = sessionStorage.getItem('lastLedgerId');
+      const savedLedger = savedLedgerId ? ledgers.find(l => l.id === savedLedgerId) : null;
+      if (savedLedger) {
+        currentLedgerId = savedLedger.id;
+        currentLedger   = savedLedger;
+        activeFilter    = null;
+        await updateLedgerUI();
+        showPage('ledger');
+      } else {
+        showPage('home');
+      }
+    } else if (restoredPage) {
+      showPage(restoredPage);
+    } else {
+      showPage('home');
+    }
   }
  
 async function saveUserSettings() {
