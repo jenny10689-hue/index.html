@@ -1271,6 +1271,10 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <div class="settings-row-label">字體設定</div>
         <div class="settings-row-right" style="color:var(--text-dim);">›</div>
       </div>
+      <div class="settings-row" id="install-app-row" onclick="installApp()" style="cursor:pointer; display:none;">
+        <div class="settings-row-label">安裝到主畫面</div>
+        <div class="settings-row-right" style="color:var(--text-dim);">›</div>
+      </div>
     </div>
 
     <!-- 開發者筆記 -->
@@ -6149,6 +6153,29 @@ window.togglePresetCard = function() {
 </script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const row = document.getElementById('install-app-row');
+    if (row) row.style.display = 'flex';
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const row = document.getElementById('install-app-row');
+    if (row) row.style.display = 'none';
+  });
+  window.installApp = async function() {
+    if (!deferredInstallPrompt) {
+      alert('目前無法直接安裝，可能已經安裝過，或瀏覽器不支援。可以試試瀏覽器選單裡的「加入主畫面」。');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    const row = document.getElementById('install-app-row');
+    if (row) row.style.display = 'none';
+  };
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW 註冊失敗', err));
