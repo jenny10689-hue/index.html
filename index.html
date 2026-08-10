@@ -4376,20 +4376,18 @@ async function renderHomePage() {
   const sharedLedger = ledgers.find(l => l.type === 'shared');
   if (walletCard && sharedLedger) {
     walletCard.style.display = 'block';
-    try {
-      const snap = await getDoc(doc(db,'users',currentUid,'settings','wallet'));
-      if (snap.exists()) {
-        const bal = snap.data().balance || 0;
-        const el = document.getElementById('home-wallet-balance');
-        if (el) el.textContent = '$' + bal.toLocaleString();
-        if (snap.data().updatedAt) {
-          const d = new Date(snap.data().updatedAt);
-          const str = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-          const uel = document.getElementById('home-wallet-updated');
-          if (uel) uel.textContent = `更新於 ${str}`;
-        }
+    const bal = sharedLedger.walletBalance || 0;
+    const el = document.getElementById('home-wallet-balance');
+    if (el) el.textContent = '$' + bal.toLocaleString();
+    const uel = document.getElementById('home-wallet-updated');
+    if (uel) {
+      if (sharedLedger.walletUpdatedAt) {
+        const d = new Date(sharedLedger.walletUpdatedAt);
+        uel.textContent = `更新於 ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      } else {
+        uel.textContent = '';
       }
-    } catch(e) {}
+    }
   } else if (walletCard) { walletCard.style.display = 'none'; }
 
   const ledger = homeTab === 'shared' ? ledgers.find(l => l.type==='shared') : ledgers.find(l => l.type==='personal');
