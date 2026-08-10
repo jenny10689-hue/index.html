@@ -9,6 +9,12 @@
 <style>
   @import url("https://fontsapi.zeoseven.com/303/main/result.css");
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f1efe8">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="記帳本">
   <title>我的記帳本</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -6127,5 +6133,12 @@ window.togglePresetCard = function() {
         
 </script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW 註冊失敗', err));
+    });
+  }
+</script>
 </body>
 </html>
