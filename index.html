@@ -600,6 +600,10 @@ body { background-color: var(--bg); color: var(--text); }
         <i class="ti ti-settings" aria-hidden="true"></i>
       </button>
     </div>
+    <div class="card" style="margin-bottom:10px; cursor:pointer;" onclick="showPage('schedule')">
+      <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:8px;">本週班表</div>
+      <div id="home-week-schedule" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;"></div>
+    </div>
     <div class="card" id="home-wallet-card" style="display:none;">
       <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">💰 錢櫃餘額（手動更新）</div>
       <div style="font-size:1.6rem; font-weight:500; color:var(--text);" id="home-wallet-balance">$0</div>
@@ -4418,11 +4422,57 @@ window.setHomeTab = function(tab) {
   renderHomePage();
 };
 
+async function renderHomeWeekSchedule() {
+  const container = document.getElementById('home-week-schedule');
+  if (!container) return;
+
+  const now = new Date();
+  const dow = now.getDay(); // 0=週日
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    weekDates.push(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+  }
+
+  const monthKeys = [...new Set(weekDates.map(d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`))];
+  const monthDataMap = {};
+  for (const key of monthKeys) {
+    try {
+      const snap = await getDoc(doc(db, 'schedule', key));
+      monthDataMap[key] = snap.exists() ? snap.data() : {};
+    } catch(e) { monthDataMap[key] = {}; }
+  }
+
+  const dowLabels = ['一','二','三','四','五','六','日'];
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  container.innerHTML = weekDates.map((d, idx) => {
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const dayData = monthDataMap[monthKey] || {};
+    const v = dayData[dateStr];
+    const shift = v ? (typeof v === 'string' ? v : v.shift) : null;
+    const label = shift === 'early' ? '早' : shift === 'late' ? '晚' : shift === 'off' ? '休' : '-';
+    const isToday = dateStr === todayStr;
+    const shiftColor = shift === 'early' ? '#3a7a58' : shift === 'late' ? '#a05030' : 'var(--text-dim)';
+    return `
+      <div style="padding:4px 2px; border-radius:8px; min-width:0; ${isToday ? 'background:var(--accent);' : ''}">
+        <div style="font-size:10px; color:${isToday ? 'var(--accent-text)' : 'var(--text-dim)'};">${dowLabels[idx]}</div>
+        <div style="font-size:11px; margin:2px 0; color:${isToday ? 'var(--accent-text)' : 'var(--text)'};">${d.getDate()}</div>
+        <div style="font-size:11px; font-weight:500; color:${isToday ? 'var(--accent-text)' : shiftColor};">${label}</div>
+      </div>`;
+  }).join('');
+}
+
 async function renderHomePage() {
   const greetEl = document.getElementById('home-greeting');
   const monthEl = document.getElementById('home-month');
   if (greetEl) greetEl.textContent = `你好，${currentName?.split(' ')[0] || ''} 👋`;
   if (monthEl) monthEl.textContent = `${currentYear}年${String(currentMonth).padStart(2,'0')}月`;
+
+  renderHomeWeekSchedule();
 
   const walletCard = document.getElementById('home-wallet-card');
   const sharedLedger = ledgers.find(l => l.type === 'shared');
