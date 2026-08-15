@@ -2001,12 +2001,26 @@ const personalId = `personal_${currentUid}`;
     });
   }
 
+  async function autoFixSharedCategoriesIfWrong() {
+    const sharedLedger = ledgers.find(l => l.type === 'shared');
+    if (!sharedLedger) return;
+    const correctNames = ['吃飯', '娛樂', '日用品', '旅遊'];
+    const currentNames = (sharedLedger.expenseCategories || []).map(c => c.name);
+    const alreadyCorrect = currentNames.length === correctNames.length &&
+      correctNames.every(n => currentNames.includes(n));
+    if (alreadyCorrect) return;
+    try {
+      await fixSharedCategories();
+    } catch(e) { console.error('自動修正共同帳本分類失敗', e); }
+  }
+
   function restoreInitialPage() {
     let restoredPage = null, savedLedgerId = null;
     try {
       restoredPage = sessionStorage.getItem('lastPage');
       savedLedgerId = sessionStorage.getItem('lastLedgerId');
     } catch(e) {}
+    autoFixSharedCategoriesIfWrong();
     if (restoredPage === 'ledger') {
       const savedLedger = savedLedgerId ? ledgers.find(l => l.id === savedLedgerId) : null;
       if (savedLedger) {
@@ -2789,7 +2803,6 @@ window.openAddRecord = function() {
     sharedExpenseCategories = correctCats;
     sharedLedger.expenseCategories = correctCats;
     console.log('共同帳本分類已修正為：', correctCats.map(c => c.name).join('、'));
-    alert('共同帳本分類已修正完成！');
   };
 
   window.setApprovalStatus = async function(id, status, isAlreadyThatStatus) {
