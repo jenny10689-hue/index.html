@@ -2247,6 +2247,14 @@ async function saveUserSettings() {
  
   function getCurrentCategories() {
     const ledger = modalSelectedLedger || currentLedger;
+    console.log('[DEBUG getCurrentCategories]', {
+      currentType,
+      modalSelectedLedger,
+      currentLedger,
+      resolvedLedgerType: ledger && ledger.type,
+      sharedExpenseCategories_names: sharedExpenseCategories.map(c => c.name),
+      expenseCategories_names: expenseCategories.map(c => c.name)
+    });
     if (currentType === 'income') return incomeCategories;
     if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
     if (ledger && ledger.type === 'dad') return dadExpenseCategories;
@@ -2714,6 +2722,16 @@ window.openAddRecord = function() {
     editingRecordId = id;
     editingRecordLedgerId = record.ledgerId || currentLedgerId;
     modalSelectedLedger = ledgers.find(l => l.id === editingRecordLedgerId) || currentLedger || null;
+    console.log('[DEBUG openEditRecord]', {
+      recordId: id,
+      recordCategory: record.category,
+      recordLedgerId_raw: record.ledgerId,
+      currentLedgerId,
+      editingRecordLedgerId,
+      resolvedModalSelectedLedger: modalSelectedLedger,
+      currentLedger,
+      allLedgers: ledgers.map(l => ({ id: l.id, type: l.type }))
+    });
  
     const isDadRecord = modalSelectedLedger && modalSelectedLedger.type === 'dad';
     deletingRecordSource = isDadRecord ? { type: 'dad', stockId: record.stockId || '' } : { type: 'normal' };
