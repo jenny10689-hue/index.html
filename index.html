@@ -4448,6 +4448,10 @@ async function renderHomeWeekSchedule() {
   const dowLabels = ['一','二','三','四','五','六','日'];
   const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 
+  const SHIFT_BG    = { early: '#b8deca', late: '#F9D3BE', off: '#f0e8e0' };
+  const SHIFT_BORDER= { early: '#88c4a8', late: '#e8b09a', off: '#d4c4b8' };
+  const SHIFT_TEXT  = { early: '#3a7a58', late: '#a05030', off: '#888780' };
+
   container.innerHTML = weekDates.map((d, idx) => {
     const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -4456,12 +4460,14 @@ async function renderHomeWeekSchedule() {
     const shift = v ? (typeof v === 'string' ? v : v.shift) : null;
     const label = shift === 'early' ? '早' : shift === 'late' ? '晚' : shift === 'off' ? '休' : '-';
     const isToday = dateStr === todayStr;
-    const shiftColor = shift === 'early' ? '#3a7a58' : shift === 'late' ? '#a05030' : 'var(--text-dim)';
+    const bg = shift ? SHIFT_BG[shift] : 'var(--card)';
+    const textColor = shift ? SHIFT_TEXT[shift] : 'var(--text-dim)';
+    const border = isToday ? '1.5px solid var(--accent)' : `0.5px solid ${shift ? SHIFT_BORDER[shift] : 'var(--border)'}`;
     return `
-      <div style="padding:4px 2px; border-radius:8px; min-width:0; ${isToday ? 'background:var(--accent);' : ''}">
-        <div style="font-size:10px; color:${isToday ? 'var(--accent-text)' : 'var(--text-dim)'};">${dowLabels[idx]}</div>
-        <div style="font-size:11px; margin:2px 0; color:${isToday ? 'var(--accent-text)' : 'var(--text)'};">${d.getDate()}</div>
-        <div style="font-size:11px; font-weight:500; color:${isToday ? 'var(--accent-text)' : shiftColor};">${label}</div>
+      <div style="padding:4px 2px; border-radius:8px; min-width:0; background:${bg}; border:${border};">
+        <div style="font-size:10px; color:var(--text-dim);">${dowLabels[idx]}</div>
+        <div style="font-size:11px; margin:2px 0; color:var(--text);">${d.getDate()}</div>
+        <div style="font-size:11px; font-weight:500; color:${textColor};">${label}</div>
       </div>`;
   }).join('');
 }
