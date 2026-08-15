@@ -722,6 +722,9 @@ body { background-color: var(--bg); color: var(--text); }
           <div id="unsettled-qian-btn" onclick="toggleSettledFilter('qian')" style="font-size:0.82rem; color:#5f5e5a; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s;">💛 待還倩：<strong style="color:#e67e22;">$<span id="unsettled-qian">0</span></strong></div>
           <div id="unsettled-teng-btn" onclick="toggleSettledFilter('teng')" style="font-size:0.82rem; color:#5f5e5a; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s;">💚 待還騰：<strong style="color:#e67e22;">$<span id="unsettled-teng">0</span></strong></div>
         </div>
+        <div id="direct-settle-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:0.5px dashed var(--border); font-size:0.78rem; color:var(--text-dim);">
+          💱 不透過錢櫃，直接互相補款（依 2:3 比例）：<strong id="direct-settle-text" style="color:var(--text);"></strong>
+        </div>
       </div>
     </div>
  
@@ -6119,6 +6122,21 @@ function renderUnsettledSummary(allRecords) {
     const tEl = document.getElementById('unsettled-teng');
     if (qEl) qEl.textContent = qianTotal.toLocaleString();
     if (tEl) tEl.textContent = tengTotal.toLocaleString();
+  }
+
+  // 不透過錢櫃，直接互相補款（依 2:3 比例）
+  const directEl = document.getElementById('direct-settle-text');
+  if (directEl) {
+    const total = qianTotal + tengTotal;
+    const qianShouldPay = total * 2 / 5;
+    const qianNet = Math.round(qianTotal - qianShouldPay);
+    if (!hasUnsettled || qianNet === 0) {
+      directEl.textContent = '$0（已經對平）';
+    } else if (qianNet > 0) {
+      directEl.textContent = `騰要付給倩 $${qianNet.toLocaleString()}`;
+    } else {
+      directEl.textContent = `倩要付給騰 $${Math.abs(qianNet).toLocaleString()}`;
+    }
   }
 
   // 首頁錢櫃卡片摘要
