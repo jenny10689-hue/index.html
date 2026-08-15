@@ -5084,10 +5084,10 @@ function renderDevNotesList() {
     return;
   }
   list.innerHTML = filtered.map(({note, i}) => `
-    <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:0.5px solid var(--hover);">
-      <div onclick="toggleDevNote(${i})" style="width:17px; height:17px; border-radius:4px; border:1.5px solid ${note.done ? '#444441' : '#d3d1c7'}; background:${note.done ? '#444441' : 'transparent'}; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:10px;">${note.done ? '✓' : ''}</div>
-      <div style="flex:1; font-size:12px; color:${note.done ? '#b4b2a9' : 'var(--text-sub)'}; text-decoration:${note.done ? 'line-through' : 'none'}; cursor:pointer;" onclick="openDevNoteEdit(${i})">${note.text}</div>
-      <i class="ti ti-pencil" style="font-size:13px; color:#d3d1c7; cursor:pointer;" onclick="openDevNoteEdit(${i})" aria-hidden="true"></i>
+    <div style="display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:0.5px solid var(--hover);">
+      <div onclick="toggleDevNote(${i})" style="width:17px; height:17px; border-radius:4px; border:1.5px solid ${note.done ? '#444441' : '#d3d1c7'}; background:${note.done ? '#444441' : 'transparent'}; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:10px;">${note.done ? '✓' : ''}</div>
+      <div style="flex:1; font-size:12px; color:${note.done ? '#b4b2a9' : 'var(--text-sub)'}; text-decoration:${note.done ? 'line-through' : 'none'}; cursor:pointer; white-space:pre-wrap; word-break:break-word;" onclick="openDevNoteEdit(${i})">${note.text}</div>
+      <i class="ti ti-pencil" style="font-size:13px; color:#d3d1c7; cursor:pointer; margin-top:2px; flex-shrink:0;" onclick="openDevNoteEdit(${i})" aria-hidden="true"></i>
     </div>
   `).join('');
 }
