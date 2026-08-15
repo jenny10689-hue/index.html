@@ -2779,6 +2779,7 @@ window.openAddRecord = function() {
     }
     closeRecordModal();
     refreshCCIfVisible();
+    refreshHomeIfVisible();
   };
  
   function formatModTime(ts) {
@@ -2852,6 +2853,7 @@ window.openAddRecord = function() {
  
     closeRecordModal();
     refreshCCIfVisible();
+    refreshHomeIfVisible();
   };
  
  
@@ -2905,6 +2907,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     }
     closeConfirmModal();
     refreshCCIfVisible();
+    refreshHomeIfVisible();
   };
  
  
@@ -3369,6 +3372,13 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
     const ccPage = document.getElementById('page-cc-summary');
     if (ccPage && ccPage.style.display !== 'none') {
       renderCCSummary();
+    }
+  }
+
+  function refreshHomeIfVisible() {
+    const homePage = document.getElementById('page-home');
+    if (homePage && homePage.style.display !== 'none') {
+      renderHomePage();
     }
   }
 
