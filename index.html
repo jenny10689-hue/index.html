@@ -2713,11 +2713,11 @@ window.openAddRecord = function() {
     if (!record) return;
     editingRecordId = id;
     editingRecordLedgerId = record.ledgerId || currentLedgerId;
+    modalSelectedLedger = ledgers.find(l => l.id === editingRecordLedgerId) || currentLedger || null;
  
-    const isDadRecord = currentLedger && currentLedger.type === 'dad';
+    const isDadRecord = modalSelectedLedger && modalSelectedLedger.type === 'dad';
     deletingRecordSource = isDadRecord ? { type: 'dad', stockId: record.stockId || '' } : { type: 'normal' };
  
-    modalSelectedLedger = null;
     document.getElementById('ledger-switch-arrows').style.display = 'none';
  
     document.getElementById('record-modal-title').textContent = '編輯記錄';
