@@ -1247,6 +1247,18 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <h1>習慣追蹤</h1>
       <button onclick="showPage('habits-archive')" style="margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:12px; cursor:pointer;">已封存</button>
     </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <button onclick="changeHabitsCalMonth(-1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">‹</button>
+        <div id="habits-cal-label" style="font-size:13px; font-weight:500; color:var(--text);"></div>
+        <button onclick="changeHabitsCalMonth(1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">›</button>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-size:10px; color:var(--text-dim); text-align:center; margin-bottom:4px;">
+        <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+      </div>
+      <div id="habits-cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px;"></div>
+      <div style="font-size:10px; color:var(--text-dim); margin-top:8px; text-align:center;">點一下看當天紀錄，長按可以打卡/補記</div>
+    </div>
     <div id="habits-list"></div>
     <button class="btn-primary" onclick="openHabitEditModal(null)" style="width:100%; margin-top:12px;">
       <i class="ti ti-plus" aria-hidden="true"></i> 新增習慣
@@ -1277,6 +1289,15 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       </div>
       <button id="habit-archive-btn" onclick="archiveCurrentHabit()" style="width:100%; margin-top:8px; padding:8px; border-radius:8px; border:none; background:none; color:var(--text-dim); font-size:12px; cursor:pointer; display:none;">封存這個習慣</button>
       <button id="habit-delete-btn" onclick="deleteCurrentHabit()" style="width:100%; margin-top:4px; padding:8px; border-radius:8px; border:none; background:none; color:#c0392b; font-size:12px; cursor:pointer; display:none;">永久刪除（含所有紀錄）</button>
+    </div>
+  </div>
+
+  <!-- 習慣打卡彈窗（長按月曆某一天跳出） -->
+  <div id="habits-punch-modal" class="modal-overlay" onclick="if(event.target===this)closeHabitsPunchModal()" style="display:none;">
+    <div class="modal-sheet">
+      <div style="font-size:14px; font-weight:500; margin-bottom:12px;" id="habits-punch-date-label">打卡</div>
+      <div id="habits-punch-list" style="margin-bottom:16px;"></div>
+      <button class="btn-primary" onclick="saveHabitsPunch()" style="width:100%;">存檔</button>
     </div>
   </div>
 
@@ -1969,7 +1990,7 @@ if (currentLedger && currentLedger.type === 'dad') {
     } else if (page === 'habits') {
       document.getElementById('page-habits').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
-      loadHabits().then(renderHabitsList);
+      initHabitsPage();
     } else if (page === 'habits-archive') {
       document.getElementById('page-habits-archive').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -2253,6 +2274,139 @@ if (ledger.type !== 'personal') {
     }
   } catch(e) { console.warn('loadAppSettings error', e); }
 }
+
+let habitsCalYear = null;
+let habitsCalMonth = null;
+let punchModalDate = null;
+let punchModalSelections = {};
+
+async function initHabitsPage() {
+  await loadHabits();
+  if (!habitsCalYear) {
+    const n = new Date();
+    habitsCalYear = n.getFullYear();
+    habitsCalMonth = n.getMonth() + 1;
+  }
+  await renderHabitsList();
+  renderHabitsCalendar();
+}
+
+window.changeHabitsCalMonth = function(delta) {
+  habitsCalMonth += delta;
+  if (habitsCalMonth > 12) { habitsCalMonth = 1; habitsCalYear++; }
+  if (habitsCalMonth < 1) { habitsCalMonth = 12; habitsCalYear--; }
+  renderHabitsCalendar();
+};
+
+function renderHabitsCalendar() {
+  const container = document.getElementById('habits-cal-grid');
+  const label = document.getElementById('habits-cal-label');
+  if (!container || !label) return;
+  label.textContent = `${habitsCalYear}年${habitsCalMonth}月`;
+
+  const active = habitsList.filter(h => !h.archived);
+  const firstDay = new Date(habitsCalYear, habitsCalMonth - 1, 1);
+  const startWeekday = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(habitsCalYear, habitsCalMonth, 0).getDate();
+  const todayStr = todayDateStr();
+
+  let cellsHtml = '';
+  for (let i = 0; i < startWeekday; i++) cellsHtml += `<div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${habitsCalYear}-${String(habitsCalMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const doneHabits = active.filter(h => habitLogsCache[h.id] && habitLogsCache[h.id][dateStr]);
+    const isToday = dateStr === todayStr;
+    const dotsHtml = doneHabits.slice(0, 5).map(h => `<span style="width:5px; height:5px; border-radius:50%; background:${h.color}; flex-shrink:0;"></span>`).join('');
+    const extra = doneHabits.length > 5 ? `<span style="font-size:8px; color:var(--text-dim);">+${doneHabits.length - 5}</span>` : '';
+    cellsHtml += `
+      <div class="habits-cal-day" data-date="${dateStr}" style="height:44px; background:var(--hover); border-radius:6px; padding:2px; text-align:center; box-sizing:border-box; cursor:pointer; ${isToday ? 'border:1.5px solid var(--accent);' : 'border:0.5px solid transparent;'}">
+        <div style="font-size:10px; color:var(--text);">${d}</div>
+        <div style="display:flex; justify-content:center; align-items:center; gap:2px; flex-wrap:wrap; margin-top:2px;">${dotsHtml}${extra}</div>
+      </div>`;
+  }
+  container.innerHTML = cellsHtml;
+
+  container.querySelectorAll('.habits-cal-day').forEach(cell => {
+    const dateStr = cell.dataset.date;
+    let pressTimer = null;
+    let longPressed = false;
+    const startPress = () => {
+      longPressed = false;
+      pressTimer = setTimeout(() => { longPressed = true; openHabitsPunchModal(dateStr); }, 500);
+    };
+    const cancelPress = () => clearTimeout(pressTimer);
+    cell.addEventListener('touchstart', startPress);
+    cell.addEventListener('touchend', () => { cancelPress(); if (!longPressed) previewHabitsDay(dateStr); });
+    cell.addEventListener('mousedown', startPress);
+    cell.addEventListener('mouseup', () => { cancelPress(); if (!longPressed) previewHabitsDay(dateStr); });
+    cell.addEventListener('mouseleave', cancelPress);
+  });
+}
+
+function previewHabitsDay(dateStr) {
+  const active = habitsList.filter(h => !h.archived);
+  const done = active.filter(h => habitLogsCache[h.id] && habitLogsCache[h.id][dateStr]);
+  if (done.length === 0) { alert(`${dateStr}\n沒有任何習慣紀錄`); return; }
+  alert(`${dateStr}\n${done.map(h => h.name).join('、')}`);
+}
+
+window.openHabitsPunchModal = function(dateStr) {
+  punchModalDate = dateStr;
+  const active = habitsList.filter(h => !h.archived);
+  punchModalSelections = {};
+  active.forEach(h => {
+    punchModalSelections[h.id] = !!(habitLogsCache[h.id] && habitLogsCache[h.id][dateStr]);
+  });
+  document.getElementById('habits-punch-date-label').textContent = `${dateStr} 打卡`;
+  renderHabitsPunchList();
+  document.getElementById('habits-punch-modal').style.display = 'flex';
+};
+
+window.closeHabitsPunchModal = function() {
+  document.getElementById('habits-punch-modal').style.display = 'none';
+};
+
+function renderHabitsPunchList() {
+  const container = document.getElementById('habits-punch-list');
+  if (!container) return;
+  const active = habitsList.filter(h => !h.archived);
+  if (active.length === 0) {
+    container.innerHTML = '<div style="font-size:12px; color:var(--text-dim);">還沒有任何習慣</div>';
+    return;
+  }
+  container.innerHTML = active.map(h => `
+    <div onclick="toggleHabitsPunchSelection('${h.id}')" style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:0.5px solid var(--hover); cursor:pointer;">
+      <span style="width:16px; height:16px; border-radius:4px; border:1.5px solid ${h.color}; background:${punchModalSelections[h.id] ? h.color : 'transparent'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        ${punchModalSelections[h.id] ? '<i class="ti ti-check" style="font-size:11px; color:#000;" aria-hidden="true"></i>' : ''}
+      </span>
+      <span style="width:10px; height:10px; border-radius:50%; background:${h.color}; flex-shrink:0;"></span>
+      <span style="font-size:13px; color:var(--text);">${h.name}</span>
+    </div>
+  `).join('');
+}
+
+window.toggleHabitsPunchSelection = function(id) {
+  punchModalSelections[id] = !punchModalSelections[id];
+  renderHabitsPunchList();
+};
+
+window.saveHabitsPunch = async function() {
+  const habitIds = Object.keys(punchModalSelections);
+  for (const id of habitIds) {
+    if (!habitLogsCache[id]) habitLogsCache[id] = {};
+    if (punchModalSelections[id]) {
+      habitLogsCache[id][punchModalDate] = true;
+    } else {
+      delete habitLogsCache[id][punchModalDate];
+    }
+    try {
+      await setDoc(doc(db,'users',currentUid,'habitLogs',id), { dates: habitLogsCache[id] });
+    } catch(e) { console.error('打卡儲存失敗', id, e); }
+  }
+  closeHabitsPunchModal();
+  renderHabitsCalendar();
+  renderHabitsList();
+};
 
 let habitsList = [];
 let editingHabitId = null;
