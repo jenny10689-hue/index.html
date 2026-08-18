@@ -2258,7 +2258,7 @@ let habitsList = [];
 let editingHabitId = null;
 let selectedHabitIcon = 'droplet';
 let selectedHabitColor = '#b8deca';
-const HABIT_ICONS = ['droplet','toilet','run','book-2','moon','home-2','brush','heart','leaf','sun','tooth','pill'];
+const HABIT_ICONS = ['droplet','toilet-paper','run','book-2','moon','home-2','brush','heart','leaf','sun','dental','pill'];
 const HABIT_COLORS = ['#b8deca','#F9D3BE','#a78bc4','#a8c8e8','#f0d896','#e8b8c8','#9dd6d1','#d3d1c7'];
 
 async function loadHabits() {
@@ -2274,7 +2274,34 @@ async function saveHabitsList() {
   } catch(e) { console.error('習慣儲存失敗', e); alert('儲存失敗，請檢查網路後再試一次'); }
 }
 
-function renderHabitsList() {
+let habitLogsCache = {};
+
+function todayDateStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+async function loadHabitLog(habitId) {
+  try {
+    const snap = await getDoc(doc(db,'users',currentUid,'habitLogs',habitId));
+    habitLogsCache[habitId] = snap.exists() ? (snap.data().dates || {}) : {};
+  } catch(e) { habitLogsCache[habitId] = {}; }
+}
+
+function daysSinceLastDone(habitId) {
+  const logMap = habitLogsCache[habitId] || {};
+  const doneDates = Object.keys(logMap).filter(d => logMap[d]);
+  if (doneDates.length === 0) return null;
+  doneDates.sort();
+  const last = doneDates[doneDates.length - 1];
+  const [y, m, d] = last.split('-').map(Number);
+  const lastDate = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((today - lastDate) / 86400000);
+}
+
+async function renderHabitsList() {
   const container = document.getElementById('habits-list');
   if (!container) return;
   const active = habitsList.filter(h => !h.archived);
@@ -2282,20 +2309,31 @@ function renderHabitsList() {
     container.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:2rem 0; font-size:0.85rem;">還沒有任何習慣，點下方新增一個吧</div>';
     return;
   }
-  container.innerHTML = active.map(h => `
+  container.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:1rem 0; font-size:0.85rem;">載入中...</div>';
+  await Promise.all(active.map(h => loadHabitLog(h.id)));
+
+  container.innerHTML = active.map(h => {
+    const days = daysSinceLastDone(h.id);
+    const doneToday = !!(habitLogsCache[h.id] && habitLogsCache[h.id][todayDateStr()]);
+    let statusText;
+    if (days === null) statusText = '還沒有紀錄';
+    else if (days === 0) statusText = '今天已經做過了';
+    else statusText = `距離上次${h.name}已過${days}天`;
+    return `
     <div class="card" style="display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer;" onclick="openHabitDetail('${h.id}')">
       <div style="width:36px; height:36px; border-radius:10px; background:${h.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <i class="ti ti-${h.icon}" style="font-size:18px; color:#000;" aria-hidden="true"></i>
       </div>
       <div style="flex:1; min-width:0;">
         <div style="font-size:13px; color:var(--text); font-weight:500;">${h.name}</div>
-        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">下一階段會顯示天數</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">${statusText}</div>
       </div>
-      <button onclick="event.stopPropagation(); quickCheckHabit('${h.id}')" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
-        <i class="ti ti-check" style="font-size:16px; color:var(--text-sub);" aria-hidden="true"></i>
+      <button onclick="event.stopPropagation(); quickCheckHabit('${h.id}')" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:${doneToday ? h.color : 'var(--card)'}; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+        <i class="ti ti-check" style="font-size:16px; color:${doneToday ? '#000' : 'var(--text-sub)'};" aria-hidden="true"></i>
       </button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderHabitsArchiveList() {
@@ -2410,11 +2448,29 @@ window.deleteCurrentHabit = async function() {
 };
 
 window.openHabitDetail = function(id) {
-  alert('單一習慣頁面下一階段才會做，這階段先確認新增/編輯/封存/刪除沒問題');
+  const habit = habitsList.find(h => h.id === id);
+  const days = daysSinceLastDone(id);
+  const daysText = days === null ? '還沒有紀錄' : days === 0 ? '今天已經做過了' : `距離上次已過${days}天`;
+  alert(`「${habit ? habit.name : ''}」\n${daysText}\n\n完整的月曆/表格頁面下一階段才會做`);
 };
 
-window.quickCheckHabit = function(id) {
-  alert('打卡功能下一階段才會做');
+window.quickCheckHabit = async function(id) {
+  const today = todayDateStr();
+  if (!habitLogsCache[id]) habitLogsCache[id] = {};
+  const isDone = !!habitLogsCache[id][today];
+  if (isDone) {
+    delete habitLogsCache[id][today];
+  } else {
+    habitLogsCache[id][today] = true;
+  }
+  try {
+    await setDoc(doc(db,'users',currentUid,'habitLogs',id), { dates: habitLogsCache[id] });
+  } catch(e) {
+    console.error('打卡失敗', e);
+    alert('打卡失敗，請檢查網路後再試一次');
+    return;
+  }
+  renderHabitsList();
 };
 
 async function saveAppSettings(updates) {
