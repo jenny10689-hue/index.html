@@ -1257,6 +1257,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
       </div>
       <div id="habits-cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px;"></div>
+      <div id="habits-cal-legend" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:8px; border-top:0.5px solid var(--border);"></div>
       <div style="font-size:10px; color:var(--text-dim); margin-top:8px; text-align:center;">點一下看當天紀錄，長按可以打卡/補記</div>
     </div>
     <div id="habits-list"></div>
@@ -2326,6 +2327,20 @@ function renderHabitsCalendar() {
   }
   container.innerHTML = cellsHtml;
 
+  const legendEl = document.getElementById('habits-cal-legend');
+  if (legendEl) {
+    if (active.length === 0) {
+      legendEl.innerHTML = '';
+    } else {
+      legendEl.innerHTML = active.map(h => `
+        <span style="display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-dim);">
+          <span style="width:8px; height:8px; border-radius:50%; background:${h.color}; flex-shrink:0;"></span>
+          ${h.name}
+        </span>
+      `).join('');
+    }
+  }
+
   container.querySelectorAll('.habits-cal-day').forEach(cell => {
     const dateStr = cell.dataset.date;
     let pressTimer = null;
@@ -2625,6 +2640,7 @@ window.quickCheckHabit = async function(id) {
     return;
   }
   renderHabitsList();
+  renderHabitsCalendar();
 };
 
 async function saveAppSettings(updates) {
