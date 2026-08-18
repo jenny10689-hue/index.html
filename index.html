@@ -1280,7 +1280,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <div class="page-title-row">
       <button class="btn-back" onclick="showPage('habits')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
       <h1 id="habit-detail-title">習慣</h1>
-      <button onclick="openHabitEditModal(currentHabitDetailId)" aria-label="編輯" style="margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:4px;">
+      <button onclick="openCurrentHabitEditModal()" aria-label="編輯" style="margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:4px;">
         <i class="ti ti-pencil" aria-hidden="true"></i>
       </button>
     </div>
@@ -2397,20 +2397,13 @@ function renderHabitsCalendar() {
 
   container.querySelectorAll('.habits-cal-day').forEach(cell => {
     const dateStr = cell.dataset.date;
-    let pressTimer = null;
-    let longPressed = false;
-    const startPress = () => {
-      longPressed = false;
-      pressTimer = setTimeout(() => { longPressed = true; openHabitsPunchModal(dateStr); }, 500);
-    };
-    const cancelPress = () => clearTimeout(pressTimer);
-    cell.addEventListener('touchstart', startPress);
-    cell.addEventListener('touchend', () => { cancelPress(); if (!longPressed) previewHabitsDay(dateStr); });
-    cell.addEventListener('mousedown', startPress);
-    cell.addEventListener('mouseup', () => { cancelPress(); if (!longPressed) previewHabitsDay(dateStr); });
-    cell.addEventListener('mouseleave', cancelPress);
+    cell.addEventListener('click', () => openHabitsPunchModal(dateStr));
   });
 }
+
+window.openCurrentHabitEditModal = function() {
+  openHabitEditModal(currentHabitDetailId);
+};
 
 function previewHabitsDay(dateStr) {
   const active = habitsList.filter(h => !h.archived);
@@ -2521,7 +2514,8 @@ function daysSinceLastDone(habitId) {
   const lastDate = new Date(y, m - 1, d);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return Math.round((today - lastDate) / 86400000);
+  const diff = Math.round((today - lastDate) / 86400000);
+  return diff < 0 ? 0 : diff;
 }
 
 async function renderHabitsList() {
