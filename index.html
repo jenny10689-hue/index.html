@@ -2537,7 +2537,7 @@ async function renderHabitsList() {
     else if (days === 0) statusText = '今天已經做過了';
     else statusText = `距離上次${h.name}已過${days}天`;
     return `
-    <div class="card" style="display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer;" onclick="openHabitDetail('${h.id}')">
+    <div class="card habit-card" data-id="${h.id}" style="display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer;">
       <div style="width:36px; height:36px; border-radius:10px; background:${h.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
         <i class="ti ti-${h.icon}" style="font-size:18px; color:#000;" aria-hidden="true"></i>
       </div>
@@ -2545,12 +2545,35 @@ async function renderHabitsList() {
         <div style="font-size:13px; color:var(--text); font-weight:500;">${h.name}</div>
         <div style="font-size:11px; color:var(--text-dim); margin-top:2px;">${statusText}</div>
       </div>
-      <button onclick="event.stopPropagation(); quickCheckHabit('${h.id}')" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:${doneToday ? h.color : 'var(--card)'}; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+      <button class="habit-quick-check" onclick="event.stopPropagation(); quickCheckHabit('${h.id}')" style="width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:${doneToday ? h.color : 'var(--card)'}; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
         <i class="ti ti-check" style="font-size:16px; color:${doneToday ? '#000' : 'var(--text-sub)'};" aria-hidden="true"></i>
       </button>
     </div>
   `;
   }).join('');
+
+  container.querySelectorAll('.habit-card').forEach(cardEl => {
+    const id = cardEl.dataset.id;
+    let pressTimer = null;
+    let longPressed = false;
+    const isOnQuickCheck = (e) => e.target.closest('.habit-quick-check');
+    const startPress = (e) => {
+      if (isOnQuickCheck(e)) return;
+      longPressed = false;
+      pressTimer = setTimeout(() => { longPressed = true; openHabitEditModal(id); }, 500);
+    };
+    const cancelPress = () => clearTimeout(pressTimer);
+    const endPress = (e) => {
+      if (isOnQuickCheck(e)) { cancelPress(); return; }
+      cancelPress();
+      if (!longPressed) openHabitDetail(id);
+    };
+    cardEl.addEventListener('touchstart', startPress);
+    cardEl.addEventListener('touchend', endPress);
+    cardEl.addEventListener('mousedown', startPress);
+    cardEl.addEventListener('mouseup', endPress);
+    cardEl.addEventListener('mouseleave', cancelPress);
+  });
 }
 
 function renderHabitsArchiveList() {
