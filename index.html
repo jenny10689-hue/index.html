@@ -1275,6 +1275,52 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
     <div id="habits-archive-list"></div>
   </div>
 
+  <!-- 單一習慣頁面 -->
+  <div id="page-habit-detail" class="container" style="display:none;">
+    <div class="page-title-row">
+      <button class="btn-back" onclick="showPage('habits')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+      <h1 id="habit-detail-title">習慣</h1>
+      <button onclick="openHabitEditModal(currentHabitDetailId)" aria-label="編輯" style="margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; padding:4px;">
+        <i class="ti ti-pencil" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="card" style="margin-bottom:12px; text-align:center;">
+      <div id="habit-detail-days" style="font-size:14px; color:var(--text); font-weight:500;"></div>
+    </div>
+    <div style="display:flex; gap:6px; margin-bottom:12px;">
+      <button id="habit-detail-tab-cal" onclick="setHabitDetailView('calendar')" class="sch-btn" style="flex:1;">月曆</button>
+      <button id="habit-detail-tab-table" onclick="setHabitDetailView('table')" class="sch-btn" style="flex:1;">表格</button>
+    </div>
+
+    <div id="habit-detail-calendar-view">
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <button onclick="changeHabitDetailMonth(-1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">‹</button>
+          <div id="habit-detail-cal-label" style="font-size:13px; font-weight:500; color:var(--text);"></div>
+          <button onclick="changeHabitDetailMonth(1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">›</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-size:10px; color:var(--text-dim); text-align:center; margin-bottom:4px;">
+          <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+        </div>
+        <div id="habit-detail-cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px;"></div>
+        <div style="font-size:10px; color:var(--text-dim); margin-top:8px; text-align:center;">點日期可以直接切換完成狀態</div>
+      </div>
+    </div>
+
+    <div id="habit-detail-table-view" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <button onclick="changeHabitDetailMonth(-1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">‹</button>
+        <div id="habit-detail-table-label" style="font-size:13px; font-weight:500; color:var(--text);"></div>
+        <button onclick="changeHabitDetailMonth(1)" style="background:none; border:none; font-size:16px; color:var(--text-sub); cursor:pointer; padding:4px 8px;">›</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <button id="habit-detail-filter-all" onclick="setHabitDetailFilter('all')" style="flex:1; padding:6px; border-radius:14px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:11px; cursor:pointer;">整個月份</button>
+        <button id="habit-detail-filter-done" onclick="setHabitDetailFilter('done')" style="flex:1; padding:6px; border-radius:14px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:11px; cursor:pointer;">只顯示有執行</button>
+      </div>
+      <div id="habit-detail-table-list"></div>
+    </div>
+  </div>
+
   <!-- 新增/編輯習慣 Modal -->
   <div id="habit-edit-modal" class="modal-overlay" onclick="if(event.target===this)closeHabitEditModal()" style="display:none;">
     <div class="modal-sheet">
@@ -1996,6 +2042,9 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('page-habits-archive').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
       renderHabitsArchiveList();
+    } else if (page === 'habit-detail') {
+      document.getElementById('page-habit-detail').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
     } else if (page === 'settings') {
       document.getElementById('page-settings').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -2276,6 +2325,11 @@ if (ledger.type !== 'personal') {
   } catch(e) { console.warn('loadAppSettings error', e); }
 }
 
+let currentHabitDetailId = null;
+let habitDetailYear = null;
+let habitDetailMonth = null;
+let habitDetailView = 'calendar';
+let habitDetailFilter = 'done';
 let habitsCalYear = null;
 let habitsCalMonth = null;
 let punchModalDate = null;
@@ -2616,12 +2670,155 @@ window.deleteCurrentHabit = async function() {
   renderHabitsList();
 };
 
-window.openHabitDetail = function(id) {
+window.openHabitDetail = async function(id) {
+  currentHabitDetailId = id;
   const habit = habitsList.find(h => h.id === id);
-  const days = daysSinceLastDone(id);
-  const daysText = days === null ? '還沒有紀錄' : days === 0 ? '今天已經做過了' : `距離上次已過${days}天`;
-  alert(`「${habit ? habit.name : ''}」\n${daysText}\n\n完整的月曆/表格頁面下一階段才會做`);
+  if (!habit) return;
+  const titleEl = document.getElementById('habit-detail-title');
+  if (titleEl) titleEl.textContent = habit.name;
+  const n = new Date();
+  habitDetailYear = n.getFullYear();
+  habitDetailMonth = n.getMonth() + 1;
+  let savedView = null;
+  try { savedView = localStorage.getItem('habitViewMode_' + id); } catch(e) {}
+  habitDetailView = savedView || 'calendar';
+  habitDetailFilter = 'done';
+  await loadHabitLog(id);
+  updateHabitDetailDaysText();
+  showPage('habit-detail');
+  renderHabitDetailView();
 };
+
+function updateHabitDetailDaysText() {
+  const habit = habitsList.find(h => h.id === currentHabitDetailId);
+  const el = document.getElementById('habit-detail-days');
+  if (!habit || !el) return;
+  const days = daysSinceLastDone(currentHabitDetailId);
+  el.textContent = days === null ? '還沒有紀錄' : days === 0 ? '今天已經做過了' : `距離上次${habit.name}已過${days}天`;
+}
+
+window.setHabitDetailView = function(mode) {
+  habitDetailView = mode;
+  try { localStorage.setItem('habitViewMode_' + currentHabitDetailId, mode); } catch(e) {}
+  renderHabitDetailView();
+};
+
+function renderHabitDetailView() {
+  const calTab = document.getElementById('habit-detail-tab-cal');
+  const tableTab = document.getElementById('habit-detail-tab-table');
+  const calView = document.getElementById('habit-detail-calendar-view');
+  const tableView = document.getElementById('habit-detail-table-view');
+  if (!calTab || !tableTab || !calView || !tableView) return;
+  if (habitDetailView === 'calendar') {
+    calTab.className = 'sch-btn primary'; tableTab.className = 'sch-btn';
+    calView.style.display = 'block'; tableView.style.display = 'none';
+    renderHabitDetailCalendar();
+  } else {
+    calTab.className = 'sch-btn'; tableTab.className = 'sch-btn primary';
+    calView.style.display = 'none'; tableView.style.display = 'block';
+    renderHabitDetailTable();
+  }
+}
+
+window.changeHabitDetailMonth = function(delta) {
+  habitDetailMonth += delta;
+  if (habitDetailMonth > 12) { habitDetailMonth = 1; habitDetailYear++; }
+  if (habitDetailMonth < 1) { habitDetailMonth = 12; habitDetailYear--; }
+  renderHabitDetailView();
+};
+
+function renderHabitDetailCalendar() {
+  const habit = habitsList.find(h => h.id === currentHabitDetailId);
+  const label = document.getElementById('habit-detail-cal-label');
+  const container = document.getElementById('habit-detail-cal-grid');
+  if (!habit || !label || !container) return;
+  label.textContent = `${habitDetailYear}年${habitDetailMonth}月`;
+
+  const firstDay = new Date(habitDetailYear, habitDetailMonth - 1, 1);
+  const startWeekday = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(habitDetailYear, habitDetailMonth, 0).getDate();
+  const todayStr = todayDateStr();
+  const logMap = habitLogsCache[currentHabitDetailId] || {};
+
+  let html = '';
+  for (let i = 0; i < startWeekday; i++) html += `<div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${habitDetailYear}-${String(habitDetailMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const done = !!logMap[dateStr];
+    const isToday = dateStr === todayStr;
+    html += `
+      <div onclick="toggleHabitDetailDay('${dateStr}')" style="height:40px; border-radius:6px; cursor:pointer; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; background:${done ? habit.color : 'var(--hover)'}; ${isToday ? 'border:1.5px solid var(--accent);' : 'border:0.5px solid transparent;'}">
+        <div style="font-size:10px; color:var(--text);">${d}</div>
+        ${done ? '<i class="ti ti-check" style="font-size:12px; color:#000;" aria-hidden="true"></i>' : ''}
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+window.toggleHabitDetailDay = async function(dateStr) {
+  const id = currentHabitDetailId;
+  if (!habitLogsCache[id]) habitLogsCache[id] = {};
+  if (habitLogsCache[id][dateStr]) delete habitLogsCache[id][dateStr];
+  else habitLogsCache[id][dateStr] = true;
+  try {
+    await setDoc(doc(db,'users',currentUid,'habitLogs',id), { dates: habitLogsCache[id] });
+  } catch(e) {
+    console.error('更新失敗', e);
+    alert('更新失敗，請檢查網路後再試一次');
+    return;
+  }
+  updateHabitDetailDaysText();
+  renderHabitDetailView();
+};
+
+window.setHabitDetailFilter = function(filter) {
+  habitDetailFilter = filter;
+  renderHabitDetailTable();
+};
+
+function renderHabitDetailTable() {
+  const habit = habitsList.find(h => h.id === currentHabitDetailId);
+  const label = document.getElementById('habit-detail-table-label');
+  const container = document.getElementById('habit-detail-table-list');
+  const allBtn = document.getElementById('habit-detail-filter-all');
+  const doneBtn = document.getElementById('habit-detail-filter-done');
+  if (!habit || !label || !container || !allBtn || !doneBtn) return;
+  label.textContent = `${habitDetailYear}年${habitDetailMonth}月`;
+  allBtn.style.background = habitDetailFilter === 'all' ? 'var(--accent)' : 'var(--card)';
+  allBtn.style.color = habitDetailFilter === 'all' ? 'var(--accent-text)' : 'var(--text-sub)';
+  doneBtn.style.background = habitDetailFilter === 'done' ? 'var(--accent)' : 'var(--card)';
+  doneBtn.style.color = habitDetailFilter === 'done' ? 'var(--accent-text)' : 'var(--text-sub)';
+
+  const logMap = habitLogsCache[currentHabitDetailId] || {};
+  const daysInMonth = new Date(habitDetailYear, habitDetailMonth, 0).getDate();
+  const monthPrefix = `${habitDetailYear}-${String(habitDetailMonth).padStart(2,'0')}`;
+
+  let rows = [];
+  if (habitDetailFilter === 'all') {
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${monthPrefix}-${String(d).padStart(2,'0')}`;
+      rows.push({ dateStr, done: !!logMap[dateStr] });
+    }
+    rows.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+  } else {
+    rows = Object.keys(logMap)
+      .filter(d => logMap[d] && d.startsWith(monthPrefix))
+      .sort().reverse()
+      .map(dateStr => ({ dateStr, done: true }));
+  }
+
+  if (rows.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:1.5rem 0; font-size:0.85rem;">這個月沒有紀錄</div>';
+    return;
+  }
+
+  container.innerHTML = rows.map(r => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:0.5px solid var(--hover);">
+      <span style="font-size:13px; color:var(--text);">${r.dateStr.slice(5).replace('-','/')}</span>
+      <span onclick="toggleHabitDetailDay('${r.dateStr}')" style="cursor:pointer; font-size:12px; color:${r.done ? 'var(--accent)' : 'var(--text-dim)'};">${r.done ? '✓ 已完成（點擊取消）' : '未完成（點擊補記）'}</span>
+    </div>
+  `).join('');
+}
 
 window.quickCheckHabit = async function(id) {
   const today = todayDateStr();
