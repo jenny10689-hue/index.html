@@ -3568,7 +3568,11 @@ window.openAddRecord = function() {
   };
  
   window.deleteRecordFromModal = function() {
-    if (!editingRecordId || !deletingRecordSource) return;
+    console.log('[DEBUG] deleteRecordFromModal 被呼叫', { editingRecordId, deletingRecordSource, editingRecordLedgerId });
+    if (!editingRecordId || !deletingRecordSource) {
+      console.log('[DEBUG] 提前 return 了,editingRecordId 或 deletingRecordSource 是空的');
+      return;
+    }
     if (deletingRecordSource.type === 'dad') {
       deleteDadRecord(editingRecordId, deletingRecordSource.stockId);
     } else {
@@ -3659,8 +3663,10 @@ window.openAddRecord = function() {
   // ===========================
  
   window.deleteRecord = function(id) {
+    console.log('[DEBUG] deleteRecord 被呼叫, id=', id);
     pendingDeleteId = id;
     document.getElementById('confirm-modal').classList.add('show');
+    console.log('[DEBUG] confirm-modal 的 class 現在是:', document.getElementById('confirm-modal').className);
   };
  
   window.closeConfirmModal = function() {
@@ -3669,6 +3675,7 @@ window.openAddRecord = function() {
   };
  
 document.getElementById('confirm-delete-btn').onclick = async function() {
+    console.log('[DEBUG] 確定刪除按鈕被點了, pendingDeleteId=', pendingDeleteId);
     if (pendingDeleteId) {
       const deleteType = document.getElementById('confirm-delete-btn').dataset.deleteType;
       if (deleteType === 'stock') {
