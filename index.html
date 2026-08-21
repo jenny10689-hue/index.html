@@ -2389,8 +2389,9 @@ function renderHabitsCalendar() {
     const isToday = dateStr === todayStr;
     const dotsHtml = doneHabits.slice(0, 5).map(h => `<span style="width:5px; height:5px; border-radius:50%; background:${h.color}; flex-shrink:0;"></span>`).join('');
     const extra = doneHabits.length > 5 ? `<span style="font-size:8px; color:var(--text-dim);">+${doneHabits.length - 5}</span>` : '';
+    const hoverTitle = doneHabits.length > 0 ? doneHabits.map(h => h.name).join('、') : '';
     cellsHtml += `
-      <div class="habits-cal-day" data-date="${dateStr}" style="height:44px; background:#f8f5ef; border-radius:6px; padding:2px; text-align:center; box-sizing:border-box; cursor:pointer; ${isToday ? 'border:1.5px solid var(--accent);' : 'border:0.5px solid var(--border);'}">
+      <div class="habits-cal-day" data-date="${dateStr}" title="${hoverTitle}" style="height:44px; background:#f8f5ef; border-radius:6px; padding:2px; text-align:center; box-sizing:border-box; cursor:pointer; ${isToday ? 'border:1.5px solid var(--accent);' : 'border:0.5px solid var(--border);'}">
         <div style="font-size:10px; color:var(--text);">${d}</div>
         <div style="display:flex; justify-content:center; align-items:center; gap:2px; flex-wrap:wrap; margin-top:2px;">${dotsHtml}${extra}</div>
       </div>`;
