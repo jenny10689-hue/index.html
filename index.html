@@ -6348,16 +6348,15 @@ function renderSchOtModal() {
 }
 
 function calcOtSettlementPay(hours) {
-  const now = new Date();
-  const totalWorkDays = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
   const salary = appSettings.salary || 0;
-  const dailyWage = totalWorkDays > 0 ? Math.round(salary / totalWorkDays) : 0;
+  const attendance = getCurrentAttendanceAmount();
+  const dailyWage = Math.round((salary + attendance) / 30);
   const hourly = dailyWage / 8;
   let pay;
   if (hours <= 2) {
-    pay = hourly * hours * (4/3);
+    pay = hourly * hours * 1.34;
   } else {
-    pay = hourly * 2 * (4/3) + hourly * (hours - 2) * (5/3);
+    pay = hourly * 2 * 1.34 + hourly * (hours - 2) * 1.67;
   }
   return Math.round(pay);
 }
@@ -6477,9 +6476,16 @@ async function saveSchLeaveData() {
 }
 
 function schCurrentDailyWage() {
-  const totalWorkDays = new Date(schYear, schMonth+1, 0).getDate();
   const salary = appSettings.salary || 0;
-  return totalWorkDays > 0 ? Math.round(salary / totalWorkDays) : 0;
+  return Math.round(salary / 30);
+}
+
+function getCurrentAttendanceAmount() {
+  const monthKey = schCurrentMonthKey();
+  const byMonth = (schAttendanceData && schAttendanceData.byMonth) || {};
+  if (byMonth[monthKey] !== undefined && byMonth[monthKey] !== null) return byMonth[monthKey];
+  const keys = Object.keys(byMonth).filter(k => byMonth[k] !== undefined && byMonth[k] !== null).sort();
+  return keys.length > 0 ? byMonth[keys[keys.length - 1]] : 0;
 }
 
 window.openSchLeaveModal = async function() {
