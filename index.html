@@ -901,6 +901,12 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
+      <div class="settings-row">
+        <div class="settings-row-label">特休總天數（每年）</div>
+        <div class="settings-row-right">
+          <input type="number" id="set-annual-leave-days" class="settings-input-sm" min="0" value="8" style="width:50px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:center;"> 天
+        </div>
+      </div>
       <div class="settings-row" style="align-items:flex-start;">
         <div class="settings-row-label" style="margin-top:0.4rem;">預算起始日</div>
         <div style="display:flex; gap:6px;">
@@ -2076,8 +2082,10 @@ if (currentLedger && currentLedger.type === 'dad') {
       document.getElementById('fab').style.display = 'none';
       const sd = document.getElementById('set-salary-date');
       const sl = document.getElementById('set-salary');
+      const sal = document.getElementById('set-annual-leave-days');
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
+      if (sal) sal.value = appSettings.annualLeaveDays !== undefined ? appSettings.annualLeaveDays : 8;
       updateBudgetStartModeButtons(appSettings.budgetStartMode || 'first');
       loadSchInsuranceData();
       loadSchAttendanceData();
@@ -5911,7 +5919,8 @@ window.setBudgetStartMode = async function(mode) {
 window.saveSettingsSalary = async function() {
   const salaryDate = parseInt(document.getElementById('set-salary-date')?.value) || 10;
   const salary     = parseInt(document.getElementById('set-salary')?.value) || 0;
-  await saveAppSettings({ salaryDate, salary });
+  const annualLeaveDays = parseInt(document.getElementById('set-annual-leave-days')?.value);
+  await saveAppSettings({ salaryDate, salary, annualLeaveDays: isNaN(annualLeaveDays) ? 8 : annualLeaveDays });
   alert('已儲存！');
   showPage('settings');
 };
@@ -6473,15 +6482,17 @@ const SCH_LEAVE_TYPES = {
   annual:   { label: '特休', defaultRate: 0 }
 };
 
-const SCH_ANNUAL_LEAVE_TOTAL_DAYS = 8;
-
 function renderAnnualLeaveSummary() {
   const el = document.getElementById('sch-annual-remain-summary');
   if (!el) return;
+  const totalDays = appSettings.annualLeaveDays !== undefined ? appSettings.annualLeaveDays : 8;
+  const currentYear = String(new Date().getFullYear());
   const entries = (schLeaveData && schLeaveData.entries) || [];
-  const usedHours = entries.filter(e => e.type === 'annual').reduce((s, e) => s + (e.hours || 0), 0);
+  const usedHours = entries
+    .filter(e => e.type === 'annual' && e.date && e.date.startsWith(currentYear))
+    .reduce((s, e) => s + (e.hours || 0), 0);
   const usedDays = usedHours / 8;
-  const remain = SCH_ANNUAL_LEAVE_TOTAL_DAYS - usedDays;
+  const remain = totalDays - usedDays;
   const remainRounded = Math.round(remain * 10) / 10;
   el.textContent = `${remainRounded}天`;
   el.style.color = remain < 0 ? '#c0392b' : 'var(--accent)';
