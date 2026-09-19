@@ -1080,7 +1080,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       .sch-day.early .sch-day-label { color:#3a7a58; }
       .sch-day.late  .sch-day-label { color:#a05030; }
       .sch-day.off   .sch-day-label { color:#888780; }
-      .sch-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+      .sch-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
       .sch-stat { background:var(--card); border:0.5px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
       .sch-stat-num { font-size:20px; font-weight:500; color:var(--text); }
       .sch-stat-lbl { font-size:11px; color:var(--text-dim); margin-top:2px; }
@@ -1123,6 +1123,17 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <div class="sch-stat"><div class="sch-stat-num" id="sch-early" style="color:#3a7a58;">0</div><div class="sch-stat-lbl">早班</div></div>
       <div class="sch-stat"><div class="sch-stat-num" id="sch-late" style="color:#a05030;">0</div><div class="sch-stat-lbl">晚班</div></div>
       <div class="sch-stat"><div class="sch-stat-num" id="sch-off" style="color:#888780;">0</div><div class="sch-stat-lbl">休假</div></div>
+      <div class="sch-stat" onclick="openSchMealModal()" style="cursor:pointer;"><div class="sch-stat-num" id="sch-meal-subsidy-days" style="color:#c98a3a;">0</div><div class="sch-stat-lbl">餐費補助</div></div>
+    </div>
+
+    <!-- 員工餐設定 Modal -->
+    <div id="sch-meal-modal" class="modal-overlay" onclick="handleOverlayClick(event,'sch-meal-modal')">
+      <div class="modal-sheet">
+        <div style="font-size:14px; font-weight:500; margin-bottom:6px;">員工餐設定</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">晚班預設沒有員工餐（補$80），勾選代表那天「有」供餐</div>
+        <div id="sch-meal-list" style="max-height:320px; overflow-y:auto;"></div>
+        <button class="btn-primary" onclick="closeSchMealModal()" style="width:100%; margin-top:12px;">關閉</button>
+      </div>
     </div>
 
     <div class="sch-wage-card">
@@ -1148,19 +1159,21 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
     <div class="sch-wage-card" id="sch-payroll-card">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:4px; text-align:center;">
-        <div style="font-size:10px; color:var(--text-dim); min-width:0;">本薪</div>
-        <div style="font-size:10px; color:var(--text-dim); min-width:0;">＋全勤</div>
-        <div style="font-size:10px; color:var(--text-dim); min-width:0;">－勞健保</div>
-        <div style="font-size:10px; color:var(--text-dim); min-width:0;">－請假</div>
-        <div style="font-size:10px; color:var(--text-dim); min-width:0;">＝預計實領</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">本薪</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋全勤</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋餐費</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">－勞健保</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">－請假</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">＝實領</div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:4px; text-align:center; margin-top:2px;">
-        <div id="sch-pay-base" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
-        <div id="sch-pay-attend" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
-        <div id="sch-pay-insurance" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
-        <div id="sch-pay-leave" style="font-size:11px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
-        <div id="sch-takehome-amount" style="font-size:13px; font-weight:600; color:var(--accent); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; text-align:center; margin-top:2px;">
+        <div id="sch-pay-base" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-attend" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-meal" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-insurance" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-leave" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-takehome-amount" style="font-size:12px; font-weight:600; color:var(--accent); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
       </div>
       <div style="font-size:10px; color:var(--text-dim); margin-top:8px; line-height:1.4;">⚠️ 全勤計算方式待確認：實際請假應依比例扣全勤，但確切比例尚未確認，目前先加全額估算。</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
@@ -6146,6 +6159,7 @@ function initSchedulePage() {
   loadSchInsuranceData();
   loadSchAttendanceData();
   loadSchLeaveData();
+  loadSchMealData();
   initSchGoogleAuth();
   // 初始化鎖定 UI
   const toggle = document.getElementById('sch-lock-toggle');
@@ -6230,6 +6244,8 @@ function renderSchedule() {
   if (earlyEl) earlyEl.textContent = early;
   if (lateEl)  lateEl.textContent  = late;
   if (offEl)   offEl.textContent   = off;
+  const mealEl = document.getElementById('sch-meal-subsidy-days');
+  if (mealEl) mealEl.textContent = countNoMealLateDays();
 
   const totalWorkDays = new Date(schYear, schMonth+1, 0).getDate();
   const salary = appSettings.salary || 0;
@@ -6252,6 +6268,74 @@ function renderSchedule() {
   renderSchTakeHome();
 }
 
+let schMealData = { dates: {} };
+
+async function loadSchMealData() {
+  try {
+    const snap = await getDoc(doc(db, 'meal', 'exceptions'));
+    schMealData = snap.exists() ? snap.data() : { dates: {} };
+  } catch(e) {}
+  renderSchedule();
+  renderSchTakeHome();
+}
+
+function countNoMealLateDays() {
+  const daysInMonth = new Date(schYear, schMonth+1, 0).getDate();
+  let count = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (getSchShift(dateStr) === 'late' && !(schMealData.dates && schMealData.dates[dateStr])) {
+      count++;
+    }
+  }
+  return count;
+}
+
+window.openSchMealModal = function() {
+  renderSchMealList();
+  document.getElementById('sch-meal-modal').classList.add('show');
+};
+
+window.closeSchMealModal = function() {
+  document.getElementById('sch-meal-modal').classList.remove('show');
+};
+
+function renderSchMealList() {
+  const container = document.getElementById('sch-meal-list');
+  if (!container) return;
+  const daysInMonth = new Date(schYear, schMonth+1, 0).getDate();
+  const lateDates = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (getSchShift(dateStr) === 'late') lateDates.push(dateStr);
+  }
+  if (lateDates.length === 0) {
+    container.innerHTML = '<div style="font-size:12px; color:var(--text-dim); text-align:center; padding:1rem 0;">這個月沒有排晚班</div>';
+    return;
+  }
+  container.innerHTML = lateDates.map(dateStr => {
+    const hasMeal = !!(schMealData.dates && schMealData.dates[dateStr]);
+    const dLabel = dateStr.slice(5).replace('-', '/');
+    return `
+      <div onclick="toggleSchMealDay('${dateStr}')" style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:0.5px solid var(--hover); cursor:pointer;">
+        <span style="font-size:13px; color:var(--text);">${dLabel}（晚班）</span>
+        <span style="font-size:12px; color:${hasMeal ? '#3a7a58' : 'var(--text-dim)'};">${hasMeal ? '✓ 有供餐' : '沒有員工餐（補$80）'}</span>
+      </div>`;
+  }).join('');
+}
+
+window.toggleSchMealDay = async function(dateStr) {
+  if (!schMealData.dates) schMealData.dates = {};
+  if (schMealData.dates[dateStr]) delete schMealData.dates[dateStr];
+  else schMealData.dates[dateStr] = true;
+  try {
+    await setDoc(doc(db, 'meal', 'exceptions'), schMealData);
+  } catch(e) { console.error('員工餐設定儲存失敗', e); alert('儲存失敗，請檢查網路後再試一次'); return; }
+  renderSchMealList();
+  renderSchedule();
+  renderSchTakeHome();
+};
+
 function renderSchTakeHome() {
   const totalEl = document.getElementById('sch-takehome-amount');
   if (!totalEl) return;
@@ -6267,6 +6351,7 @@ function renderSchTakeHome() {
 
   const insurance   = monthValueOrLatest(schInsuranceData && schInsuranceData.byMonth);
   const attendance  = monthValueOrLatest(schAttendanceData && schAttendanceData.byMonth);
+  const mealSubsidy = countNoMealLateDays() * 80;
 
   const leaveEntries = (schLeaveData && schLeaveData.entries) || [];
   let leaveDeduct = 0;
@@ -6274,14 +6359,16 @@ function renderSchTakeHome() {
     if (e.date && e.date.startsWith(monthKey)) leaveDeduct += e.estAmount || 0;
   });
 
-  const takeHome = Math.round(salary + attendance - insurance - leaveDeduct);
+  const takeHome = Math.round(salary + attendance + mealSubsidy - insurance - leaveDeduct);
 
   const baseEl = document.getElementById('sch-pay-base');
   const attendEl = document.getElementById('sch-pay-attend');
+  const mealEl2 = document.getElementById('sch-pay-meal');
   const insEl = document.getElementById('sch-pay-insurance');
   const leaveEl = document.getElementById('sch-pay-leave');
   if (baseEl) baseEl.textContent = `$${Math.round(salary).toLocaleString()}`;
   if (attendEl) attendEl.textContent = `$${Math.round(attendance).toLocaleString()}`;
+  if (mealEl2) mealEl2.textContent = `$${mealSubsidy.toLocaleString()}`;
   if (insEl) insEl.textContent = `$${Math.round(insurance).toLocaleString()}`;
   if (leaveEl) leaveEl.textContent = `$${Math.round(leaveDeduct).toLocaleString()}`;
   totalEl.textContent = `$${takeHome.toLocaleString()}`;
