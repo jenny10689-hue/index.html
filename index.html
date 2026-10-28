@@ -1603,6 +1603,45 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       </div>
 
 
+
+<style id="shared-split-compact-layout">
+  #shared-split-row {
+    padding: 12px !important;
+  }
+  #shared-split-row .split-compact-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  #shared-split-row .split-compact-line label {
+    flex: 0 1 88px;
+    min-width: 0;
+    font-size: 12px;
+  }
+  #shared-split-row .split-compact-line input {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+  #shared-split-owed {
+    flex: 1;
+    min-width: 0;
+    margin: 0 !important;
+    text-align: right;
+    font-size: 12px !important;
+    white-space: normal;
+    align-self: center;
+  }
+  @media (max-width: 380px) {
+    #shared-split-row .split-compact-line {
+      gap: 6px;
+    }
+    #shared-split-row .split-compact-line label {
+      flex-basis: 65px;
+    }
+  }
+</style>
 <div id="shared-split-row" style="display:none;padding:12px;
 margin:10px 0;background:var(--hover);border-radius:12px">
   <div style="display:flex;justify-content:space-between;
@@ -1619,7 +1658,7 @@ margin:10px 0;background:var(--hover);border-radius:12px">
       恢復比例
     </button>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  <div class="split-compact-line">
     <label>倩負擔
       <input type="number" id="shared-qian" min="0" step="1"
         oninput="editSharedAmount('qian')"
@@ -1634,10 +1673,10 @@ margin:10px 0;background:var(--hover);border-radius:12px">
         background:var(--card);color:var(--text);
         border:1px solid var(--border);border-radius:8px">
     </label>
-  </div>
+
   <div id="shared-split-owed"
     style="margin-top:10px;font-size:13px;color:var(--text-sub)">
-  </div>
+  </div></div>
 </div>
 <!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
       <div id="note-row" class="form-row-compact" style="display:none; align-items:flex-start;">
