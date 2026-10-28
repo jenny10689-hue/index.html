@@ -1052,7 +1052,38 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
       <div style="display:flex; align-items:center; gap:6px; margin-left:auto;">
         <button onclick="showPage('settings-salary')" aria-label="薪水設定" style="width:26px; height:26px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">⚙️</button>
         <button onclick="openSchCustomTimeModal()" style="padding:4px 10px; border-radius:14px; border:0.5px solid var(--border); background:var(--card); color:var(--text-sub); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">自訂</button>
-        <button onclick="syncSchToGoogle()" style="padding:4px 10px; border-radius:14px; border:none; background:var(--accent); color:var(--accent-text); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">傳送</button>
+        <button id="sch-sync-button" onclick="syncSchToGoogle()" style="padding:4px 10px; border-radius:14px; border:none; background:var(--accent); color:var(--accent-text); font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;">傳送</button>
+<style>
+@keyframes schSyncSpin { to { transform:rotate(360deg); } }
+.sch-sync-spinner {
+  width:32px;height:32px;border-radius:50%;
+  border:4px solid var(--border);
+  border-top-color:var(--accent);
+  animation:schSyncSpin .8s linear infinite;
+  margin:0 auto 18px;
+}
+</style>
+<div id="sch-sync-overlay" role="dialog" aria-modal="true"
+ style="display:none;position:fixed;inset:0;z-index:99999;
+ background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:20px">
+ <div style="background:var(--card);color:var(--text);padding:28px;
+ border-radius:16px;width:100%;max-width:340px;text-align:center;
+ box-shadow:0 12px 36px rgba(0,0,0,.2)">
+  <div class="sch-sync-spinner"></div>
+  <div style="font-size:17px;font-weight:600;margin-bottom:10px">正在傳送班表</div>
+  <div id="sch-sync-count" role="status" aria-live="polite"
+   style="font-size:15px;margin-bottom:14px">已傳送 0 筆／共 0 筆</div>
+  <div id="sch-sync-progress" role="progressbar" aria-label="傳送進度"
+   aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+   style="height:10px;border-radius:10px;background:var(--border);overflow:hidden">
+   <div id="sch-sync-fill" style="width:0%;height:100%;border-radius:10px;
+    background:var(--accent);transition:width .2s"></div>
+  </div>
+  <div id="sch-sync-stage" style="font-size:12px;
+   color:var(--text-sub);margin-top:12px">準備中…</div>
+ </div>
+</div>
+
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--text-dim); flex-shrink:0;">
           <span id="sch-lock-label">已鎖定</span>
           <div id="sch-lock-toggle" onclick="toggleSchLock()" style="width:36px; height:20px; border-radius:10px; background:var(--accent); position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;">
@@ -6999,48 +7030,135 @@ function schFormatHourLabel(t) {
   return m === 30 ? `${hh}.5` : hh;
 }
 
+
+let schSyncBusy = false;
+
+function schProgress(done, total, stage) {
+  const percent = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('sch-sync-count').textContent =
+    `已傳送 ${done} 筆／共 ${total} 筆`;
+  document.getElementById('sch-sync-fill').style.width = percent + '%';
+  document.getElementById('sch-sync-progress')
+    .setAttribute('aria-valuenow', String(percent));
+  document.getElementById('sch-sync-stage').textContent = stage;
+}
+
+async function schGoogleRequest(url, options) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    let message = '';
+    try {
+      const data = await res.json();
+      message = data.error?.message || '';
+    } catch (_) {}
+    throw new Error(`Google 日曆 HTTP ${res.status} ${message}`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
 async function doSchSync(token) {
-  const lastDay = new Date(schYear, schMonth+1, 0).getDate();
-  const monthStart = `${schYear}-${String(schMonth+1).padStart(2,'0')}-01`;
-  const monthEnd   = `${schYear}-${String(schMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-  const searchRes = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${monthStart}T00:00:00%2B08:00&timeMax=${monthEnd}T23:59:59%2B08:00&singleEvents=true`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
-  );
-  const searchData = await searchRes.json();
-  for (const event of (searchData.items || [])) {
-    if (['早','晚','早班','晚班'].includes(event.summary)) {
-      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`, {
-        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
-      });
+  if (schSyncBusy) return;
+  schSyncBusy = true;
+
+  const overlay = document.getElementById('sch-sync-overlay');
+  const button = document.getElementById('sch-sync-button');
+
+  overlay.style.display = 'flex';
+  button.disabled = true;
+
+  const prefix = `${schYear}-${String(schMonth + 1).padStart(2,'0')}-`;
+  const entries = Object.entries(schData).filter(([date, value]) => {
+    const shift = typeof value === 'string' ? value : value?.shift;
+    return date.startsWith(prefix) && shift && shift !== 'off';
+  });
+
+  const total = entries.length;
+  let done = 0;
+
+  schProgress(0, total, '正在檢查 Google 日曆…');
+
+  try {
+    const lastDay = new Date(schYear, schMonth + 1, 0).getDate();
+    const monthStart = prefix + '01';
+    const monthEnd = prefix + String(lastDay).padStart(2,'0');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    // 清除原本的早班、晚班事件
+    let pageToken = '';
+    do {
+      const searchUrl =
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events` +
+        `?timeMin=${monthStart}T00:00:00%2B08:00` +
+        `&timeMax=${monthEnd}T23:59:59%2B08:00` +
+        `&singleEvents=true&maxResults=2500` +
+        (pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '');
+
+      const data = await schGoogleRequest(searchUrl, { headers });
+      schProgress(0, total, '正在清除舊班表…');
+
+      for (const event of data.items || []) {
+        if (['早','晚','早班','晚班'].includes(event.summary)) {
+          await schGoogleRequest(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(event.id)}`,
+            { method:'DELETE', headers }
+          );
+        }
+      }
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
+
+    // 逐筆建立新班表
+    for (const [dateStr, value] of entries) {
+      const shift = typeof value === 'string' ? value : value.shift;
+      const custom = typeof value === 'object' && value.start && value.end;
+      const start = custom ? value.start : shift === 'early' ? '07:00' : '14:30';
+      const end = custom ? value.end : shift === 'early' ? '15:30' : '23:00';
+
+      schProgress(done, total, `正在傳送 ${dateStr}…`);
+
+      const created = await schGoogleRequest(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        {
+          method:'POST',
+          headers:{ ...headers, 'Content-Type':'application/json' },
+          body:JSON.stringify({
+            summary:custom
+              ? `${schFormatHourLabel(start)}-${schFormatHourLabel(end)}`
+              : shift === 'early' ? '早' : '晚',
+            start:{ dateTime:`${dateStr}T${start}:00`, timeZone:'Asia/Taipei' },
+            end:{ dateTime:`${dateStr}T${end}:00`, timeZone:'Asia/Taipei' },
+            reminders:{
+              useDefault:false,
+              overrides:[{ method:'popup', minutes:20 }]
+            }
+          })
+        }
+      );
+
+      if (!created?.id) throw new Error(`${dateStr} 未取得事件 ID`);
+
+      await schGoogleRequest(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(created.id)}`,
+        {
+          method:'PATCH',
+          headers:{ ...headers, 'Content-Type':'application/json' },
+          body:JSON.stringify({ colorId:'5' })
+        }
+      );
+
+      done++;
+      schProgress(done, total, done === total ? '傳送完成' : '正在傳送…');
     }
+
+    alert(`已同步 ${done} 筆班表到 Google 日曆！`);
+  } catch (error) {
+    console.error('班表同步失敗', error);
+    alert(`傳送中斷，已完成 ${done}／${total} 筆。\n${error.message}`);
+  } finally {
+    overlay.style.display = 'none';
+    button.disabled = false;
+    schSyncBusy = false;
   }
-  let count = 0;
-  for (const [dateStr, value] of Object.entries(schData)) {
-    const shift = typeof value === 'string' ? value : value.shift;
-    if (shift === 'off' || !shift) continue;
-    const hasCustom = typeof value === 'object' && value.start && value.end;
-    const startTime = hasCustom ? value.start : (shift==='early' ? '07:00' : '14:30');
-    const endTime   = hasCustom ? value.end   : (shift==='early' ? '15:30' : '23:00');
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        summary: hasCustom ? `${schFormatHourLabel(startTime)}-${schFormatHourLabel(endTime)}` : (shift === 'early' ? '早' : '晚'),
-        start: { dateTime: `${dateStr}T${startTime}:00`, timeZone: 'Asia/Taipei' },
-        end:   { dateTime: `${dateStr}T${endTime}:00`,   timeZone: 'Asia/Taipei' },
-        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 20 }] }
-      })
-    });
-    const created = await res.json();
-    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${created.id}`, {
-      method: 'PATCH',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ colorId: '5' })
-    });
-    count++;
-  }
-  alert(`已同步 ${count} 筆班表到 Google 日曆！`);
 }
 
 window.toggleSchLock = async function() {
