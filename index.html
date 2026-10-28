@@ -815,6 +815,8 @@ body { background-color: var(--bg); color: var(--text); }
         </div>
       </div>
       <div id="budget-list"></div>
+      <div id="funding-summary" class="card"
+        style="margin-top:16px;padding:16px;display:none"></div>
       <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #f1efe8;">
         <p style="font-size:0.8rem; color:#888780; margin-bottom:0.5rem;">點擊分類旁的金額可以編輯預算</p>
       </div>
@@ -2017,6 +2019,8 @@ margin:10px 0;background:var(--hover);border-radius:12px">
 
   // 預算資料 { personal: { '餐飲': 7000, ... }, shared: { '吃飯': 3000, ... } }
   let budgets = { personal: {}, shared: {} };
+  let budgetDestinations = {};
+  // budget-funding-phase1
 
   let unsubscribeRecords = null;
   let unsubscribeLedgers = null;
@@ -3144,6 +3148,8 @@ async function loadUserSettings() {
       if (data.incomeCategories)        incomeCategories        = data.incomeCategories;
       if (data.sharedExpenseCategories) sharedExpenseCategories = data.sharedExpenseCategories;
       if (data.budgets)                 budgets                 = data.budgets;
+      if (data.budgetDestinations)
+        budgetDestinations = data.budgetDestinations;
     } else {
       await saveUserSettings();
     }
@@ -3159,7 +3165,7 @@ await loadStockTargets();
 async function saveUserSettings() {
     // 只存收入分類、預算（支出分類改由 saveCatManageCategories 依帳本各自存，避免寫錯帳本）
     await setDoc(doc(db,'users',currentUid), {
-      incomeCategories, budgets
+      incomeCategories, budgets, budgetDestinations
     }, { merge:true });
   }
 
@@ -4033,6 +4039,127 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     renderBudgetPage();
   };
 
+
+  const fundingOptions = [
+    ['first', '第一銀行保留'],
+    ['cathay', '國泰世華'],
+    ['fubon', '台北富邦'],
+    ['cash-budget', '現金預算本'],
+    ['cash-saving', '現金預存'],
+    ['wallet', '共同錢櫃'],
+    ['unset', '尚未設定']
+  ];
+
+  function fundingBudgetValue(type, month, cat) {
+    const [year, m] = month.split('-').map(Number);
+    const prev = new Date(year, m - 2, 1);
+    const prevKey = prev.getFullYear() + '-' +
+      String(prev.getMonth() + 1).padStart(2, '0');
+
+    return Number(
+      budgets[type]?.[month]?.[cat] ??
+      budgets[type]?.[prevKey]?.[cat] ?? 0
+    ) || 0;
+  }
+
+  window.setBudgetDestination = async function(type, cat, value) {
+    if (!budgetDestinations[type])
+      budgetDestinations[type] = {};
+
+    budgetDestinations[type][cat] = value;
+
+    try {
+      await saveUserSettings();
+      renderBudgetPage();
+    } catch (e) {
+      console.error(e);
+      alert('資金去向儲存失敗，請重新整理後再試');
+    }
+  };
+
+  function renderFundingSummary() {
+    const target = document.getElementById('funding-summary');
+    if (!target) return;
+
+    // 第一階段只統計個人帳本
+    if (budgetLedgerType !== 'personal') {
+      target.style.display = 'none';
+      return;
+    }
+
+    target.style.display = 'block';
+
+    const month = budgetYear + '-' +
+      String(budgetMonth).padStart(2, '0');
+
+    const totals = {};
+    fundingOptions.forEach(([key]) => totals[key] = 0);
+
+    expenseCategories.forEach(cat => {
+      const dest =
+        budgetDestinations.personal?.[cat.name] || 'unset';
+
+      totals[dest] += fundingBudgetValue(
+        'personal', month, cat.name
+      );
+    });
+
+    const total = Object.values(totals)
+      .reduce((a, b) => a + b, 0);
+
+    const format = n => '$' + n.toLocaleString();
+
+    const cash = totals['cash-budget'] +
+      totals['cash-saving'] + totals.wallet;
+
+    const rows = [
+      ['第一銀行保留', totals.first],
+      ['國泰世華', totals.cathay],
+      ['台北富邦', totals.fubon],
+      ['現金預算本', totals['cash-budget']],
+      ['現金預存', totals['cash-saving']],
+      ['共同錢櫃', totals.wallet],
+      ['尚未設定去向', totals.unset]
+    ];
+
+    target.innerHTML = '';
+
+    const title = document.createElement('h3');
+    title.textContent = '本月資金分配';
+    target.appendChild(title);
+
+    rows.forEach(([name, value]) => {
+      const row = document.createElement('div');
+      row.style.cssText =
+        'display:flex;justify-content:space-between;' +
+        'padding:8px 0;border-bottom:1px solid var(--border);';
+
+      const left = document.createElement('span');
+      const right = document.createElement('strong');
+
+      left.textContent = name;
+      right.textContent = format(value);
+
+      row.append(left, right);
+      target.appendChild(row);
+    });
+
+    const result = document.createElement('div');
+    result.style.cssText =
+      'margin-top:12px;padding:12px;' +
+      'background:var(--hover);border-radius:10px;';
+
+    result.innerHTML =
+      '<div style="display:flex;justify-content:space-between">' +
+      '<strong>預計提領現金</strong>' +
+      '<strong>' + format(cash) + '</strong></div>' +
+      '<div style="display:flex;justify-content:space-between;' +
+      'margin-top:8px"><span>預算分配合計</span>' +
+      '<strong>' + format(total) + '</strong></div>';
+
+    target.appendChild(result);
+  }
+
   async function renderBudgetPage() {
     const isShared = budgetLedgerType === 'shared';
     const cats = isShared ? sharedExpenseCategories : expenseCategories;
@@ -4115,8 +4242,43 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         renderBudgetPage();
       };
 
+
+      if (!isShared) {
+        const box = document.createElement('div');
+        box.style.cssText =
+          'padding:4px 0 12px 42px;display:flex;' +
+          'align-items:center;gap:8px;font-size:12px;';
+
+        const label = document.createElement('span');
+        label.textContent = '資金去向';
+
+        const select = document.createElement('select');
+        select.style.cssText =
+          'flex:1;min-width:0;padding:7px;border-radius:8px;' +
+          'background:var(--card);color:var(--text);' +
+          'border:1px solid var(--border);';
+
+        fundingOptions.forEach(([key, name]) => {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+
+        select.value =
+          budgetDestinations.personal?.[cat.name] || 'unset';
+
+        select.onchange = () =>
+          setBudgetDestination('personal', cat.name, select.value);
+
+        box.append(label, select);
+        item.appendChild(box);
+      }
+
       container.appendChild(item);
     });
+
+    renderFundingSummary();
   }
 
 
