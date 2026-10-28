@@ -21,7 +21,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     button, input, select, textarea { font-family: inherit; }
- 
+
     body {
       font-family: var(--font-family, sans-serif);
       background-color: #f1efe8;
@@ -29,7 +29,7 @@
       min-height: 100vh;
       display: flex;
     }
- 
+
     /* ===========================
        側邊欄
        =========================== */
@@ -46,19 +46,19 @@
       transition: width 0.2s;
       overflow: hidden;
     }
- 
+
     #sidebar.collapsed { width: 56px; padding: 1rem 0.5rem; }
     #sidebar.collapsed #sidebar-logo-text,
     #sidebar.collapsed .sidebar-label,
     #sidebar.collapsed h2 { display: none; }
     #sidebar.collapsed .sidebar-item { padding: 0.6rem; justify-content: center; }
- 
+
     #sidebar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
     #sidebar-logo { font-size: 1.1rem; font-weight: 500; color: #2c2c2a; white-space: nowrap; }
     #toggle-sidebar { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #888780; padding: 0.2rem 0.4rem; flex-shrink: 0; }
     #toggle-sidebar:hover { color: #2c2c2a; background: none; }
     #sidebar h2 { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.05em; margin: 0.75rem 0 0.3rem; padding-left: 0.5rem; white-space: nowrap; }
- 
+
     .sidebar-item {
       display: flex; align-items: center; gap: 0.6rem;
       padding: 0.55rem 0.75rem; border-radius: 8px; cursor: pointer;
@@ -68,18 +68,18 @@
     .sidebar-item:hover { background-color: #f1efe8; }
     .sidebar-item.active { background-color: #f1efe8; color: #2c2c2a; font-weight: 500; border-left: 3px solid #444441; padding-left: calc(0.75rem - 3px); }
     .sidebar-icon { font-size: 1rem; flex-shrink: 0; }
- 
+
     /* ===========================
        主畫面
        =========================== */
     #main { flex: 1; padding: 1.5rem; overflow-y: auto; min-width: 0; position: relative; }
     .container { max-width: 720px; margin: 0 auto; }
- 
+
     h1 { font-size: 1.3rem; font-weight: 500; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #d3d1c7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     h2 { font-size: 0.95rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.75rem; }
- 
+
     .card { background: #ffffff; border: 1px solid #d3d1c7; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
- 
+
     /* ===========================
        月份選擇器
        =========================== */
@@ -87,7 +87,7 @@
     .month-picker button { padding: 0.25rem 0.5rem; font-size: 1rem; border: 1px solid #d3d1c7; border-radius: 6px; background: #fff; cursor: pointer; }
 .month-picker button:hover { background: var(--hover); }
     .month-label { font-size: 0.88rem; font-weight: 500; min-width: 70px; text-align: center; }
- 
+
     /* ===========================
        結餘摘要
        =========================== */
@@ -98,7 +98,7 @@
     .summary-value.income  { color: #2e7d32; }
     .summary-value.expense { color: #c0392b; }
     .summary-value.balance { color: #2c2c2a; }
- 
+
     /* ===========================
        圓餅圖
        =========================== */
@@ -111,7 +111,7 @@
     .legend-label { color: #5f5e5a; flex: 1; }
     .legend-amount { font-weight: 500; color: #2c2c2a; }
     .legend-pct { font-size: 0.75rem; color: #888780; }
- 
+
     /* ===========================
        快速輸入區
        =========================== */
@@ -124,7 +124,7 @@
     .preset-chip-btn:hover { background: #f1efe8; }
     .preset-chip-del { border: none; border-left: 1px solid #d3d1c7; background: transparent; padding: 0.4rem 0.5rem; cursor: pointer; font-size: 0.75rem; color: var(--text-dim); }
     .preset-chip-del:hover { background: #f1efe8; color: #5f5e5a; }
- 
+
     /* 課金快速輸入 */
 #topup-inline { background: var(--bg); border-radius: 10px; padding: 0.875rem 1rem; margin-bottom: 0.75rem; border: 1px solid var(--border); }
     #topup-inline h3 { font-size: 0.85rem; font-weight: 500; color: #5f5e5a; margin-bottom: 0.6rem; }
@@ -154,7 +154,7 @@
     .bottom-nav-btn i { font-size: 20px; line-height: 1; }
     .topup-field { display: flex; align-items: center; gap: 0.75rem; }
     .topup-field .input-sm { background: #ffffff; }
- 
+
     /* ===========================
        記錄清單
        =========================== */
@@ -170,23 +170,23 @@
     .record-right { text-align: right; flex-shrink: 0; }
     .record-amount { font-size: 0.95rem; font-weight: 500; }
     .record-actions { display: flex; gap: 0.3rem; margin-top: 0.25rem; justify-content: flex-end; }
- 
+
     .pay-badge {
       display: inline-flex; align-items: center; justify-content: center;
       width: 20px; height: 20px; border-radius: 50%;
       font-size: 0.8rem; cursor: default;
     }
- 
+
     .amount-expense { color: #c0392b; }
     .amount-income  { color: #2e7d32; }
- 
+
     .tag { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.45rem; border-radius: 999px; border: 1px solid #d3d1c7; color: #5f5e5a; background: #f1efe8; cursor: pointer; user-select: none; white-space: nowrap; }
     .tag-prestored { background: #e8f5e9; border-color: #c8e6c9; color: #2e7d32; }
     .tag-btn { font-size: 0.75rem; padding: 0.2rem 0.5rem; border: 1px solid #d3d1c7; border-radius: 6px; background: #fff; cursor: pointer; color: #5f5e5a; }
     .tag-btn:hover { background: #f1efe8; }
     .tag-btn.danger { color: #c0392b; border-color: #e0b0ad; }
     .tag-btn.danger:hover { background: #fdf0ef; }
- 
+
     /* ===========================
        浮動新增按鈕
        =========================== */
@@ -199,7 +199,7 @@
       transition: background 0.15s, transform 0.15s; z-index: 50;
     }
     #fab:hover { background: #2c2c2a; transform: scale(1.05); }
- 
+
     /* ===========================
        新增/編輯 彈出視窗
        =========================== */
@@ -223,7 +223,7 @@
         max-height: 90vh !important;
       }
     }
- 
+
     /* 從底部滑入 */
     .modal-sheet {
       background: #fff; border-radius: 16px 16px 0 0;
@@ -231,12 +231,12 @@
       max-height: 90vh; overflow-y: auto;
       animation: slideUp 0.2s ease;
     }
- 
+
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
- 
+
     .modal-handle { width: 36px; height: 4px; background: #d3d1c7; border-radius: 2px; margin: 0 auto 1rem; }
     .modal-title { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
- 
+
     /* 表單緊湊版 */
     .form-compact { display: flex; flex-direction: column; gap: 0.75rem; }
     .form-row-compact { display: flex; align-items: center; gap: 0.75rem; }
@@ -245,7 +245,7 @@
       .form-row-compact .input-sm { font-size: 0.82rem; padding: 0.4rem 0.4rem; }
     }
     .form-label { font-size: 0.8rem; color: #888780; width: 56px; flex-shrink: 0; }
- 
+
     .input-sm {
       flex: 1; padding: 0.45rem 0.65rem; font-size: 0.9rem;
       border: 1px solid #d3d1c7; border-radius: 8px;
@@ -253,13 +253,13 @@
     }
     .input-sm:focus { border-color: #888780; background: #fff; }
     textarea.input-sm { resize: vertical; min-height: 56px; }
- 
+
     /* 類型切換 */
     .type-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.25rem; }
     .type-tab { padding: 0.35rem 1rem; border-radius: 20px; border: 1px solid #d3d1c7; background: #fff; font-size: 0.85rem; cursor: pointer; color: #5f5e5a; transition: all 0.15s; }
     .type-tab.active-expense { background: #444441; color: #fff; border-color: #444441; }
     .type-tab.active-income  { background: #2e7d32; color: #fff; border-color: #2e7d32; }
- 
+
     /* emoji 選擇器 */
     .emoji-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .emoji-option {
@@ -282,13 +282,13 @@
       font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 4px; white-space: nowrap; z-index: 10;
     }
     .emoji-option:hover .emoji-tooltip { display: block; }
- 
+
     /* 通用 modal box */
     .modal-box-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); align-items: center; justify-content: center; z-index: 110; }
     .modal-box-overlay.show { display: flex; }
     .modal-box { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #d3d1c7; width: 340px; max-width: 92vw; max-height: 85vh; overflow-y: auto; }
     .modal-box h2 { margin-bottom: 1rem; font-size: 1rem; font-weight: 500; }
- 
+
     /* 按鈕 */
     button { padding: 0.45rem 1rem; font-size: 0.85rem; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; color: #2c2c2a; cursor: pointer; transition: background 0.15s; }
 button:hover { background: var(--hover); }
@@ -298,7 +298,7 @@ button:hover { background: var(--hover); }
     .btn-income-color:hover { background: #c8e6c9; }
     .btn-full { width: 100%; }
     .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.78rem; }
- 
+
     /* 信用卡統計 */
     .cc-summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
 .cc-stat { background: var(--hover); border-radius: 8px; padding: 0.75rem 1rem; }
@@ -311,7 +311,7 @@ button:hover { background: var(--hover); }
     .cc-stat-value { font-size: 1.05rem; font-weight: 500; }
     .cc-detail-row { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f1efe8; font-size: 0.85rem; }
     .cc-detail-row:last-child { border-bottom: none; }
- 
+
     /* 預算頁面 */
     .budget-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f1efe8; }
     .budget-item:last-child { border-bottom: none; }
@@ -325,7 +325,7 @@ button:hover { background: var(--hover); }
     .budget-right { text-align: right; flex-shrink: 0; }
     .budget-remaining { font-size: 0.88rem; font-weight: 500; }
     .budget-remaining.over { color: #c0392b; }
- 
+
     /* 信用卡對帳區塊 */
     .cc-reconcile {
       background: var(--card);
@@ -377,7 +377,7 @@ button:hover { background: var(--hover); }
     .cc-recon-diff.warn { color: #c0392b; }
     .cc-recon-diff.exact{ color: #444441; }
     .cc-recon-note { font-size: 0.75rem; color: #888780; }
- 
+
     /* 登入 */
     #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; width: 100%; gap: 1rem; }
     #login-screen h1 { border: none; font-size: 1.6rem; display: block; }
@@ -385,10 +385,10 @@ button:hover { background: var(--hover); }
     .btn-google { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; font-size: 1rem; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; cursor: pointer; }
     .btn-google:hover { background: #f1efe8; }
     #loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; color: #888780; }
- 
+
 @media (max-width: 600px) {
       body { flex-direction: column; }
- 
+
       /* 手機版 sidebar 變成底部滑出選單 */
       #sidebar {
         position: fixed;
@@ -413,7 +413,7 @@ button:hover { background: var(--hover); }
         padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
         overflow-y: auto;
       }
- 
+
       /* 頂部列永遠顯示 */
       #sidebar-top {
         width: 100%;
@@ -422,19 +422,19 @@ button:hover { background: var(--hover); }
         align-items: center;
         min-height: 36px;
       }
- 
+
       /* 使用者名稱和選單項目預設隱藏，展開才顯示 */
       #sidebar h2 { padding-left: 0.25rem; }
- 
+
       .sidebar-item {
         width: 100%;
         padding: 0.6rem 0.5rem;
         border-radius: 8px;
       }
- 
+
       /* 登出按鈕不要撐到底 */
       #sidebar > div[style*="flex:1"] { display: none; }
- 
+
       #main { padding: 1rem; padding-bottom: 72px; }
       #bottom-nav { display: flex; }
       .summary-grid { grid-template-columns: 1fr 1fr; }
@@ -461,7 +461,7 @@ body { background-color: var(--bg); color: var(--text); }
 #fab { background: rgba(68, 68, 65, 0.55); }
 #fab:hover { background: var(--accent2); }
 .budget-bar { background: var(--accent); }
- 
+
 /* 主題預覽卡片 */
 .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
 .theme-card {
@@ -479,7 +479,7 @@ body { background-color: var(--bg); color: var(--text); }
 .theme-preview-card { flex: 1; border-radius: 3px; }
 .theme-name { font-size: 0.78rem; font-weight: 500; text-align: center; color: var(--text-sub); }
 @media (max-width: 600px) { .theme-grid { grid-template-columns: repeat(2, 1fr); } }
- 
+
 /* 信用卡帳本分欄 */
 .cc-ledger-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .cc-col-title { font-size: 0.75rem; font-weight: 500; color: var(--text-dim); margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 0.5px solid var(--border); }
@@ -546,9 +546,9 @@ body { background-color: var(--bg); color: var(--text); }
   </style>
 </head>
 <body>
- 
+
 <div id="loading">載入中...</div>
- 
+
 <!-- 登入 -->
 <div id="login-screen" style="display:none;">
   <h1>💰 我的記帳本</h1>
@@ -563,7 +563,7 @@ body { background-color: var(--bg); color: var(--text); }
     使用 Google 帳號登入
   </button>
 </div>
- 
+
 <!-- 側邊欄 -->
 <div id="sidebar" style="display:none;">
   <div id="sidebar-top">
@@ -589,7 +589,7 @@ body { background-color: var(--bg); color: var(--text); }
 </div>
 <!-- 主畫面 -->
 <div id="main" style="display:none;">
- 
+
   <!-- 首頁 -->
   <div id="page-home" class="container" style="display:none;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
@@ -669,7 +669,7 @@ body { background-color: var(--bg); color: var(--text); }
         <button onclick="changeMonth(1)">&#8250;</button>
       </span>
     </h1>
- 
+
     <!-- 圓餅圖 + 統計合併 -->
     <div class="card" id="pie-card">
       <h2 style="margin-bottom:0.75rem;">📊 支出分佈</h2>
@@ -692,7 +692,7 @@ body { background-color: var(--bg); color: var(--text); }
         </div>
       </div>
     </div>
- 
+
     <!-- 課金（共同帳本才顯示） -->
     <div id="topup-card" class="card" style="display:none;">
       <div id="topup-inline">
@@ -728,11 +728,11 @@ body { background-color: var(--bg); color: var(--text); }
           <div id="unsettled-teng-btn" onclick="toggleSettledFilter('teng')" style="font-size:0.82rem; color:#5f5e5a; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s;">💚 待還騰：<strong style="color:#e67e22;">$<span id="unsettled-teng">0</span></strong></div>
         </div>
         <div id="direct-settle-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:0.5px dashed var(--border); font-size:0.78rem; color:var(--text-dim);">
-          💱 不透過錢櫃，直接互相補款（依 2:3 比例）：<strong id="direct-settle-text" style="color:var(--text);"></strong>
+          💱 不透過錢櫃，直接互相補款：<strong id="direct-settle-text" style="color:var(--text);"></strong>
         </div>
       </div>
     </div>
- 
+
     <!-- 快速輸入 -->
     <div class="card" id="preset-card">
       <div class="preset-toggle-header" onclick="togglePresetCard()">
@@ -744,7 +744,7 @@ body { background-color: var(--bg); color: var(--text); }
         <button class="btn-sm" onclick="openAddPreset()" style="margin-top:0.25rem;">＋ 新增常用</button>
       </div>
     </div>
- 
+
 <!-- 記錄清單 -->
     <div class="card">
       <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
@@ -794,7 +794,7 @@ body { background-color: var(--bg); color: var(--text); }
       <div id="recon-teng"></div>
     </div>
   </div>
- 
+
   <!-- 預算頁 -->
   <div id="page-budget" class="container" style="display:none;">
     <h1>
@@ -826,7 +826,7 @@ body { background-color: var(--bg); color: var(--text); }
         <button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
         <span id="dad-ledger-title">爸爸ㄉ波紋</span>
       </h1>
- 
+
 <!-- 總餘額 + 圓餅圖合併 -->
       <div class="card">
         <div style="display:flex; align-items:center; gap:1rem;">
@@ -844,7 +844,7 @@ body { background-color: var(--bg); color: var(--text); }
           </div>
         </div>
       </div>
- 
+
       <!-- 記錄清單 -->
       <div class="card">
 <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
@@ -860,7 +860,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 <!-- 存股頁面 -->
     <div id="page-stocks" class="container" style="display:none;">
       <div class="page-title-row"><button class="btn-back" onclick="showPage('ledger')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button><h1>📈 存股記錄</h1></div>
- 
+
       <!-- 視角切換 -->
       <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap;">
         <button id="stock-tab-qian"     class="btn-primary btn-sm" onclick="setStockView('qian')">我的</button>
@@ -870,7 +870,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <button class="btn-sm" onclick="openAddStock()">＋ 新增存股</button>
         <button class="btn-sm" onclick="openManageTargets()">管理標的</button>
       </div>
- 
+
       <!-- 圓餅圖（各標的佔比） -->
       <div class="card" id="stock-pie-card">
         <h2>各標的佔比</h2>
@@ -881,7 +881,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <div id="stock-pie-legend" style="display:flex; flex-direction:column; gap:0.4rem; flex:1; min-width:160px;"></div>
         </div>
       </div>
- 
+
       <!-- 每個標的的明細 -->
       <div id="stock-targets-area"></div>
     </div>
@@ -1504,9 +1504,9 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         </div>
     </div>
   </div>
- 
+
 </div>
- 
+
 <!-- 底部頁籤（手機版） -->
 <div id="bottom-nav">
   <button class="bottom-nav-btn" id="nav-home" onclick="showPage('home')">
@@ -1540,7 +1540,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
 <!-- 浮動新增按鈕 -->
 <button id="fab" onclick="openAddRecord()" title="新增記錄">＋</button>
- 
+
 <!-- 新增/編輯記錄 sheet -->
 <div id="record-modal" class="modal-overlay" onclick="handleOverlayClick(event,'record-modal')">
   <div class="modal-sheet" id="record-modal-sheet" ontouchstart="recordModalTouchStart(event)" ontouchend="recordModalTouchEnd(event)">
@@ -1553,7 +1553,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <button onclick="switchModalLedger(1)" style="padding:0.15rem 0.5rem; font-size:0.85rem;">&#8250;</button>
       </span>
     </div>
- 
+
     <div class="form-compact">
       <!-- 類型 -->
       <div class="type-tabs" style="justify-content:space-between; align-items:center;">
@@ -1567,20 +1567,20 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           <button type="button" onclick="shiftBillingMonth(1)" style="width:22px; height:22px; border-radius:50%; border:0.5px solid var(--border); background:var(--card); cursor:pointer; font-size:12px; color:var(--text-sub); flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0;">›</button>
         </div>
       </div>
- 
+
       <!-- 日期 + 名稱 平均分配，金額縮小成一半 -->
       <div class="form-row-compact">
         <input type="date"   class="input-sm" id="rec-date"   style="flex:1.2; min-width:0;">
         <input type="text"   class="input-sm" id="rec-name"   placeholder="名稱" style="flex:0.9; min-width:0;">
         <input type="number" class="input-sm" id="rec-amount" placeholder="金額" style="flex:0.9; min-width:0;">
       </div>
- 
+
       <!-- 常用支出（左側 label 對齊分類/支付/備註） -->
       <div class="form-row-compact" style="align-items:flex-start;">
         <div class="form-label" style="margin-top:0.5rem;">常用支出</div>
         <div class="quick-presets" id="modal-preset-buttons" style="flex:1;"></div>
       </div>
- 
+
       <!-- 分類 emoji（左側 label 對齊備註/支付） -->
       <div class="form-row-compact" style="align-items:flex-start;">
         <div class="form-label" style="margin-top:0.5rem;">分類</div>
@@ -1593,7 +1593,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
           </div>
         </div>
       </div>
- 
+
       <!-- 支付別 emoji（支出才顯示，左側 label 對齊分類/備註） -->
       <div id="pay-row" class="form-row-compact" style="align-items:flex-start;">
         <div class="form-label" style="margin-top:0.5rem;">支付</div>
@@ -1602,22 +1602,59 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
         </div>
       </div>
 
-      <!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
+
+<div id="shared-split-row" style="display:none;padding:12px;
+margin:10px 0;background:var(--hover);border-radius:12px">
+  <div style="display:flex;justify-content:space-between;
+  align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <strong style="font-size:13px">分攤金額</strong>
+    <div id="shared-split-ratios" style="display:flex;gap:6px">
+      <button type="button" id="shared-ratio-40"
+        onclick="selectSharedRatio(40)">2:3</button>
+      <button type="button" id="shared-ratio-50"
+        onclick="selectSharedRatio(50)">1:1</button>
+    </div>
+    <button type="button" id="shared-split-reset"
+      onclick="resetSharedSplit()" style="display:none">
+      恢復比例
+    </button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <label>倩負擔
+      <input type="number" id="shared-qian" min="0" step="1"
+        oninput="editSharedAmount('qian')"
+        style="width:100%;box-sizing:border-box;padding:9px;
+        background:var(--card);color:var(--text);
+        border:1px solid var(--border);border-radius:8px">
+    </label>
+    <label>騰負擔
+      <input type="number" id="shared-teng" min="0" step="1"
+        oninput="editSharedAmount('teng')"
+        style="width:100%;box-sizing:border-box;padding:9px;
+        background:var(--card);color:var(--text);
+        border:1px solid var(--border);border-radius:8px">
+    </label>
+  </div>
+  <div id="shared-split-owed"
+    style="margin-top:10px;font-size:13px;color:var(--text-sub)">
+  </div>
+</div>
+<!-- 備註（共同帳本才顯示，左側 label 對齊分類/支付） -->
       <div id="note-row" class="form-row-compact" style="display:none; align-items:flex-start;">
         <div class="form-label" style="margin-top:0.5rem;">備註</div>
         <textarea class="input-sm" id="rec-note" placeholder="選填" style="flex:1;"></textarea>
       </div>
- 
+
 <div style="display:flex; gap:0.5rem; margin-top:0.25rem; flex-wrap:wrap;">
           <button class="btn-primary" id="record-submit-btn" onclick="submitRecord()" style="flex:1;">新增</button>
           <button onclick="closeRecordModal()" style="flex:1;">取消</button>
           <button id="record-delete-btn" onclick="deleteRecordFromModal()" style="flex:1; display:none; color:#c0392b; border-color:#e0b0ad;">刪除</button>
         </div>
- 
+
     </div>
   </div>
 </div>
- 
+
 <!-- 新增常用支出 sheet -->
 <div id="preset-modal" class="modal-overlay" onclick="handleOverlayClick(event,'preset-modal')">
   <div class="modal-sheet">
@@ -1649,7 +1686,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   <div class="modal-box" style="width:440px;">
     <h2 id="stock-modal-title">新增存股記錄</h2>
     <div class="form-compact" style="gap:0.65rem;">
- 
+
 <!-- 誰的 -->
       <div style="display:grid; grid-template-columns:36px 1fr; align-items:center; gap:0.5rem; min-width:0;">
         <span style="font-size:0.8rem; color:#888780;">誰的</span>
@@ -1658,19 +1695,19 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
           <button id="stock-owner-dad"  class="btn-sm"             onclick="setStockOwner('dad')">周有忠</button>
         </div>
       </div>
- 
+
       <!-- 股票 -->
       <div style="display:grid; grid-template-columns:36px 1fr; align-items:center; gap:0.5rem; min-width:0;">
         <span style="font-size:0.8rem; color:#888780;">股票</span>
         <select id="stock-target" class="input-sm" style="width:100%; min-width:0;"></select>
       </div>
- 
+
       <!-- 日期 -->
 <div class="form-row-compact">
         <span class="form-label" style="width:36px;">日期</span>
         <input type="date" class="input-sm" id="stock-date" oninput="handleStockDateInput(this)">
       </div>
- 
+
       <!-- 計算：股數 × 股價 = 成本 -->
       <div class="form-row-compact" style="min-width:0;">
         <span class="form-label" style="flex-shrink:0; width:36px;">計算</span>
@@ -1682,23 +1719,23 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
           <strong style="color:var(--text);">$<span id="stock-cost-display">0</span></strong>
         </div>
             </div>
- 
+
 <!-- 拿錢 -->
       <div class="form-row-compact">
         <span class="form-label" style="width:36px;">拿錢</span>
         <input type="number" class="input-sm" id="stock-taken" placeholder="例如：4000">
       </div>
- 
+
       <div style="display:flex; gap:0.5rem; margin-top:0.25rem;">
         <button class="btn-primary" onclick="submitStock()" style="flex:1;" id="stock-submit-btn">新增</button>
         <button onclick="closeStockModal()" style="flex:1;">取消</button>
         <button id="stock-delete-btn" onclick="deleteStockFromModal()" style="flex:1; display:none; color:#c0392b; border-color:#e0b0ad;">刪除</button>
       </div>
- 
+
     </div>
   </div>
 </div>
- 
+
 <!-- 管理標的 modal -->
 <div id="targets-modal" class="modal-box-overlay"onclick="handleOverlayClick(event,'targets-modal')">
   <div class="modal-box">
@@ -1728,7 +1765,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     <button class="btn-full" onclick="closeCatModal()">關閉</button>
   </div>
 </div>
- 
+
 <!-- 刪除確認 -->
 <div id="confirm-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'confirm-modal')">
   <div class="modal-box" style="width:280px;">
@@ -1771,13 +1808,13 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     <button class="btn-full" onclick="closeInviteModal()">關閉</button>
   </div>
 </div>
- 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, updateDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
- 
+
   const firebaseConfig = {
     apiKey: "AIzaSyCXNHHiH6-1hT-bEG5uy-Eyqa2dcMVX61s",
     authDomain: "my-expense-app-c4e73.firebaseapp.com",
@@ -1786,15 +1823,15 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     messagingSenderId: "728977309080",
     appId: "1:728977309080:web:2b836492afc9a996663fed"
   };
- 
+
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
- 
+
   // ===========================
   // 📦 全域狀態
   // ===========================
- 
+
   let currentUid   = null;
   let currentEmail = null;
   let currentName  = null;
@@ -1814,7 +1851,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     themeColor: '#444441',
     devNotes: []
   };
- 
+
   // 支出分類（含 emoji）
   let expenseCategories = [
     { name:'餐飲', emoji:'🍽️' },
@@ -1826,7 +1863,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     { name:'繳錢', emoji:'💸' },
     { name:'購物', emoji:'🛍️' },
   ];
- 
+
   // 收入分類
   let incomeCategories = [
     { name:'工作收入', emoji:'💼' },
@@ -1834,7 +1871,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     { name:'二手拍',   emoji:'🏷️' },
     { name:'其他收入', emoji:'💰' },
   ];
- 
+
   // 共同帳本支出分類
   let sharedExpenseCategories = [
     { name:'吃飯', emoji:'🍽️' },
@@ -1848,7 +1885,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     { name:'股票', emoji:'💹' },
     { name:'電話費', emoji:'📞' },
   ];
- 
+
   // 支付方式
   const PAYMENT_PERSONAL = [
     { name:'倩cube',    emoji:'🌳', label:'倩cube' },
@@ -1867,7 +1904,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     { name:'現金', emoji:'🟡', label:'現金' },
     { name:'國泰', emoji:'🌳', label:'國泰' },
   ];
- 
+
   const CC_CATHAY_QIAN = ['倩cube'];
   const CC_FUBON       = ['倩Costco'];
   const CC_TENG        = ['騰cube'];
@@ -1910,12 +1947,12 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
     selectedBillingMonth = `${y}-${String(m).padStart(2,'0')}`;
     renderBillingPeriodPicker();
   };
- 
+
   let presets = [];
- 
+
   // 圓餅圖
   let pieChart = null;
- 
+
   // 月份
   const now = new Date();
   let currentYear  = now.getFullYear();
@@ -1925,7 +1962,7 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let budgetYear  = now.getFullYear();
   let budgetMonth = now.getMonth() + 1;
   let budgetLedgerType = 'personal';
- 
+
   let activeFilter     = null;
   let pendingDeleteId  = null;
   let invitingLedgerId = null;
@@ -1938,27 +1975,27 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
   let selectedPCat     = null; // preset 的分類
   let selectedPPay     = null; // preset 的支付方式
   let catTabType       = 'expense';
- 
+
   // 預算資料 { personal: { '餐飲': 7000, ... }, shared: { '吃飯': 3000, ... } }
   let budgets = { personal: {}, shared: {} };
- 
+
   let unsubscribeRecords = null;
   let unsubscribeLedgers = null;
   let currentPage = 'ledger';
   let ledgersFirstLoadDone = false;
- 
- 
+
+
   // ===========================
   // 🔐 登入登出
   // ===========================
- 
+
   document.getElementById('google-login-btn').addEventListener('click', async () => {
     try { await signInWithPopup(auth, new GoogleAuthProvider()); }
     catch(e) { alert('登入失敗，請再試一次'); }
   });
- 
+
   window.logout = async function() { await signOut(auth); };
- 
+
   onAuthStateChanged(auth, async (user) => {
     const loadingEl = document.getElementById('loading');
     if (loadingEl) {
@@ -1969,14 +2006,14 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       currentUid   = user.uid;
       currentEmail = user.email;
       currentName  = user.displayName;
- 
+
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('sidebar').style.display = 'flex';
       document.getElementById('main').style.display = 'block';
       document.getElementById('fab').style.display = 'flex';
       const suBottom = document.getElementById('sidebar-user-bottom');
       if (suBottom) suBottom.textContent = '👤 ' + currentName;
- 
+
       setTodayDate();
       await setDoc(doc(db,'users',currentUid), { email:currentEmail, name:currentName }, { merge:true });
       await loadUserSettings();
@@ -1994,18 +2031,18 @@ style="background:var(--hover); border:1.5px dashed var(--border); color:var(--t
       if (unsubscribeLedgers) unsubscribeLedgers();
     }
   });
- 
+
   function setTodayDate() {
     const today = new Date();
     document.getElementById('rec-date').value =
       `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   }
- 
- 
+
+
   // ===========================
   // ☰ 側邊欄
   // ===========================
- 
+
 window.toggleSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 600) {
@@ -2022,11 +2059,11 @@ window.toggleSidebar = function() {
     const overlay = document.getElementById('sidebar-overlay');
     if (overlay) overlay.style.display = 'none';
   };
- 
+
   // ===========================
   // 📄 頁面切換
   // ===========================
- 
+
 window.showPage = function(page) {
   pageHistory.push(page);
   if (pageHistory.length > 20) pageHistory.shift();
@@ -2047,23 +2084,23 @@ window.showPage = function(page) {
   currentPage = page;
   document.getElementById('fab').style.display = 'flex';
   document.getElementById('fab').onclick = openAddRecord;
- 
+
     // 手機版選完頁面後自動收合選單
     if (window.innerWidth <= 600) {
       closeMobileSidebar();
     }
- 
+
     // 非帳本頁面時，清除帳本選單的 active
     if (page !== 'ledger') {
       document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => b.classList.remove('active'));
     }
- 
+
 if (page === 'ledger') {
       // 標記左側選單 active
       document.querySelectorAll('#ledger-menu .sidebar-item').forEach(b => {
         if (b.dataset.id === currentLedgerId) b.classList.add('active');
       });
- 
+
 // 爸爸帳本用專屬頁面
 if (currentLedger && currentLedger.type === 'dad') {
   document.querySelectorAll('#main > div').forEach(d => d.style.display = 'none');
@@ -2153,12 +2190,12 @@ if (currentLedger && currentLedger.type === 'dad') {
     }
     updateBottomNav();
   };
- 
- 
+
+
   // ===========================
   // 📒 帳本
   // ===========================
- 
+
   function loadLedgers() {
     unsubscribeLedgers = onSnapshot(collection(db,'ledgers'), async (snapshot) => {
       ledgers = snapshot.docs
@@ -2181,14 +2218,14 @@ const personalId = `personal_${currentUid}`;
             ]
           });
         }
- 
+
       if (!currentLedgerId && ledgers.length > 0) {
         currentLedgerId = ledgers[0].id;
         currentLedger   = ledgers[0];
       } else {
         currentLedger = ledgers.find(l => l.id === currentLedgerId) || ledgers[0];
       }
- 
+
       renderLedgerMenu();
       renderLedgerManage();
       updateLedgerUI();
@@ -2234,7 +2271,7 @@ const personalId = `personal_${currentUid}`;
     }
     showPage(restoredPage || 'home');
   }
- 
+
 function renderLedgerMenu() {
     const container = document.getElementById('ledger-menu');
     container.innerHTML = '';
@@ -2257,13 +2294,13 @@ btn.onclick = function() {
       };      container.appendChild(btn);
     });
   }
- 
+
 async function updateLedgerUI() {
     if (!currentLedger) return;
     document.getElementById('ledger-title').textContent = currentLedger.name;
     const isShared = currentLedger.type === 'shared';
     document.getElementById('topup-card').style.display = isShared ? 'block' : 'none';
- 
+
     // 預設分類
     const defaultPersonal = [
       {name:'餐飲',emoji:'🍽️'},{name:'交通',emoji:'🛵'},
@@ -2278,11 +2315,11 @@ async function updateLedgerUI() {
     const defaultDad = [
       {name:'股票',emoji:'💹'},{name:'電話費',emoji:'📞'}
     ];
- 
+
     // 判斷帳本分類是否有效（必須是陣列且每個元素有 name 和 emoji）
     const isValid = (arr) =>
       Array.isArray(arr) && arr.length > 0 && arr[0].name && arr[0].emoji;
- 
+
     let currentLedgerCats;
     if (currentLedger.type === 'shared') {
       sharedExpenseCategories = isValid(currentLedger.expenseCategories)
@@ -2297,16 +2334,16 @@ async function updateLedgerUI() {
         ? currentLedger.expenseCategories : defaultPersonal;
       currentLedgerCats = expenseCategories;
     }
- 
+
     // 如果帳本還沒有分類，自動存一份進去（存到該帳本自己的分類，不會互相污染）
     if (!isValid(currentLedger.expenseCategories)) {
       await updateDoc(doc(db,'ledgers',currentLedgerId), { expenseCategories: currentLedgerCats });
       currentLedger.expenseCategories = currentLedgerCats;
     }
- 
+
     // 常用支出改成每個帳本各自獨立
     presets = Array.isArray(currentLedger.presets) ? currentLedger.presets : [];
- 
+
 // 套用帳本配色
 applyTheme(currentLedger.theme || 'original');
 renderCatPicker();
@@ -2340,7 +2377,7 @@ if (ledger.owner === currentEmail) {
   invBtn.className = 'btn-sm';
   invBtn.onclick = () => openInviteModal(ledger);
   btnGroup.appendChild(invBtn);
- 
+
   const themeBtn = document.createElement('button');
   themeBtn.textContent = '🎨';
   themeBtn.className = 'btn-sm';
@@ -2370,7 +2407,7 @@ if (ledger.type !== 'personal') {
       container.appendChild(row);
     });
   }
- 
+
   async function deleteLedger(ledger) {
   if (!confirm(`確定要刪除「${ledger.name}」？\n裡面的記錄也會一併刪除，無法復原！`)) return;
   const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
@@ -2383,12 +2420,12 @@ if (ledger.type !== 'personal') {
     currentLedger = null;
   }
 }
- 
- 
+
+
   // ===========================
   // ⚙️ 個人設定
   // ===========================
- 
+
   async function loadAppSettings() {
   try {
     const snap = await getDoc(doc(db, 'users', currentUid, 'settings', 'app'));
@@ -3079,7 +3116,7 @@ await loadStockTargets();
     updateBudgetMonthLabel();
     // 頁面還原改到 loadLedgers() 第一次載入完成後才做，見 restoreInitialPage()
   }
- 
+
 async function saveUserSettings() {
     // 只存收入分類、預算（支出分類改由 saveCatManageCategories 依帳本各自存，避免寫錯帳本）
     await setDoc(doc(db,'users',currentUid), {
@@ -3107,13 +3144,13 @@ async function saveUserSettings() {
     await updateDoc(doc(db,'ledgers',targetLedgerId), { expenseCategories: cats });
     if (ledger) ledger.expenseCategories = cats;
   }
- 
+
   async function savePresets() {
     if (!currentLedgerId) return;
     await updateDoc(doc(db,'ledgers',currentLedgerId), { presets });
     if (currentLedger) currentLedger.presets = presets;
   }
- 
+
   function getCurrentCategories() {
     const ledger = modalSelectedLedger || currentLedger;
     if (currentType === 'income') return incomeCategories;
@@ -3121,17 +3158,17 @@ async function saveUserSettings() {
     if (ledger && ledger.type === 'dad') return dadExpenseCategories;
     return expenseCategories;
   }
- 
- 
+
+
   // ===========================
   // 📅 月份
   // ===========================
- 
+
   function updateMonthLabel() {
     document.getElementById('month-label').textContent =
       `${currentYear}/${String(currentMonth).padStart(2,'0')}`;
   }
- 
+
   window.changeMonth = function(delta) {
     currentMonth += delta;
     if (currentMonth > 12) { currentMonth = 1;  currentYear++; }
@@ -3139,12 +3176,12 @@ async function saveUserSettings() {
     updateMonthLabel();
     listenRecords();
   };
- 
+
   function updateCCMonthLabel() {
     document.getElementById('cc-month-label').textContent =
       `${ccYear}/${String(ccMonth).padStart(2,'0')}`;
   }
- 
+
   window.changeCCMonth = function(delta) {
     ccMonth += delta;
     if (ccMonth > 12) { ccMonth = 1;  ccYear++; }
@@ -3152,12 +3189,12 @@ async function saveUserSettings() {
     updateCCMonthLabel();
     renderCCSummary();
   };
- 
+
   function updateBudgetMonthLabel() {
     document.getElementById('budget-month-label').textContent =
       `${budgetYear}/${String(budgetMonth).padStart(2,'0')}`;
   }
- 
+
   window.changeBudgetMonth = function(delta) {
     budgetMonth += delta;
     if (budgetMonth > 12) { budgetMonth = 1;  budgetYear++; }
@@ -3165,12 +3202,12 @@ async function saveUserSettings() {
     updateBudgetMonthLabel();
     renderBudgetPage();
   };
- 
- 
+
+
   // ===========================
   // 🔄 支出/收入切換
   // ===========================
- 
+
   window.setType = function(type) {
     currentType = type;
     document.getElementById('tab-expense').className = type === 'expense' ? 'type-tab active-expense' : 'type-tab';
@@ -3180,13 +3217,134 @@ async function saveUserSettings() {
     selectedPay = null;
     renderCatPicker();
     renderPayPicker();
+    initSharedSplit();
   };
- 
- 
+
+
   // ===========================
   // 🎨 emoji 選擇器
   // ===========================
- 
+
+
+  let sharedSplitMode = 'ratio';
+  let sharedSplitPercent = 40;
+  let sharedQianAmount = 0;
+
+  const sharedSplitDefault = cat =>
+    ['旅遊', '娛樂'].includes(cat) ? 50 : 40;
+
+  function sharedSplitTotal() {
+    return Math.max(0, Math.round(
+      Number(document.getElementById('rec-amount').value) || 0
+    ));
+  }
+
+  function updateSharedSplitVisibility() {
+    const el = document.getElementById('shared-split-row');
+    if (!el) return;
+    const ledger = modalSelectedLedger || currentLedger;
+    const show = ledger?.type === 'shared' && currentType === 'expense';
+    el.style.display = show ? 'block' : 'none';
+    if (show) renderSharedSplit();
+  }
+
+  function renderSharedSplit() {
+    const total = sharedSplitTotal();
+    if (sharedSplitMode === 'ratio') {
+      sharedQianAmount = Math.round(total * sharedSplitPercent / 100);
+    } else {
+      sharedQianAmount = Math.min(
+        total, Math.max(0, Math.round(sharedQianAmount))
+      );
+    }
+
+    const teng = total - sharedQianAmount;
+    document.getElementById('shared-qian').value = sharedQianAmount;
+    document.getElementById('shared-teng').value = teng;
+
+    document.getElementById('shared-split-ratios').style.display =
+      sharedSplitMode === 'ratio' ? 'flex' : 'none';
+    document.getElementById('shared-split-reset').style.display =
+      sharedSplitMode === 'custom' ? 'inline' : 'none';
+
+    for (const val of [40, 50]) {
+      const btn = document.getElementById('shared-ratio-' + val);
+      const active = sharedSplitMode === 'ratio' &&
+        sharedSplitPercent === val;
+      btn.style.background = active ? 'var(--accent)' : 'var(--card)';
+      btn.style.color = active ? 'var(--accent-text)' : 'var(--text)';
+      btn.style.border = '1px solid var(--border)';
+      btn.style.borderRadius = '8px';
+      btn.style.padding = '6px 12px';
+      btn.style.cursor = 'pointer';
+    }
+
+    const owed = document.getElementById('shared-split-owed');
+    const pay = selectedPay || '';
+
+    if (pay === '錢櫃') {
+      owed.textContent = '錢櫃支付，不產生欠款';
+    } else if (pay.startsWith('倩')) {
+      owed.textContent = '騰應還倩 $' + teng.toLocaleString();
+    } else if (pay.startsWith('騰')) {
+      owed.textContent = '倩應還騰 $' +
+        sharedQianAmount.toLocaleString();
+    } else {
+      owed.textContent = '選擇付款方式後顯示代墊金額';
+    }
+  }
+
+  window.selectSharedRatio = function(percent) {
+    sharedSplitMode = 'ratio';
+    sharedSplitPercent = percent;
+    renderSharedSplit();
+  };
+
+  window.resetSharedSplit = function() {
+    sharedSplitMode = 'ratio';
+    sharedSplitPercent = sharedSplitDefault(selectedCat);
+    renderSharedSplit();
+  };
+
+  window.editSharedAmount = function(who) {
+    const total = sharedSplitTotal();
+    const input = document.getElementById(
+      who === 'qian' ? 'shared-qian' : 'shared-teng'
+    );
+    if (input.value === '') return;
+
+    const value = Math.min(total,
+      Math.max(0, Math.round(Number(input.value) || 0))
+    );
+
+    sharedSplitMode = 'custom';
+    sharedQianAmount = who === 'qian' ? value : total - value;
+    renderSharedSplit();
+  };
+
+  function initSharedSplit(record = null) {
+    sharedSplitMode = record?.splitMode === 'custom'
+      ? 'custom' : 'ratio';
+
+    sharedSplitPercent = record?.splitPercent === 50 ? 50
+      : record?.splitPercent === 40 ? 40
+      : record ? 40 : sharedSplitDefault(selectedCat);
+
+    sharedQianAmount = record?.qianShare != null
+      ? Number(record.qianShare) : 0;
+
+    updateSharedSplitVisibility();
+  }
+
+  document.getElementById('rec-amount').addEventListener(
+    'input', () => {
+      const row = document.getElementById('shared-split-row');
+      if (row && row.style.display !== 'none') {
+        renderSharedSplit();
+      }
+    }
+  );
+
   function renderCatPicker() {
     const container = document.getElementById('cat-picker');
     container.innerHTML = '';
@@ -3196,11 +3354,18 @@ async function saveUserSettings() {
       el.className = 'emoji-option' + (selectedCat === cat.name ? ' selected' : '');
       el.innerHTML = `${cat.emoji}<span class="emoji-tooltip">${cat.name}</span>`;
       el.title = cat.name;
-      el.onclick = function() { selectedCat = cat.name; renderCatPicker(); };
+      el.onclick = function() {
+      selectedCat = cat.name;
+      if (sharedSplitMode === 'ratio') {
+        sharedSplitPercent = sharedSplitDefault(selectedCat);
+      }
+      renderCatPicker();
+      updateSharedSplitVisibility();
+    };
       container.appendChild(el);
     });
   }
- 
+
   function renderPayPicker() {
     const container = document.getElementById('pay-picker');
     container.innerHTML = '';
@@ -3210,11 +3375,16 @@ async function saveUserSettings() {
       el.className = 'emoji-option' + (selectedPay === pay.name ? ' selected' : '');
       el.innerHTML = `${pay.emoji}<span class="emoji-tooltip">${pay.label}</span>`;
       el.title = pay.label;
-      el.onclick = function() { selectedPay = pay.name; renderPayPicker(); renderBillingPeriodPicker(); };
+      el.onclick = function() {
+      selectedPay = pay.name;
+      renderPayPicker();
+      renderBillingPeriodPicker();
+      updateSharedSplitVisibility();
+    };
       container.appendChild(el);
     });
   }
- 
+
   function renderPCatPicker() {
     const container = document.getElementById('p-cat-picker');
     container.innerHTML = '';
@@ -3227,7 +3397,7 @@ async function saveUserSettings() {
       container.appendChild(el);
     });
   }
- 
+
   function getPaymentOptions() {
     const ledger = modalSelectedLedger || currentLedger;
     if (!ledger) return PAYMENT_PERSONAL;
@@ -3235,24 +3405,24 @@ async function saveUserSettings() {
     if (ledger.type === 'dad')    return PAYMENT_DAD;
     return PAYMENT_PERSONAL;
   }
- 
+
   function getCatEmoji(catName) {
     const all = [...expenseCategories, ...incomeCategories, ...sharedExpenseCategories, ...dadExpenseCategories];
     const found = all.find(c => c.name === catName);
     return found ? found.emoji : '📌';
   }
- 
+
   function getPayEmoji(payName) {
     const all = [...PAYMENT_PERSONAL, ...PAYMENT_SHARED, ...PAYMENT_DAD];
     const found = all.find(p => p.name === payName);
     return found ? found.emoji : '💳';
   }
- 
- 
+
+
   // ===========================
   // ⭐ 常用支出
   // ===========================
- 
+
   function renderPresets() {
     const container = document.getElementById('preset-buttons');
     container.innerHTML = '';
@@ -3286,7 +3456,7 @@ async function saveUserSettings() {
       container.appendChild(item);
     });
   }
- 
+
   function renderModalPresets() {
     const container = document.getElementById('modal-preset-buttons');
     if (!container) return;
@@ -3309,7 +3479,7 @@ async function saveUserSettings() {
       container.appendChild(btn);
     });
   }
- 
+
   window.openAddPreset = function() {
     selectedPCat = null;
     selectedPPay = null;
@@ -3321,7 +3491,7 @@ async function saveUserSettings() {
     renderPPayPicker();
     document.getElementById('preset-modal').classList.add('show');
   };
- 
+
   function renderPPayPicker() {
     const container = document.getElementById('p-pay-picker');
     container.innerHTML = '';
@@ -3335,11 +3505,11 @@ async function saveUserSettings() {
       container.appendChild(el);
     });
   }
- 
+
   window.closePresetModal = function() {
     document.getElementById('preset-modal').classList.remove('show');
   };
- 
+
   window.submitPreset = async function() {
     const name   = document.getElementById('p-name').value.trim();
     const amount = document.getElementById('p-amount').value;
@@ -3349,16 +3519,16 @@ async function saveUserSettings() {
     renderPresets();
     closePresetModal();
   };
- 
- 
+
+
   // ===========================
   // 💰 錢櫃課金
   // ===========================
- 
+
   window.calcTopup = function(source) {
     const qianInput = document.getElementById('topup-qian');
     const tengInput  = document.getElementById('topup-teng-input');
- 
+
     if (source === 'teng') {
       const tengVal = Number(tengInput.value) || 0;
       qianInput.value = tengVal ? Math.round(tengVal / 1.5) : '';
@@ -3366,7 +3536,7 @@ async function saveUserSettings() {
       const qianVal = Number(qianInput.value) || 0;
       tengInput.value = qianVal ? Math.round(qianVal * 1.5) : '';
     }
- 
+
     const qian    = Number(qianInput.value) || 0;
     const teng    = Number(tengInput.value) || 0;
     const total   = qian + teng;
@@ -3374,21 +3544,21 @@ async function saveUserSettings() {
     document.getElementById('topup-total').textContent = total.toLocaleString();
     document.getElementById('topup-after').textContent = (current + total).toLocaleString();
   };
- 
+
   window.doTopup = async function() {
     const qian = Number(document.getElementById('topup-qian').value);
     if (!qian || qian <= 0) { alert('請輸入倩的課金金額！'); return; }
     const teng = Math.round(qian * 1.5);
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
- 
+
     // 找個人帳本
     const personalLedger = ledgers.find(l => l.type === 'personal');
     // 找共同帳本
     const sharedLedger   = ledgers.find(l => l.type === 'shared');
- 
+
     if (!personalLedger || !sharedLedger) { alert('找不到個人或共同帳本！'); return; }
- 
+
     // 1. 個人帳本新增支出「錢櫃課金」
     await addDoc(collection(db,'ledgers',personalLedger.id,'expenses'), {
       name: '錢櫃課金', amount: qian, category: '繳錢',
@@ -3396,7 +3566,7 @@ async function saveUserSettings() {
       type: 'expense', addedBy: currentName, addedByEmail: currentEmail,
       prestored: false, readyToPay: false
     });
- 
+
     // 2. 共同帳本新增收入「倩課金」
     await addDoc(collection(db,'ledgers',sharedLedger.id,'expenses'), {
       name: '倩課金', amount: qian, category: '錢櫃課金',
@@ -3404,7 +3574,7 @@ async function saveUserSettings() {
       type: 'income', addedBy: currentName, addedByEmail: currentEmail,
       prestored: false, readyToPay: false
     });
- 
+
     // 3. 共同帳本新增收入「騰課金」
     await addDoc(collection(db,'ledgers',sharedLedger.id,'expenses'), {
       name: '騰課金', amount: teng, category: '錢櫃課金',
@@ -3412,7 +3582,7 @@ async function saveUserSettings() {
       type: 'income', addedBy: currentName, addedByEmail: currentEmail,
       prestored: false, readyToPay: false
     });
- 
+
     const newBalance = (Number(document.getElementById('wallet-balance-display').value) || 0) + qian + teng;
       await updateDoc(doc(db,'ledgers',sharedLedger.id), { walletBalance: newBalance, walletUpdatedAt: Date.now() });
       if (currentLedger && currentLedger.id === sharedLedger.id) {
@@ -3421,16 +3591,16 @@ async function saveUserSettings() {
       }
       document.getElementById('wallet-balance-display').value = newBalance;
       renderWalletUpdatedAt();
- 
+
       document.getElementById('topup-qian').value = '';
         document.getElementById('topup-teng-input').value = '';
     calcTopup();
     alert(`課金完成！\n個人帳本：-$${qian.toLocaleString()}\n共同帳本收入：+$${(qian+teng).toLocaleString()}`);
   };
- 
+
   async function updateWalletDisplay(allRecords) {
     let balance;
- 
+
     if (currentLedger && currentLedger.walletBalance !== undefined && currentLedger.walletBalance !== null) {
       balance = currentLedger.walletBalance;
     } else {
@@ -3444,14 +3614,14 @@ async function saveUserSettings() {
         console.warn('初始化錢櫃餘額失敗', e);
       }
     }
- 
+
     document.getElementById('wallet-balance-display').value = balance;
     const warning = document.getElementById('wallet-warning');
     warning.style.display = balance < 2000 ? 'inline' : 'none';
     renderWalletUpdatedAt();
     calcTopup();
   }
- 
+
   function renderWalletUpdatedAt() {
     const el = document.getElementById('wallet-updated-at');
     if (!el) return;
@@ -3462,7 +3632,7 @@ async function saveUserSettings() {
       el.textContent = '';
     }
   }
- 
+
   window.saveWalletBalance = async function(value) {
     const balance = Number(value) || 0;
     if (!currentLedgerId) return;
@@ -3476,21 +3646,21 @@ async function saveUserSettings() {
     warning.style.display = balance < 2000 ? 'inline' : 'none';
     calcTopup();
   };
- 
- 
+
+
   // ===========================
   // 👂 監聽記錄
   // ===========================
- 
+
   function listenRecords() {
     if (unsubscribeRecords) unsubscribeRecords();
     if (!currentLedgerId) return;
- 
+
     const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
     const endDate   = `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
- 
+
     const q = query(collection(db,'ledgers',currentLedgerId,'expenses'), orderBy('date','desc'));
- 
+
     unsubscribeRecords = onSnapshot(q, (snapshot) => {
       allLedgerRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       records = allLedgerRecords.filter(r => r.date >= startDate && r.date <= endDate);
@@ -3502,53 +3672,54 @@ async function saveUserSettings() {
       }
     });
   }
- 
- 
+
+
   // ===========================
   // ➕ 新增/編輯記錄 modal
   // ===========================
- 
+
 window.openAddRecord = function() {
     editingRecordId = null;
     deletingRecordSource = null;
- 
+
     modalSelectedLedger = currentLedger || ledgers.find(l => l.type === 'personal');
- 
+
     document.getElementById('ledger-switch-arrows').style.display = 'flex';
     renderModalLedgerTitle();
- 
+
     document.getElementById('record-modal-title').textContent = '新增記錄';
     document.getElementById('record-submit-btn').textContent  = '新增';
     document.getElementById('record-delete-btn').style.display = 'none';
- 
+
     document.getElementById('rec-name').value   = '';
     document.getElementById('rec-amount').value = '';
     document.getElementById('rec-note').value   = '';
     setTodayDate();
     document.getElementById('rec-date').oninput = renderBillingPeriodPicker;
     selectedBillingMonth = null;
- 
+
     currentType = 'expense';
     document.getElementById('tab-expense').className = 'type-tab active-expense';
     document.getElementById('tab-income').className  = 'type-tab';
     document.getElementById('pay-row').style.display = 'flex';
- 
+
     selectedCat = null;
     selectedPay = null;
- 
+
     document.getElementById('note-row').style.display = 'flex';
- 
+
     renderCatPicker();
     renderPayPicker();
     renderModalPresets();
+    initSharedSplit();
     document.getElementById('record-modal').classList.add('show');
   };
- 
+
   function renderModalLedgerTitle() {
     const ledgerName = modalSelectedLedger ? modalSelectedLedger.name : '記帳本';
     document.getElementById('record-modal-ledger-name').textContent = ledgerName;
   }
- 
+
   window.switchModalLedger = function(direction) {
     const switchable = ledgers.filter(l => l.type === 'personal' || l.type === 'shared' || l.type === 'dad');
     if (switchable.length < 2) return;
@@ -3562,8 +3733,9 @@ window.openAddRecord = function() {
     renderCatPicker();
     renderPayPicker();
     renderModalPresets();
+    initSharedSplit();
   };
- 
+
   let recordModalTouchStartX = 0;
   window.recordModalTouchStart = function(e) {
     recordModalTouchStartX = e.changedTouches[0].screenX;
@@ -3576,19 +3748,19 @@ window.openAddRecord = function() {
     if (diff > 0) switchModalLedger(-1);
     else switchModalLedger(1);
   };
- 
+
   window.openEditRecord = function(id) {
     const record = records.find(r => r.id === id) || dadRecords.find(r => r.id === id) || allLedgerRecords.find(r => r.id === id);
     if (!record) return;
     editingRecordId = id;
     editingRecordLedgerId = record.ledgerId || currentLedgerId;
     modalSelectedLedger = ledgers.find(l => l.id === editingRecordLedgerId) || currentLedger || null;
- 
+
     const isDadRecord = modalSelectedLedger && modalSelectedLedger.type === 'dad';
     deletingRecordSource = isDadRecord ? { type: 'dad', stockId: record.stockId || '' } : { type: 'normal' };
- 
+
     document.getElementById('ledger-switch-arrows').style.display = 'none';
- 
+
     document.getElementById('record-modal-title').textContent = '編輯記錄';
     document.getElementById('record-submit-btn').textContent  = '儲存';
     document.getElementById('record-delete-btn').style.display = 'block';
@@ -3598,23 +3770,24 @@ window.openAddRecord = function() {
     document.getElementById('rec-date').oninput = renderBillingPeriodPicker;
     selectedBillingMonth = record.billingMonth || null;
     document.getElementById('rec-note').value   = record.note || '';
- 
+
     currentType = record.type || 'expense';
     document.getElementById('tab-expense').className = currentType === 'expense' ? 'type-tab active-expense' : 'type-tab';
     document.getElementById('tab-income').className  = currentType === 'income'  ? 'type-tab active-income'  : 'type-tab';
     document.getElementById('pay-row').style.display = currentType === 'expense' ? 'flex' : 'none';
- 
+
     selectedCat = record.category || null;
     selectedPay = record.payment  || null;
- 
+
     document.getElementById('note-row').style.display = 'flex';
- 
+
     renderCatPicker();
     renderPayPicker();
     renderBillingPeriodPicker();
+    initSharedSplit(record);
     document.getElementById('record-modal').classList.add('show');
   };
- 
+
   window.closeRecordModal = function() {
     document.getElementById('record-modal').classList.remove('show');
     editingRecordId = null;
@@ -3624,7 +3797,7 @@ window.openAddRecord = function() {
     selectedPay = null;
     deletingRecordSource = null;
   };
- 
+
   window.deleteRecordFromModal = function() {
     console.log('[DEBUG] deleteRecordFromModal 被呼叫', { editingRecordId, deletingRecordSource, editingRecordLedgerId });
     if (!editingRecordId || !deletingRecordSource) {
@@ -3640,7 +3813,7 @@ window.openAddRecord = function() {
     refreshCCIfVisible();
     refreshHomeIfVisible();
   };
- 
+
   function formatModTime(ts) {
     const d = new Date(ts);
     const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -3677,12 +3850,12 @@ window.openAddRecord = function() {
     const amount = document.getElementById('rec-amount').value;
     const date   = document.getElementById('rec-date').value;
     const note   = document.getElementById('rec-note').value.trim();
- 
+
     if (!name || !amount || !date) { alert('請填寫名稱、金額和日期！'); return; }
     if (!selectedCat) { alert('請選擇分類！'); return; }
     if (currentType === 'expense' && !selectedPay) { alert('請選擇支付方式！'); return; }
     if (!currentLedgerId) { alert('請先選擇帳本！'); return; }
- 
+
     const billingCutoff = currentType === 'expense' ? ccCutoffDayForPayment(selectedPay) : null;
     const data = {
       name, amount: Number(amount), category: selectedCat,
@@ -3691,6 +3864,34 @@ window.openAddRecord = function() {
       addedBy: currentName, addedByEmail: currentEmail,
       billingMonth: billingCutoff ? (selectedBillingMonth || ccAutoPeriodLabel(date, billingCutoff)) : null,
     };
+
+    const targetRecordLedger = editingRecordId
+      ? ledgers.find(l => l.id ===
+          (editingRecordLedgerId || currentLedgerId))
+      : (modalSelectedLedger || currentLedger);
+
+    if (targetRecordLedger?.type === 'shared' &&
+        currentType === 'expense') {
+      const total = sharedSplitTotal();
+
+      if (sharedSplitMode === 'ratio') {
+        sharedQianAmount = Math.round(
+          total * sharedSplitPercent / 100
+        );
+      }
+
+      if (!Number.isFinite(sharedQianAmount) ||
+          sharedQianAmount < 0 || sharedQianAmount > total) {
+        alert('請確認分攤金額');
+        return;
+      }
+
+      data.splitMode = sharedSplitMode;
+      data.splitPercent = sharedSplitMode === 'ratio'
+        ? sharedSplitPercent : null;
+      data.qianShare = sharedQianAmount;
+      data.tengShare = total - sharedQianAmount;
+    }
     const now = Date.now();
 
     if (editingRecordId) {
@@ -3709,29 +3910,29 @@ window.openAddRecord = function() {
         lastEditBy: currentName, lastEditByEmail: currentEmail, lastEditAt: now,
       });
     }
- 
+
     closeRecordModal();
     refreshCCIfVisible();
     refreshHomeIfVisible();
   };
- 
- 
+
+
   // ===========================
   // 🗑️ 刪除
   // ===========================
- 
+
   window.deleteRecord = function(id) {
     console.log('[DEBUG] deleteRecord 被呼叫, id=', id);
     pendingDeleteId = id;
     document.getElementById('confirm-modal').classList.add('show');
     console.log('[DEBUG] confirm-modal 的 class 現在是:', document.getElementById('confirm-modal').className);
   };
- 
+
   window.closeConfirmModal = function() {
     pendingDeleteId = null;
     document.getElementById('confirm-modal').classList.remove('show');
   };
- 
+
 document.getElementById('confirm-delete-btn').onclick = async function() {
     console.log('[DEBUG] 確定刪除按鈕被點了, pendingDeleteId=', pendingDeleteId);
     if (pendingDeleteId) {
@@ -3771,42 +3972,42 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     refreshCCIfVisible();
     refreshHomeIfVisible();
   };
- 
- 
+
+
   // ===========================
   // ✅ 已預存
   // ===========================
- 
+
   window.togglePrestored = async function(id, current) {
     await updateDoc(doc(db,'ledgers',currentLedgerId,'expenses',id), { prestored: !current });
   };
- 
- 
+
+
   // ===========================
   // 🎯 預算
   // ===========================
- 
+
   window.setBudgetLedger = function(type) {
     budgetLedgerType = type;
     document.getElementById('budget-tab-personal').className = type === 'personal' ? 'btn-sm btn-primary' : 'btn-sm';
     document.getElementById('budget-tab-shared').className   = type === 'shared'   ? 'btn-sm btn-primary' : 'btn-sm';
     renderBudgetPage();
   };
- 
+
   async function renderBudgetPage() {
     const isShared = budgetLedgerType === 'shared';
     const cats = isShared ? sharedExpenseCategories : expenseCategories;
     const budgetKey = budgetLedgerType; // 'personal' or 'shared'
     const monthKey  = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
- 
+
     document.getElementById('budget-ledger-label').textContent =
       isShared ? '共同帳本預算' : '個人帳本預算';
- 
+
     // 找對應的帳本
     const ledger = isShared
       ? ledgers.find(l => l.type === 'shared')
       : ledgers.find(l => l.type === 'personal');
- 
+
     // 撈該月支出：依照「預算起始日」設定，決定這個月實際對應的日期範圍
     let monthExpense = {};
     if (ledger) {
@@ -3827,17 +4028,17 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         }
       });
     }
- 
+
     const container = document.getElementById('budget-list');
     container.innerHTML = '';
- 
+
     cats.forEach(function(cat) {
 // 如果這個月沒有預算，自動找上個月的設定來用
     let prevMonth = budgetMonth - 1;
     let prevYear  = budgetYear;
     if (prevMonth < 1) { prevMonth = 12; prevYear--; }
     const prevMonthKey = `${prevYear}-${String(prevMonth).padStart(2,'0')}`;
- 
+
     const budget =
       (budgets[budgetKey]?.[monthKey]?.[cat.name]) ??           // 這個月有設定就用這個月的
       (budgets[budgetKey]?.[prevMonthKey]?.[cat.name]) ??       // 沒有就用上個月的
@@ -3846,7 +4047,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const remain  = budget - spent;
       const pct     = budget > 0 ? Math.min(spent / budget * 100, 100) : 0;
       const isOver  = remain < 0;
- 
+
       const item = document.createElement('div');
       item.className = 'budget-item';
       item.innerHTML = `
@@ -3861,7 +4062,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
           <div style="font-size:0.72rem; color:#888780;">${isOver ? '超支' : '剩餘'}</div>
         </div>
       `;
- 
+
       // 點擊預算數字可以編輯
       item.querySelector('.budget-edit-trigger').onclick = async function() {
         const newBudget = prompt(`設定「${cat.name}」${monthKey} 預算`, budget || '');
@@ -3874,32 +4075,32 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         await saveUserSettings();
         renderBudgetPage();
       };
- 
+
       container.appendChild(item);
     });
   }
- 
- 
+
+
   // ===========================
   // 🖥️ 渲染清單
   // ===========================
- 
+
   function renderFilterButtons() {
     const container = document.getElementById('filter-buttons');
     container.innerHTML = '';
- 
+
     const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
       : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
       : expenseCategories;
- 
+
     const select = document.createElement('select');
     select.style.cssText = 'flex:1; padding:0.35rem 0.6rem; font-size:0.88rem; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text); outline:none;';
- 
+
     const allOpt = document.createElement('option');
     allOpt.value = '';
     allOpt.textContent = '全部分類';
     select.appendChild(allOpt);
- 
+
     cats.forEach(function(cat) {
       const opt = document.createElement('option');
       opt.value = cat.name;
@@ -3907,19 +4108,19 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       if (activeFilter === cat.name) opt.selected = true;
       select.appendChild(opt);
     });
- 
+
     select.onchange = function() {
       activeFilter = this.value || null;
       render();
     };
- 
+
     container.appendChild(select);
   }
- 
+
   function render() {
     const container = document.getElementById('record-list');
     container.innerHTML = '';
- 
+
     const QIAN_PAYS = ['倩cube', '倩Costco', '倩現金'];
     const TENG_PAYS = ['騰cube', '騰現金'];
     let filtered = activeFilter
@@ -3930,13 +4131,13 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     } else if (settledFilter === 'teng') {
       filtered = allLedgerRecords.filter(r => r.type === 'expense' && !r.settled && TENG_PAYS.includes(r.payment));
     }
- 
+
     const totalIncome  = records.filter(r => r.type === 'income').reduce((s,r)  => s + r.amount, 0);
     const totalExpense = records.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
     document.getElementById('total-income').textContent  = totalIncome.toLocaleString();
     document.getElementById('total-expense').textContent = totalExpense.toLocaleString();
     document.getElementById('total-balance').textContent = (totalIncome - totalExpense).toLocaleString();
- 
+
     if (filtered.length === 0) {
       container.innerHTML = '<div style="text-align:center; color:#b4b2a9; padding:2rem 0; font-size:0.9rem;">本月沒有記錄</div>';
       return;
@@ -3955,7 +4156,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       const catEmoji  = getCatEmoji(item.category);
       const payEmoji  = item.payment ? getPayEmoji(item.payment) : '';
       const payLabel  = item.payment || '';
- 
+
       const div = document.createElement('div');
 
       const isShared = isSharedLedger;
@@ -4046,38 +4247,38 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
       container.appendChild(div);
     });
- 
+
     renderFilterButtons();
   }
- 
- 
+
+
   // ===========================
   // 🥧 圓餅圖
   // ===========================
- 
+
   function renderPieChart() {
     const expenseRecords = records.filter(r => r.type === 'expense');
     const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
       : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
       : expenseCategories;
- 
+
     const data = {};
     cats.forEach(c => { data[c.name] = 0; });
     expenseRecords.forEach(r => {
       if (data[r.category] !== undefined) data[r.category] += r.amount;
     });
- 
+
     const labels  = cats.map(c => c.name).filter(n => data[n] > 0);
     const values  = labels.map(n => data[n]);
     const total   = values.reduce((a,b) => a+b, 0);
     const emojis  = labels.map(n => cats.find(c => c.name === n)?.emoji || '');
- 
+
 //圓餅圖顏色
 const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1D1C4','#f6cb66','#f7d5d0','#efddbf'];
     // 更新圖例
     const legend = document.getElementById('pie-legend');
     legend.innerHTML = '';
- 
+
     if (total === 0) {
       legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">本月無支出</div>';
       // 清空圖表
@@ -4087,7 +4288,7 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
       if (pieChart) { pieChart.destroy(); pieChart = null; }
       return;
     }
- 
+
     labels.forEach(function(label, i) {
       const pct = Math.round(values[i] / total * 100);
       const item = document.createElement('div');
@@ -4100,7 +4301,7 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
       `;
       legend.appendChild(item);
     });
- 
+
     // 畫圓餅圖
     const canvas = document.getElementById('pie-canvas');
     if (pieChart) { pieChart.destroy(); }
@@ -4129,15 +4330,15 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
       }
     });
   }
- 
- 
+
+
   // ===========================
   // 💳 信用卡統計
   // ===========================
- 
+
   // 對帳資料快取
   let reconcileData = {};
- 
+
   async function loadReconcileData() {
     const monthKey = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
     try {
@@ -4145,7 +4346,7 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
       reconcileData = snap.exists() ? snap.data() : {};
     } catch(e) { reconcileData = {}; }
   }
- 
+
   async function saveReconcile(reconcileId, field, value) {
     const monthKey = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
     if (!reconcileData[reconcileId]) reconcileData[reconcileId] = {};
@@ -4158,22 +4359,22 @@ const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1
     renderCCSummary();
   }
   window.saveReconcile = saveReconcile;
- 
-  
+
+
 function renderReconcile(reconcileId, appTotal, showSaved) {
     const container = document.getElementById(reconcileId);
     if (!container) return;
- 
+
     if (showSaved === false) {
       container.innerHTML = '';
       return;
     }
- 
+
     const rd      = reconcileData[reconcileId] || {};
     const actual  = rd.actual  !== undefined ? rd.actual  : '';
     const bank    = rd.bank    !== undefined ? rd.bank    : '';
     const cash    = rd.cash    !== undefined ? rd.cash    : '';
- 
+
     let diffHtml = '';
     if (actual !== '') {
       const totalSaved = (Number(bank) || 0) + (Number(cash) || 0);
@@ -4199,7 +4400,7 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
           </div>`;
       }
     }
- 
+
     container.innerHTML = `
       <div class="cc-reconcile">
         <h3>📋 對帳</h3>
@@ -4229,7 +4430,7 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
       </div>
     `;
   }
- 
+
   function refreshCCIfVisible() {
     const ccPage = document.getElementById('page-cc-summary');
     if (ccPage && ccPage.style.display !== 'none') {
@@ -4246,24 +4447,24 @@ function renderReconcile(reconcileId, appTotal, showSaved) {
 
   async function renderCCSummary() {
     await loadReconcileData();
- 
+
     const cathayStart = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.cathayDay).padStart(2,'0')}`;
     const cathayEnd   = getCycleEnd(ccYear, ccMonth, appSettings.cathayDay);
     const fubonStart  = `${ccYear}-${String(ccMonth).padStart(2,'0')}-${String(appSettings.fubonDay).padStart(2,'0')}`;
     const fubonEnd    = getCycleEnd(ccYear, ccMonth, appSettings.fubonDay);
- 
+
     allLedgerRecords = [];
     for (const ledger of ledgers) {
       const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
       snap.docs.forEach(d => allLedgerRecords.push({ ...d.data(), id:d.id, ledgerId:ledger.id, ledgerName:ledger.name }));
     }
     const allRecords = allLedgerRecords;
- 
+
 renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QIAN, cathayStart, cathayEnd, 'recon-cathay', true);
     renderCCSection('cc-fubon-summary', 'cc-fubon-detail',  allRecords, CC_FUBON,        fubonStart,  fubonEnd,  'recon-fubon',  true);
     renderCCSection('cc-teng-summary',  'cc-teng-detail',   allRecords, CC_TENG,         cathayStart, cathayEnd, 'recon-teng',   false);
     }
- 
+
   function getCycleStart(year, month, day) {
     let y = year, m = month - 1;
     if (m < 1) { m = 12; y--; }
@@ -4275,7 +4476,7 @@ renderCCSection('cc-cathay-summary','cc-cathay-detail', allRecords, CC_CATHAY_QI
     if (m > 12) { m = 1; y++; }
     return `${y}-${String(m).padStart(2,'0')}-${String(day - 1).padStart(2,'0')}`;
   }
- 
+
 function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDate, endDate, reconcileId, showSaved) {
       const periodLabel = `${ccYear}-${String(ccMonth).padStart(2,'0')}`;
       const filtered    = allRecords.filter(r => {
@@ -4286,13 +4487,13 @@ function renderCCSection(summaryId, detailId, allRecords, paymentNames, startDat
     const total       = filtered.reduce((s,r) => s+r.amount, 0);
     const prestored   = filtered.filter(r => r.prestored).reduce((s,r) => s+r.amount, 0);
     const unprestored = total - prestored;
- 
+
     document.getElementById(summaryId).innerHTML = `
       <div class="cc-stat"><div class="cc-stat-label">本期總計</div><div class="cc-stat-value amount-expense">$${total.toLocaleString()}</div></div>
       <div class="cc-stat"><div class="cc-stat-label">✓ 已預存</div><div class="cc-stat-value" style="color:#2e7d32;">$${prestored.toLocaleString()}</div></div>
       <div class="cc-stat"><div class="cc-stat-label">⚠ 未預存</div><div class="cc-stat-value amount-expense">$${unprestored.toLocaleString()}</div></div>
     `;
- 
+
     const detailEl = document.getElementById(detailId);
     if (filtered.length === 0) {
       detailEl.innerHTML = '<div style="font-size:0.85rem; color:#888780; padding:0.5rem 0;">本期無記錄</div>';
@@ -4351,21 +4552,21 @@ renderReconcile(reconcileId, total, showSaved);
         <div id="cc-tab-s-${summaryId}" style="display:none;">${renderRecRows(sharedRecs)}</div>
       </div>
     `;
- 
+
     // 對帳區塊
 renderReconcile(reconcileId, total, showSaved);
   }
- 
+
   window.togglePrestoredCC = async function(recordId, ledgerId, current) {
     await updateDoc(doc(db,'ledgers',ledgerId,'expenses',recordId), { prestored: !current });
     renderCCSummary();
   };
- 
- 
+
+
   // ===========================
   // 🏷️ 分類管理
   // ===========================
- 
+
 // 從新增記錄 modal 開啟分類管理
   // 先關閉記錄 modal，管理完再重新開啟
 window.openCategoryModalFromRecord = function() {
@@ -4382,18 +4583,18 @@ window.openCategoryModalFromRecord = function() {
     renderCatList();
     document.getElementById('cat-modal').classList.add('show');
   };
- 
+
   window.closeCatModal = function() {
     document.getElementById('cat-modal').classList.remove('show');
   };
- 
+
   window.setCatTab = function(type) {
     catTabType = type;
     document.getElementById('cat-tab-expense').className = type==='expense' ? 'btn-sm btn-primary' : 'btn-sm';
     document.getElementById('cat-tab-income').className  = type==='income'  ? 'btn-sm btn-primary' : 'btn-sm';
     renderCatList();
   };
- 
+
   function renderCatList() {
     const container = document.getElementById('cat-list');
     container.innerHTML = '';
@@ -4410,46 +4611,46 @@ window.openCategoryModalFromRecord = function() {
       container.appendChild(row);
     });
   }
- 
+
   window.removeCategory = async function(idx) {
     const cats = getCatManageCategories();
     cats.splice(idx, 1);
     await saveCatManageCategories();
     renderCatList();
   };
- 
+
   window.addCategory = async function() {
     const name  = document.getElementById('new-cat-input').value.trim();
     const emoji = document.getElementById('new-cat-emoji').value.trim();
     if (!name || !emoji) { alert('請填寫分類名稱和 emoji！'); return; }
- 
+
     const cats = getCatManageCategories();
     if (cats.find(c => c.name === name)) { alert('已存在！'); return; }
     cats.push({ name, emoji });
- 
+
     document.getElementById('new-cat-input').value  = '';
     document.getElementById('new-cat-emoji').value  = '';
     await saveCatManageCategories();
     renderCatList();
   };
- 
- 
+
+
   // ===========================
   // 👥 邀請成員
   // ===========================
- 
+
   window.openInviteModal = function(ledger) {
     invitingLedgerId = ledger.id;
     document.getElementById('invite-modal-title').textContent = `邀請成員 — ${ledger.name}`;
     renderMemberList(ledger);
     document.getElementById('invite-modal').classList.add('show');
   };
- 
+
   window.closeInviteModal = function() {
     document.getElementById('invite-modal').classList.remove('show');
     invitingLedgerId = null;
   };
- 
+
   function renderMemberList(ledger) {
     const container = document.getElementById('member-list');
     container.innerHTML = '';
@@ -4476,7 +4677,7 @@ window.openCategoryModalFromRecord = function() {
       container.appendChild(row);
     });
   }
- 
+
   window.addMember = async function() {
     const email = document.getElementById('invite-email').value.trim().toLowerCase();
     if (!email || !email.includes('@')) { alert('請輸入正確的 Gmail！'); return; }
@@ -4488,30 +4689,30 @@ window.openCategoryModalFromRecord = function() {
     const l = ledgers.find(l => l.id === invitingLedgerId);
     if (l) { l.members.push(email); renderMemberList(l); }
   };
- 
- 
+
+
   // ===========================
   // 🪟 overlay 點擊關閉
   // ===========================
 // ===========================
   // 📈 存股記錄
   // ===========================
- 
+
   // 目前的視角：'qian'、'dad'、'combined'
   let stockView = 'qian';
- 
+
   // 新增存股時的歸屬
   let stockOwner = 'qian';
- 
+
   // 存股圓餅圖
   let stockPieChart = null;
- 
+
   // 標的清單（預設有 0050）
   let stockTargets = ['0050'];
- 
+
   // 所有存股記錄（從 Firestore 撈）
   let stockRecords = [];
- 
+
   // 監聽存股記錄
   function listenStocks() {
     // 從 Firestore 的 stocks 集合監聽，只取這個使用者的
@@ -4523,7 +4724,7 @@ window.openCategoryModalFromRecord = function() {
       }
     );
   }
- 
+
   // 載入標的設定
   async function loadStockTargets() {
     const snap = await getDoc(doc(db, 'users', currentUid));
@@ -4531,11 +4732,11 @@ window.openCategoryModalFromRecord = function() {
       stockTargets = snap.data().stockTargets;
     }
   }
- 
+
   async function saveStockTargets() {
     await setDoc(doc(db, 'users', currentUid), { stockTargets }, { merge: true });
   }
- 
+
   // 切換視角
   window.setStockView = function(view) {
     stockView = view;
@@ -4544,23 +4745,23 @@ window.openCategoryModalFromRecord = function() {
     document.getElementById('stock-tab-combined').className = view === 'combined' ? 'btn-sm btn-primary' : 'btn-sm';
     renderStockPage();
   };
- 
+
   // 渲染整個存股頁面
   function renderStockPage() {
     // 篩選記錄
     const filtered = stockView === 'combined'
       ? stockRecords
       : stockRecords.filter(r => r.owner === stockView);
- 
+
     renderStockPie(filtered);
     renderStockTargets(filtered);
   }
- 
+
   // 圓餅圖（各標的佔比，用總成本計算）
   function renderStockPie(filtered) {
     const legend = document.getElementById('stock-pie-legend');
     legend.innerHTML = '';
- 
+
     // 計算每個標的的總投入
     const data = {};
     stockTargets.forEach(t => { data[t] = 0; });
@@ -4568,13 +4769,13 @@ window.openCategoryModalFromRecord = function() {
       if (data[r.target] !== undefined) data[r.target] += r.taken;
       else data[r.target] = r.taken;
     });
- 
+
     const labels = Object.keys(data).filter(k => data[k] > 0);
     const values = labels.map(k => data[k]);
     const total  = values.reduce((a,b) => a+b, 0);
- 
+
     const COLORS = ['#444441','#88AFB5','#EFB187','#ABD5A4','#FAC1B6','#BEC4E4','#C1D1C4','#F99895'];
- 
+
     if (total === 0) {
       legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">尚無記錄</div>';
       const canvas = document.getElementById('stock-pie-canvas');
@@ -4582,7 +4783,7 @@ window.openCategoryModalFromRecord = function() {
       if (stockPieChart) { stockPieChart.destroy(); stockPieChart = null; }
       return;
     }
- 
+
     labels.forEach(function(label, i) {
       const pct = Math.round(values[i] / total * 100);
       const item = document.createElement('div');
@@ -4595,7 +4796,7 @@ window.openCategoryModalFromRecord = function() {
       `;
       legend.appendChild(item);
     });
- 
+
     const canvas = document.getElementById('stock-pie-canvas');
     if (stockPieChart) stockPieChart.destroy();
     stockPieChart = new Chart(canvas, {
@@ -4618,12 +4819,12 @@ window.openCategoryModalFromRecord = function() {
       }
     });
   }
- 
+
   // 每個標的的明細區塊
   function renderStockTargets(filtered) {
     const container = document.getElementById('stock-targets-area');
     container.innerHTML = '';
- 
+
     // 依標的分組
     const targetGroups = {};
     stockTargets.forEach(t => { targetGroups[t] = []; });
@@ -4631,20 +4832,20 @@ window.openCategoryModalFromRecord = function() {
       if (!targetGroups[r.target]) targetGroups[r.target] = [];
       targetGroups[r.target].push(r);
     });
- 
+
     Object.entries(targetGroups).forEach(function([target, records]) {
       if (records.length === 0) return;
- 
+
       // 計算統計
       const totalShares = records.reduce((s,r) => s + r.shares, 0);
       const totalCost   = records.reduce((s,r) => s + r.cost, 0);
       const totalTaken  = records.reduce((s,r) => s + r.taken, 0);
       const avgCost     = totalShares > 0 ? (totalCost / totalShares).toFixed(2) : 0;
- 
+
       const card = document.createElement('div');
       card.className = 'card';
       card.style.marginBottom = '1rem';
- 
+
       // 標題 + 統計
       card.innerHTML = `
         <h2 style="margin-bottom:0.75rem;">📊 ${target}</h2>
@@ -4663,7 +4864,7 @@ window.openCategoryModalFromRecord = function() {
           </div>
         </div>
       `;
- 
+
       // 明細表格
 const table = document.createElement('table');
       table.style.cssText = 'width:100%; table-layout:fixed; font-size:0.82rem; border-collapse:collapse;';
@@ -4700,12 +4901,12 @@ const table = document.createElement('table');
       container.appendChild(card);
     });
   }
- 
- 
+
+
   // ===========================
   // ➕ 新增存股 modal
   // ===========================
- 
+
   window.openAddStock = function() {
     document.getElementById('stock-delete-btn').style.display = 'none';
     document.getElementById('stock-submit-btn').textContent = '新增';
@@ -4713,44 +4914,44 @@ const table = document.createElement('table');
     const today = new Date();
     document.getElementById('stock-date').value =
       `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
- 
+
     // 清空欄位
     document.getElementById('stock-price').value  = '';
     document.getElementById('stock-shares').value = '';
     document.getElementById('stock-taken').value  = '';
     document.getElementById('stock-cost-display').textContent = '0';
- 
+
     // 設定歸屬預設
     setStockOwner('qian');
- 
+
     // 填入標的選單
     renderTargetSelect();
- 
+
     // 監聽股價和股數變動，自動計算成本
     document.getElementById('stock-price').oninput  = calcStockCost;
     document.getElementById('stock-shares').oninput = calcStockCost;
- 
- 
+
+
     document.getElementById('stock-modal').classList.add('show');
   };
- 
+
   window.closeStockModal = function() {
     document.getElementById('stock-modal').classList.remove('show');
   };
- 
+
   window.deleteStockFromModal = function() {
     const editStockId = document.getElementById('stock-modal').dataset.editStockId;
     if (!editStockId) return;
     deleteStock(editStockId);
     closeStockModal();
   };
- 
+
   window.setStockOwner = function(owner) {
     stockOwner = owner;
     document.getElementById('stock-owner-qian').className = owner === 'qian' ? 'btn-sm btn-primary' : 'btn-sm';
     document.getElementById('stock-owner-dad').className  = owner === 'dad'  ? 'btn-sm btn-primary' : 'btn-sm';
   };
- 
+
   function renderTargetSelect() {
     const select = document.getElementById('stock-target');
     select.innerHTML = '';
@@ -4760,7 +4961,7 @@ const table = document.createElement('table');
       select.appendChild(opt);
     });
   }
- 
+
   function calcStockCost() {
     const price  = Number(document.getElementById('stock-price').value)  || 0;
     const shares = Number(document.getElementById('stock-shares').value) || 0;
@@ -4768,27 +4969,27 @@ const table = document.createElement('table');
     const cost = price * shares + (shares > 0 ? 1 : 0);
     document.getElementById('stock-cost-display').textContent = cost.toLocaleString();
   }
- 
+
 window.submitStock = async function() {
     const target = document.getElementById('stock-target').value;
     const date   = document.getElementById('stock-date').value;
     const price  = Number(document.getElementById('stock-price').value);
     const shares = Number(document.getElementById('stock-shares').value);
     const taken  = Number(document.getElementById('stock-taken').value);
- 
+
     if (!target || !date || !price || !shares || !taken) {
       alert('請填寫所有欄位！'); return;
     }
- 
+
     const cost = price * shares + 1;
- 
+
     const stockRef = await addDoc(collection(db, 'users', currentUid, 'stocks'), {
       owner: stockOwner,
       target, date, price, shares, cost, taken,
       addedBy: currentEmail,
       createdAt: Date.now()
     });
- 
+
     // 爸爸的存股，同步寫一筆支出到爸爸帳本
     const fromDad = document.getElementById('stock-modal').dataset.fromDad === 'true';
     if (fromDad || stockOwner === 'dad') {
@@ -4809,11 +5010,11 @@ window.submitStock = async function() {
       }
       document.getElementById('stock-modal').dataset.fromDad = '';
     }
- 
+
     // 如果是編輯模式，更新既有記錄
     const editStockId   = document.getElementById('stock-modal').dataset.editStockId;
     const editExpenseId = document.getElementById('stock-modal').dataset.editExpenseId;
- 
+
     if (editStockId) {
       // 更新 stocks 集合
       await updateDoc(doc(db, 'users', currentUid, 'stocks', editStockId), {
@@ -4833,71 +5034,71 @@ window.submitStock = async function() {
       document.getElementById('stock-modal').dataset.editExpenseId = '';
       document.getElementById('stock-modal-title').textContent = '新增存股記錄';
     }
- 
+
     closeStockModal();
   };
- 
+
   window.deleteStock = function(id) {
     pendingDeleteId = id;
     // 借用現有的確認刪除 modal，但刪的是 stocks
     document.getElementById('confirm-delete-btn').dataset.deleteType = 'stock';
     document.getElementById('confirm-modal').classList.add('show');
   };
- 
- 
+
+
   // ===========================
- 
+
 // ===========================
   // 👴 爸爸帳本
   // ===========================
- 
+
   let dadRecords = [];
   let dadPieChart = null;
   let unsubscribeDad = null;
- 
+
   function listenDadRecords() {
     if (unsubscribeDad) unsubscribeDad();
     if (!currentLedgerId) return;
- 
+
     const q = query(
       collection(db,'ledgers',currentLedgerId,'expenses'),
       orderBy('date','desc')
     );
- 
+
     unsubscribeDad = onSnapshot(q, (snapshot) => {
       dadRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       renderDadPage();
     });
   }
- 
+
   function renderDadPage() {
     // 總餘額 = 所有收入 - 所有支出（不分月份）
     const totalIncome  = dadRecords.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
     const totalExpense = dadRecords.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
     const balance = totalIncome - totalExpense;
     document.getElementById('dad-balance').textContent = balance.toLocaleString();
- 
+
     // 圓餅圖（支出分類）
     const dadCats = [
       { name: '股票',   emoji: '💹' },
       { name: '電話費', emoji: '📞' },
     ];
- 
+
     const data = {};
     dadCats.forEach(c => { data[c.name] = 0; });
     dadRecords.filter(r => r.type === 'expense').forEach(r => {
       if (data[r.category] !== undefined) data[r.category] += r.amount;
     });
- 
+
     const labels  = dadCats.map(c => c.name).filter(n => data[n] > 0);
     const values  = labels.map(n => data[n]);
     const total   = values.reduce((a,b) => a+b, 0);
     const emojis  = labels.map(n => dadCats.find(c => c.name === n)?.emoji || '');
     const COLORS  = ['#444441','#88AFB5'];
- 
+
     const legend = document.getElementById('dad-pie-legend');
     legend.innerHTML = '';
- 
+
     if (total > 0) {
       labels.forEach(function(label, i) {
         const item = document.createElement('div');
@@ -4909,7 +5110,7 @@ window.submitStock = async function() {
         `;
         legend.appendChild(item);
       });
- 
+
       const canvas = document.getElementById('dad-pie-canvas');
       if (dadPieChart) dadPieChart.destroy();
       dadPieChart = new Chart(canvas, {
@@ -4934,16 +5135,16 @@ window.submitStock = async function() {
     } else {
       legend.innerHTML = '<div style="color:#b4b2a9; font-size:0.85rem;">尚無支出記錄</div>';
     }
- 
+
     // 記錄清單
     const container = document.getElementById('dad-record-list');
     container.innerHTML = '';
- 
+
     if (dadRecords.length === 0) {
       container.innerHTML = '<div style="text-align:center; color:#b4b2a9; padding:2rem 0; font-size:0.9rem;">尚無記錄</div>';
       return;
     }
- 
+
     dadRecords.forEach(function(item) {
       const isExpense = item.type !== 'income';
       const div = document.createElement('div');
@@ -4971,16 +5172,16 @@ window.submitStock = async function() {
   }
   // 🏷️ 管理標的
   // ===========================
- 
+
   window.openManageTargets = function() {
     renderTargetsList();
     document.getElementById('targets-modal').classList.add('show');
   };
- 
+
   window.closeTargetsModal = function() {
     document.getElementById('targets-modal').classList.remove('show');
   };
- 
+
   function renderTargetsList() {
     const container = document.getElementById('targets-list');
     container.innerHTML = '';
@@ -4994,7 +5195,7 @@ window.submitStock = async function() {
       container.appendChild(row);
     });
   }
- 
+
   window.addTarget = async function() {
     const name = document.getElementById('new-target-input').value.trim().toUpperCase();
     if (!name) { alert('請輸入標的名稱！'); return; }
@@ -5004,7 +5205,7 @@ window.submitStock = async function() {
     await saveStockTargets();
     renderTargetsList();
   };
- 
+
   window.removeTarget = async function(idx) {
     if (!confirm(`確定刪除「${stockTargets[idx]}」？`)) return;
     stockTargets.splice(idx, 1);
@@ -5020,12 +5221,12 @@ window.submitStock = async function() {
       className: 'noto-emoji'
     });
   }
- 
- 
+
+
 // ===========================
 // 🎨 配色主題
 // ===========================
- 
+
 const THEMES = [
   { id:'original',  name:'原色',    bg:'#f1efe8', sidebar:'#ffffff', card:'#ffffff', border:'#d3d1c7', accent:'#444441', text:'#2c2c2a', textSub:'#5f5e5a', hover:'#f1efe8' },
   { id:'sakura',    name:'櫻花粉',  bg:'#fdf0f2', sidebar:'#fff5f7', card:'#ffffff', border:'#f7d5dc', accent:'#dd918f', text:'#3a2828', textSub:'#7a5050', hover:'#fae0e4' },
@@ -5038,7 +5239,7 @@ const THEMES = [
 ];
 let currentTheme = 'original';
 let themingLedgerId = null;
- 
+
 function applyTheme(themeId) {
   const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
   const r = document.documentElement;
@@ -5057,19 +5258,19 @@ function applyTheme(themeId) {
   r.style.setProperty('--text-dim', '#888780');
   currentTheme = themeId;
 }
- 
+
 window.openThemeModal = function(ledger) {
   themingLedgerId = ledger.id;
   document.getElementById('theme-modal-title').textContent = `🎨 ${ledger.name} 配色`;
   renderThemeGrid(ledger.theme || 'original');
   document.getElementById('theme-modal').classList.add('show');
 };
- 
+
 window.closeThemeModal = function() {
   document.getElementById('theme-modal').classList.remove('show');
   themingLedgerId = null;
 };
- 
+
 function renderThemeGrid(activeThemeId) {
   const container = document.getElementById('theme-grid');
   if (!container) return;
@@ -5099,19 +5300,19 @@ function renderThemeGrid(activeThemeId) {
     container.appendChild(card);
   });
 }
- 
+
 // ===========================
 // 👴 爸爸帳本新增選擇
 // ===========================
- 
+
 window.openDadAddChoice = function() {
   document.getElementById('dad-add-modal').classList.add('show');
 };
- 
+
 window.closeDadAddModal = function() {
   document.getElementById('dad-add-modal').classList.remove('show');
 };
- 
+
 // 編輯存股
 window.handleDadEdit = function(expenseId, stockId) {
   if (stockId) {
@@ -5120,7 +5321,7 @@ window.handleDadEdit = function(expenseId, stockId) {
     openEditRecord(expenseId);
   }
 };
- 
+
 window.deleteDadRecord = function(expenseId, stockId) {
   pendingDeleteId = expenseId;
   if (stockId) {
@@ -5130,20 +5331,20 @@ window.deleteDadRecord = function(expenseId, stockId) {
   }
   document.getElementById('confirm-modal').classList.add('show');
 };
- 
+
 window.openEditStockFromTable = async function(stockId) {
     // 存股表格直接編輯，不經過爸爸帳本的支出記錄
     const stockSnap = await getDoc(doc(db, 'users', currentUid, 'stocks', stockId));
     if (!stockSnap.exists()) { alert('找不到存股記錄'); return; }
     const r = stockSnap.data();
- 
+
     document.getElementById('stock-modal-title').textContent = '編輯存股記錄';
     document.getElementById('stock-modal').dataset.editStockId = stockId;
     document.getElementById('stock-modal').dataset.editExpenseId = '';
     document.getElementById('stock-modal').dataset.fromDad = '';
     document.getElementById('stock-delete-btn').style.display = 'block';
     document.getElementById('stock-submit-btn').textContent = '儲存';
- 
+
     setStockOwner(r.owner || 'qian');
     renderTargetSelect();
     const sel = document.getElementById('stock-target');
@@ -5159,14 +5360,14 @@ window.openEditStockFromTable = async function(stockId) {
     document.getElementById('stock-shares').oninput = calcStockCost;
     document.getElementById('stock-modal').classList.add('show');
   };
- 
+
   window.openEditStock = async function(expenseId, stockId) {
   if (!stockId) {
     // 沒有 stockId，開一般編輯
     openEditRecord(expenseId);
     return;
   }
- 
+
   // 載入存股資料
   const stockSnap = await getDoc(doc(db, 'users', currentUid, 'stocks', stockId));
   if (!stockSnap.exists()) {
@@ -5174,9 +5375,9 @@ window.openEditStockFromTable = async function(stockId) {
     openEditRecord(expenseId);
     return;
   }
- 
+
   const r = stockSnap.data();
- 
+
   // 設定存股 modal 為編輯模式
   document.getElementById('stock-modal-title').textContent = '編輯存股記錄';
   document.getElementById('stock-modal').dataset.editStockId = stockId;
@@ -5184,60 +5385,60 @@ window.openEditStockFromTable = async function(stockId) {
   document.getElementById('stock-modal').dataset.fromDad = '';
   document.getElementById('stock-delete-btn').style.display = 'block';
   document.getElementById('stock-submit-btn').textContent = '儲存';
- 
+
   setStockOwner(r.owner || 'dad');
   renderTargetSelect();
- 
+
   // 選到對應的標的
   const sel = document.getElementById('stock-target');
   for (let i = 0; i < sel.options.length; i++) {
     if (sel.options[i].value === r.target) { sel.selectedIndex = i; break; }
   }
- 
+
   document.getElementById('stock-date').value   = r.date;
   document.getElementById('stock-price').value  = r.price;
   document.getElementById('stock-shares').value = r.shares;
   document.getElementById('stock-taken').value  = r.taken;
   document.getElementById('stock-cost-display').textContent = Math.ceil(r.cost).toLocaleString();
- 
+
   document.getElementById('stock-price').oninput  = calcStockCost;
   document.getElementById('stock-shares').oninput = calcStockCost;
- 
+
   document.getElementById('stock-modal').classList.add('show');
 };
- 
+
 window.openDadStockAdd = function() {
   // 預設歸屬為爸爸
   setStockOwner('dad');
- 
+
   // 設定今天日期
   const today = new Date();
   document.getElementById('stock-date').value =
     `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
- 
+
   // 清空欄位
   document.getElementById('stock-price').value  = '';
   document.getElementById('stock-shares').value = '';
   document.getElementById('stock-taken').value  = '';
   document.getElementById('stock-cost-display').textContent = '0';
- 
+
   renderTargetSelect();
   document.getElementById('stock-price').oninput  = calcStockCost;
   document.getElementById('stock-shares').oninput = calcStockCost;
- 
+
   // 覆寫 submitStock，完成後同步到爸爸帳本
   document.getElementById('stock-modal').dataset.fromDad = 'true';
   document.getElementById('stock-modal').classList.add('show');
 };
- 
+
 window.handleStockDateInput = function(input) {
   const val = input.value.replace(/\D/g, '');
   if (val.length === 8) {
     input.value = `${val.slice(0,4)}-${val.slice(4,6)}-${val.slice(6,8)}`;
   }
 };
- 
- 
+
+
 window.switchToLedgerType = function(type) {
   const ledger = ledgers.find(l => l.type === type);
   if (!ledger) return;
@@ -7221,57 +7422,65 @@ window.syncSchToGoogle = function() {
   schTokenClient.requestAccessToken();
 };
 
+
 function renderUnsettledSummary(allRecords) {
   const QIAN_PAYS = ['倩cube', '倩Costco', '倩現金'];
   const TENG_PAYS = ['騰cube', '騰現金'];
 
-  const unsettledRecords = allRecords.filter(r =>
-    r.type === 'expense' && r.payment !== '錢櫃' && !r.settled
-  );
+  let owedToQian = 0;
+  let owedToTeng = 0;
 
-  const qianTotal = unsettledRecords
-    .filter(r => QIAN_PAYS.includes(r.payment))
-    .reduce((s, r) => s + r.amount, 0);
-  const tengTotal = unsettledRecords
-    .filter(r => TENG_PAYS.includes(r.payment))
-    .reduce((s, r) => s + r.amount, 0);
+  for (const r of allRecords) {
+    if (r.type !== 'expense' || r.settled ||
+        r.payment === '錢櫃') continue;
 
-  const hasUnsettled = qianTotal > 0 || tengTotal > 0;
+    const amount = Math.max(0, Number(r.amount) || 0);
 
-  // 共同帳本頁摘要
+    // 舊紀錄維持原本 2:3
+    const qian = r.qianShare != null
+      ? Math.min(amount,
+          Math.max(0, Number(r.qianShare) || 0))
+      : Math.round(amount * 0.4);
+
+    const teng = amount - qian;
+
+    if (QIAN_PAYS.includes(r.payment)) owedToQian += teng;
+    if (TENG_PAYS.includes(r.payment)) owedToTeng += qian;
+  }
+
+  const hasUnsettled = owedToQian > 0 || owedToTeng > 0;
+
   const summaryEl = document.getElementById('unsettled-summary');
-  if (summaryEl) {
+  if (summaryEl)
     summaryEl.style.display = hasUnsettled ? 'block' : 'none';
-    const qEl = document.getElementById('unsettled-qian');
-    const tEl = document.getElementById('unsettled-teng');
-    if (qEl) qEl.textContent = qianTotal.toLocaleString();
-    if (tEl) tEl.textContent = tengTotal.toLocaleString();
-  }
 
-  // 不透過錢櫃，直接互相補款（依 2:3 比例）
+  const qEl = document.getElementById('unsettled-qian');
+  const tEl = document.getElementById('unsettled-teng');
+
+  if (qEl) qEl.textContent = owedToQian.toLocaleString();
+  if (tEl) tEl.textContent = owedToTeng.toLocaleString();
+
   const directEl = document.getElementById('direct-settle-text');
+
   if (directEl) {
-    const total = qianTotal + tengTotal;
-    const qianShouldPay = total * 2 / 5;
-    const qianNet = Math.round(qianTotal - qianShouldPay);
-    if (!hasUnsettled || qianNet === 0) {
-      directEl.textContent = '$0（已經對平）';
-    } else if (qianNet > 0) {
-      directEl.textContent = `騰要付給倩 $${qianNet.toLocaleString()}`;
-    } else {
-      directEl.textContent = `倩要付給騰 $${Math.abs(qianNet).toLocaleString()}`;
-    }
+    const net = Math.round(owedToQian - owedToTeng);
+    directEl.textContent = net === 0
+      ? '$0（已經對平）'
+      : net > 0
+        ? '騰要付給倩 $' + net.toLocaleString()
+        : '倩要付給騰 $' +
+          Math.abs(net).toLocaleString();
   }
 
-  // 首頁錢櫃卡片摘要
-  const homeUnsettled = document.getElementById('home-unsettled');
-  if (homeUnsettled) {
-    homeUnsettled.style.display = hasUnsettled ? 'block' : 'none';
-    const hqEl = document.getElementById('home-unsettled-qian');
-    const htEl = document.getElementById('home-unsettled-teng');
-    if (hqEl) hqEl.textContent = qianTotal.toLocaleString();
-    if (htEl) htEl.textContent = tengTotal.toLocaleString();
-  }
+  const home = document.getElementById('home-unsettled');
+  if (home)
+    home.style.display = hasUnsettled ? 'block' : 'none';
+
+  const hq = document.getElementById('home-unsettled-qian');
+  const ht = document.getElementById('home-unsettled-teng');
+
+  if (hq) hq.textContent = owedToQian.toLocaleString();
+  if (ht) ht.textContent = owedToTeng.toLocaleString();
 }
 
 window.toggleSettledFilter = function(type) {
@@ -7310,7 +7519,7 @@ window.togglePresetCard = function() {
   body.style.display = isOpen ? 'none' : 'block';
   icon.classList.toggle('open', !isOpen);
 };
- 
+
   window.handleOverlayClick = function(event, modalId) {
     if (event.target.id === modalId) {
       const el = document.getElementById(modalId);
@@ -7318,8 +7527,8 @@ window.togglePresetCard = function() {
       if (modalId === 'record-modal') { editingRecordId = null; selectedCat = null; selectedPay = null; }
     }
   };
- 
-        
+
+
 </script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
