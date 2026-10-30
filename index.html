@@ -5279,11 +5279,10 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         return;
       }
 
-      saving = True if False else False
-      saving = true
-      actualInput.disabled = true
+      saving = true;
+      actualInput.disabled = true;
 
-      try:
+      try {
         await setDoc(
           doc(db, 'users', currentUid, 'plannerSalary', month),
           { actual: raw === '' ? null : Number(raw) },
