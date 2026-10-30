@@ -5239,7 +5239,6 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       'font-size:18px;font-weight:700;margin:0 0 12px';
     root.appendChild(title);
 
-    row('預計領薪水', plannerMoney(info.estimated), {strong:true});
 
     const actualWrap = document.createElement('div');
     actualWrap.style.cssText =
@@ -5428,6 +5427,111 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     root.appendChild(note);
   }
 
+
+
+  // planner-rent-setting-v1
+  async function savePlannerRentSubsidy() {
+    const input = document.getElementById('set-rent-subsidy');
+    if (!input) return;
+
+    const raw = input.value.trim();
+    if (raw && (!Number.isFinite(Number(raw)) || Number(raw) < 0)) {
+      alert('請輸入有效的租屋補助金額');
+      input.value = String(Number(appSettings.rentSubsidy) || 0);
+      return;
+    }
+
+    appSettings.rentSubsidy = raw === '' ? 0 : Number(raw);
+
+    try {
+      await saveUserSettings();
+    } catch (e) {
+      console.error(e);
+      alert('租屋補助儲存失敗');
+    }
+  }
+
+  function ensurePlannerRentSubsidySetting() {
+    const page = document.getElementById('page-settings');
+    if (!page) return;
+
+    const salaryInput =
+      page.querySelector('input[id*="salary"]') ||
+      page.querySelector('input[id*="Salary"]');
+
+    if (!salaryInput) return;
+
+    let wrap = document.getElementById('settings-rent-subsidy-wrap');
+
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'settings-rent-subsidy-wrap';
+      wrap.style.cssText = 'margin-top:12px';
+
+      const label = document.createElement('label');
+      label.textContent = '租屋補助金額';
+      label.style.cssText =
+        'display:block;font-size:13px;font-weight:500;' +
+        'margin-bottom:6px';
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.step = '1';
+      input.id = 'set-rent-subsidy';
+      input.placeholder = '請輸入固定租屋補助';
+      input.style.cssText =
+        'width:100%;padding:10px;border:1px solid var(--border);' +
+        'border-radius:8px;background:var(--card);' +
+        'color:var(--text);box-sizing:border-box';
+
+      input.addEventListener('blur', savePlannerRentSubsidy);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          input.blur();
+        }
+      });
+
+      wrap.append(label, input);
+
+      const host =
+        salaryInput.closest('label') ||
+        salaryInput.closest('.form-row') ||
+        salaryInput.closest('.setting-item') ||
+        salaryInput.parentElement;
+
+      if (!host || !host.parentElement) return;
+      host.parentElement.insertBefore(wrap, host.nextSibling);
+    }
+
+    const input = document.getElementById('set-rent-subsidy');
+    if (input && document.activeElement !== input) {
+      input.value = String(Number(appSettings.rentSubsidy) || 0);
+    }
+  }
+
+  const plannerRentSettingObserver = new MutationObserver(() => {
+    const page = document.getElementById('page-settings');
+    if (!page) return;
+
+    const visible = page.style.display !== 'none';
+    if (visible) {
+      setTimeout(ensurePlannerRentSubsidySetting, 50);
+    }
+  });
+
+  setTimeout(() => {
+    if (document.body) {
+      plannerRentSettingObserver.observe(document.body, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+    }
+    ensurePlannerRentSubsidySetting();
+  }, 0);
 
   async function renderBudgetPage() {
     budgetLedgerType = 'personal';
