@@ -796,32 +796,84 @@ body { background-color: var(--bg); color: var(--text); }
   </div>
 
   <!-- 預算頁 -->
-  <div id="page-budget" class="container" style="display:none;">
-    <h1>
-      <button class="btn-back" onclick="showPage('home')" aria-label="返回"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
-      🎯 預算管理
-      <span class="month-picker">
-        <button onclick="changeBudgetMonth(-1)">&#8249;</button>
-        <span class="month-label" id="budget-month-label"></span>
-        <button onclick="changeBudgetMonth(1)">&#8250;</button>
-      </span>
-    </h1>
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h2 style="margin-bottom:0;" id="budget-ledger-label">個人記帳</h2>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn-sm" id="budget-tab-personal" onclick="setBudgetLedger('personal')" class="btn-primary">個人</button>
-          <button class="btn-sm" id="budget-tab-shared"   onclick="setBudgetLedger('shared')">共同</button>
-        </div>
-      </div>
-      <div id="budget-list"></div>
-      <div id="funding-summary" class="card"
-        style="margin-top:16px;padding:16px;display:none"></div>
-      <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #f1efe8;">
-        <p style="font-size:0.8rem; color:#888780; margin-bottom:0.5rem;">點擊分類旁的金額可以編輯預算</p>
-      </div>
-    </div>
+
+<div id="page-budget" class="container" style="display:none">
+  <h1>
+    <button class="btn-back" onclick="showPage('home')"
+      aria-label="返回">
+      <i class="ti ti-arrow-left"></i>
+    </button>
+    每月資金規劃
+    <span class="month-picker">
+      <button onclick="changeBudgetMonth(-1)">&#8249;</button>
+      <span class="month-label" id="budget-month-label"></span>
+      <button onclick="changeBudgetMonth(1)">&#8250;</button>
+    </span>
+  </h1>
+
+  <style>
+    .fund-row {
+      display:flex;align-items:center;gap:10px;
+      padding:12px 0;border-bottom:1px solid var(--border);
+    }
+    .fund-main {flex:1;min-width:0}
+    .fund-name {font-size:14px;font-weight:500}
+    .fund-sub {font-size:11px;color:var(--text-dim);margin-top:4px}
+    .fund-amount {font-size:15px;font-weight:600;white-space:nowrap}
+    .fund-select {
+      max-width:145px;width:100%;padding:7px 5px;
+      border:1px solid var(--border);border-radius:8px;
+      background:var(--card);color:var(--text);font-size:12px;
+    }
+    .fund-action {
+      padding:5px 9px;border:1px solid var(--border);
+      border-radius:8px;background:var(--card);
+      color:var(--text);cursor:pointer;
+    }
+    .fund-summary-row {
+      display:flex;justify-content:space-between;
+      gap:12px;padding:9px 0;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+    }
+    @media(max-width:450px) {
+      .fund-row {flex-wrap:wrap}
+      .fund-select {max-width:130px}
+    }
+  </style>
+
+  <div class="card">
+    <h2>資金分配總覽</h2>
+    <div id="fund-planner-summary"></div>
   </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;
+      align-items:center;gap:8px;margin-bottom:10px">
+      <h2 style="margin:0">消費預算</h2>
+      <span style="font-size:11px;color:var(--text-dim)">
+        連動原本記帳分類
+      </span>
+    </div>
+    <div id="budget-list"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;
+      align-items:center;gap:8px;margin-bottom:12px">
+      <h2 style="margin:0">固定撥款</h2>
+      <button class="fund-action"
+        onclick="addFundingFixed()">＋新增</button>
+    </div>
+    <div id="fund-fixed-list"></div>
+  </div>
+
+  <p style="font-size:12px;color:var(--text-dim);
+    padding:0 4px 20px">
+    第一階段僅統計預算與固定撥款。
+    信用卡帳單及共同帳本同步將在後續加入。
+  </p>
+</div>
 <!-- 爸爸帳本頁面 -->
     <div id="page-dad" class="container" style="display:none;">
       <h1>
@@ -2020,6 +2072,10 @@ margin:10px 0;background:var(--hover);border-radius:12px">
   // 預算資料 { personal: { '餐飲': 7000, ... }, shared: { '吃飯': 3000, ... } }
   let budgets = { personal: {}, shared: {} };
   let budgetDestinations = {};
+  // funding-planner-v1
+  let fundingFixedItems = [
+    {id:'rent', name:'房租', amount:5000, dest:'partner'}
+  ];
   // budget-funding-phase1
 
   let unsubscribeRecords = null;
@@ -3150,6 +3206,8 @@ async function loadUserSettings() {
       if (data.budgets)                 budgets                 = data.budgets;
       if (data.budgetDestinations)
         budgetDestinations = data.budgetDestinations;
+      if (Array.isArray(data.fundingFixedItems))
+        fundingFixedItems = data.fundingFixedItems;
     } else {
       await saveUserSettings();
     }
@@ -3165,7 +3223,7 @@ await loadStockTargets();
 async function saveUserSettings() {
     // 只存收入分類、預算（支出分類改由 saveCatManageCategories 依帳本各自存，避免寫錯帳本）
     await setDoc(doc(db,'users',currentUid), {
-      incomeCategories, budgets, budgetDestinations
+      incomeCategories, budgets, budgetDestinations, fundingFixedItems
     }, { merge:true });
   }
 
@@ -4160,127 +4218,324 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     target.appendChild(result);
   }
 
-  async function renderBudgetPage() {
-    const isShared = budgetLedgerType === 'shared';
-    const cats = isShared ? sharedExpenseCategories : expenseCategories;
-    const budgetKey = budgetLedgerType; // 'personal' or 'shared'
-    const monthKey  = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
 
-    document.getElementById('budget-ledger-label').textContent =
-      isShared ? '共同帳本預算' : '個人帳本預算';
+  const plannerDestinations = [
+    ['first', '第一銀行保留'],
+    ['cathay', '國泰世華'],
+    ['fubon', '台北富邦'],
+    ['partner', '匯給男友'],
+    ['cash-budget', '現金預算本'],
+    ['cash-saving', '現金預存'],
+    ['wallet', '共同錢櫃'],
+    ['unset', '尚未設定']
+  ];
 
-    // 找對應的帳本
-    const ledger = isShared
-      ? ledgers.find(l => l.type === 'shared')
-      : ledgers.find(l => l.type === 'personal');
+  const plannerMoney = n =>
+    '$' + Math.round(n).toLocaleString('zh-TW');
 
-    // 撈該月支出：依照「預算起始日」設定，決定這個月實際對應的日期範圍
-    let monthExpense = {};
-    if (ledger) {
-      let startDate, endDate;
-      if (appSettings.budgetStartMode === 'payday') {
-        const startDay = appSettings.salaryDate || 10;
-        startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-${String(startDay).padStart(2,'0')}`;
-        endDate   = getCycleEnd(budgetYear, budgetMonth, startDay);
-      } else {
-        startDate = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-01`;
-        endDate   = `${budgetYear}-${String(budgetMonth).padStart(2,'0')}-31`;
-      }
-      const snap = await getDocs(collection(db,'ledgers',ledger.id,'expenses'));
-      snap.docs.forEach(d => {
-        const r = d.data();
-        if (r.type === 'expense' && r.date >= startDate && r.date <= endDate) {
-          monthExpense[r.category] = (monthExpense[r.category] || 0) + r.amount;
-        }
-      });
-    }
-
-    const container = document.getElementById('budget-list');
-    container.innerHTML = '';
-
-    cats.forEach(function(cat) {
-// 如果這個月沒有預算，自動找上個月的設定來用
-    let prevMonth = budgetMonth - 1;
-    let prevYear  = budgetYear;
-    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-    const prevMonthKey = `${prevYear}-${String(prevMonth).padStart(2,'0')}`;
-
-    const budget =
-      (budgets[budgetKey]?.[monthKey]?.[cat.name]) ??           // 這個月有設定就用這個月的
-      (budgets[budgetKey]?.[prevMonthKey]?.[cat.name]) ??       // 沒有就用上個月的
-      0;                                                         // 上個月也沒有就是 0
-      const spent   = monthExpense[cat.name] || 0;
-      const remain  = budget - spent;
-      const pct     = budget > 0 ? Math.min(spent / budget * 100, 100) : 0;
-      const isOver  = remain < 0;
-
-      const item = document.createElement('div');
-      item.className = 'budget-item';
-      item.innerHTML = `
-        <div class="budget-icon">${cat.emoji}</div>
-        <div class="budget-body">
-          <div class="budget-label">${cat.name}</div>
-          <div class="budget-bar-wrap"><div class="budget-bar${isOver?' over':''}" style="width:${pct}%"></div></div>
-          <div class="budget-nums">已花 $${spent.toLocaleString()} / 預算 <span class="budget-edit-trigger" data-cat="${cat.name}" style="cursor:pointer; text-decoration:underline; color:#444441;">$${budget > 0 ? budget.toLocaleString() : '點擊設定'}</span></div>
-        </div>
-        <div class="budget-right">
-          <div class="budget-remaining${isOver?' over':''}">${isOver ? '-' : ''}$${Math.abs(remain).toLocaleString()}</div>
-          <div style="font-size:0.72rem; color:#888780;">${isOver ? '超支' : '剩餘'}</div>
-        </div>
-      `;
-
-      // 點擊預算數字可以編輯
-      item.querySelector('.budget-edit-trigger').onclick = async function() {
-        const newBudget = prompt(`設定「${cat.name}」${monthKey} 預算`, budget || '');
-        if (newBudget === null) return;
-        const val = Number(newBudget);
-        if (isNaN(val) || val < 0) { alert('請輸入有效金額！'); return; }
-        if (!budgets[budgetKey]) budgets[budgetKey] = {};
-        if (!budgets[budgetKey][monthKey]) budgets[budgetKey][monthKey] = {};
-        budgets[budgetKey][monthKey][cat.name] = val;
-        await saveUserSettings();
-        renderBudgetPage();
-      };
-
-
-      if (!isShared) {
-        const box = document.createElement('div');
-        box.style.cssText =
-          'padding:4px 0 12px 42px;display:flex;' +
-          'align-items:center;gap:8px;font-size:12px;';
-
-        const label = document.createElement('span');
-        label.textContent = '資金去向';
-
-        const select = document.createElement('select');
-        select.style.cssText =
-          'flex:1;min-width:0;padding:7px;border-radius:8px;' +
-          'background:var(--card);color:var(--text);' +
-          'border:1px solid var(--border);';
-
-        fundingOptions.forEach(([key, name]) => {
-          const opt = document.createElement('option');
-          opt.value = key;
-          opt.textContent = name;
-          select.appendChild(opt);
-        });
-
-        select.value =
-          budgetDestinations.personal?.[cat.name] || 'unset';
-
-        select.onchange = () =>
-          setBudgetDestination('personal', cat.name, select.value);
-
-        box.append(label, select);
-        item.appendChild(box);
-      }
-
-      container.appendChild(item);
-    });
-
-    renderFundingSummary();
+  function plannerMonthKey() {
+    return `${budgetYear}-${String(budgetMonth).padStart(2,'0')}`;
   }
 
+  function plannerBudget(cat) {
+    return fundingBudgetValue(
+      'personal', plannerMonthKey(), cat
+    );
+  }
+
+  function plannerDestinationSelect(value, onChange) {
+    const select = document.createElement('select');
+    select.className = 'fund-select';
+
+    plannerDestinations.forEach(([key,label]) => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = label;
+      select.appendChild(option);
+    });
+
+    select.value = value || 'unset';
+    select.onchange = () => onChange(select.value);
+    return select;
+  }
+
+  function plannerRow(name, amount, subtitle) {
+    const row = document.createElement('div');
+    row.className = 'fund-row';
+
+    const main = document.createElement('div');
+    main.className = 'fund-main';
+
+    const title = document.createElement('div');
+    title.className = 'fund-name';
+    title.textContent = name;
+
+    const sub = document.createElement('div');
+    sub.className = 'fund-sub';
+    sub.textContent = subtitle || '';
+
+    main.append(title, sub);
+
+    const money = document.createElement('div');
+    money.className = 'fund-amount';
+    money.textContent = plannerMoney(amount);
+
+    row.append(main, money);
+
+    return {row, main, money};
+  }
+
+  async function plannerSave() {
+    await saveUserSettings();
+    await renderBudgetPage();
+  }
+
+  window.plannerEditBudget = async function(cat) {
+    const old = plannerBudget(cat);
+    const input = prompt(`設定「${cat}」每月預算`, old);
+
+    if (input === null) return;
+    if (input.trim() === '' ||
+        !Number.isFinite(Number(input)) ||
+        Number(input) < 0) {
+      alert('請輸入有效金額');
+      return;
+    }
+
+    const month = plannerMonthKey();
+    if (!budgets.personal) budgets.personal = {};
+    if (!budgets.personal[month])
+      budgets.personal[month] = {};
+
+    budgets.personal[month][cat] = Number(input);
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('預算儲存失敗');
+    }
+  };
+
+  window.plannerSetBudgetDest = async function(cat, dest) {
+    if (!budgetDestinations.personal)
+      budgetDestinations.personal = {};
+
+    budgetDestinations.personal[cat] = dest;
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('資金去向儲存失敗');
+    }
+  };
+
+  window.addFundingFixed = async function() {
+    const name = prompt('固定撥款項目名稱（例如：電話費）');
+    if (!name || !name.trim()) return;
+
+    const amountText = prompt('每月固定金額', '0');
+    if (amountText === null) return;
+
+    const amount = Number(amountText);
+    if (amountText.trim() === '' ||
+        !Number.isFinite(amount) || amount < 0) {
+      alert('請輸入有效金額');
+      return;
+    }
+
+    fundingFixedItems.push({
+      id: 'fixed-' + Date.now(),
+      name: name.trim(),
+      amount,
+      dest: 'unset'
+    });
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('固定撥款儲存失敗');
+    }
+  };
+
+  window.plannerEditFixed = async function(id) {
+    const item = fundingFixedItems.find(x => x.id === id);
+    if (!item) return;
+
+    const name = prompt('修改項目名稱', item.name);
+    if (name === null || !name.trim()) return;
+
+    const value = prompt('修改每月金額', item.amount);
+    if (value === null) return;
+
+    const amount = Number(value);
+    if (value.trim() === '' ||
+        !Number.isFinite(amount) || amount < 0) {
+      alert('請輸入有效金額');
+      return;
+    }
+
+    item.name = name.trim();
+    item.amount = amount;
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('修改失敗');
+    }
+  };
+
+  window.plannerDeleteFixed = async function(id) {
+    const item = fundingFixedItems.find(x => x.id === id);
+    if (!item) return;
+
+    if (!confirm(`確定刪除「${item.name}」？`)) return;
+
+    fundingFixedItems =
+      fundingFixedItems.filter(x => x.id !== id);
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('刪除失敗');
+    }
+  };
+
+  window.plannerSetFixedDest = async function(id, dest) {
+    const item = fundingFixedItems.find(x => x.id === id);
+    if (!item) return;
+
+    item.dest = dest;
+
+    try {
+      await plannerSave();
+    } catch(e) {
+      console.error(e);
+      alert('資金去向儲存失敗');
+    }
+  };
+
+  async function renderBudgetPage() {
+    budgetLedgerType = 'personal';
+
+    const budgetList = document.getElementById('budget-list');
+    const fixedList = document.getElementById('fund-fixed-list');
+    const summary = document.getElementById('fund-planner-summary');
+
+    if (!budgetList || !fixedList || !summary) return;
+
+    budgetList.innerHTML = '';
+    fixedList.innerHTML = '';
+    summary.innerHTML = '';
+
+    const totals = Object.fromEntries(
+      plannerDestinations.map(([key]) => [key, 0])
+    );
+
+    // 消費預算，沿用原本的預算資料
+    for (const cat of expenseCategories) {
+      const amount = plannerBudget(cat.name);
+      const dest =
+        budgetDestinations.personal?.[cat.name] || 'unset';
+
+      totals[dest] += amount;
+
+      const {row, main, money} =
+        plannerRow(cat.name, amount, '消費預算');
+
+      const edit = document.createElement('button');
+      edit.className = 'fund-action';
+      edit.textContent = '編輯';
+      edit.onclick = () => plannerEditBudget(cat.name);
+
+      const select = plannerDestinationSelect(
+        dest,
+        value => plannerSetBudgetDest(cat.name, value)
+      );
+
+      row.append(select, edit);
+      budgetList.appendChild(row);
+    }
+
+    // 固定撥款，不需要有記帳分類
+    for (const item of fundingFixedItems) {
+      const amount = Number(item.amount) || 0;
+      const dest = item.dest || 'unset';
+
+      if (totals[dest] === undefined) totals[dest] = 0;
+      totals[dest] += amount;
+
+      const {row} = plannerRow(
+        item.name, amount, '固定撥款'
+      );
+
+      const select = plannerDestinationSelect(
+        dest,
+        value => plannerSetFixedDest(item.id, value)
+      );
+
+      const edit = document.createElement('button');
+      edit.className = 'fund-action';
+      edit.textContent = '編輯';
+      edit.onclick = () => plannerEditFixed(item.id);
+
+      const del = document.createElement('button');
+      del.className = 'fund-action';
+      del.textContent = '刪除';
+      del.onclick = () => plannerDeleteFixed(item.id);
+
+      row.append(select, edit, del);
+      fixedList.appendChild(row);
+    }
+
+    const total = Object.values(totals)
+      .reduce((a,b) => a+b, 0);
+
+    const cash =
+      totals['cash-budget'] +
+      totals['cash-saving'] +
+      totals.wallet;
+
+    const addSummary = (name, value, highlight=false) => {
+      const row = document.createElement('div');
+      row.className = 'fund-summary-row';
+
+      if (highlight) row.style.fontWeight = '600';
+
+      const label = document.createElement('span');
+      label.textContent = name;
+
+      const number = document.createElement('span');
+      number.textContent = plannerMoney(value);
+
+      row.append(label, number);
+      summary.appendChild(row);
+    };
+
+    addSummary('國泰世華', totals.cathay);
+    addSummary('台北富邦', totals.fubon);
+    addSummary('匯給男友', totals.partner);
+    addSummary('第一銀行保留', totals.first);
+    addSummary('預計提領現金', cash, true);
+
+    if (totals.unset)
+      addSummary('尚未設定去向', totals.unset);
+
+    addSummary('每月安排合計', total, true);
+
+    const note = document.createElement('div');
+    note.style.cssText =
+      'font-size:11px;color:var(--text-dim);margin-top:10px';
+    note.textContent =
+      '現金提領包含預算本、預存與共同錢櫃。' +
+      '此處不追蹤銀行餘額。';
+
+    summary.appendChild(note);
+  }
 
   // ===========================
   // 🖥️ 渲染清單
