@@ -4350,31 +4350,130 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     await renderBudgetPage();
   }
 
-  window.plannerEditBudget = async function(cat) {
-    const old = plannerBudget(cat);
-    const input = prompt(`設定「${cat}」每月預算`, old);
 
-    if (input === null) return;
-    if (input.trim() === '' ||
-        !Number.isFinite(Number(input)) ||
-        Number(input) < 0) {
-      alert('請輸入有效金額');
-      return;
-    }
+  let plannerShowHidden = false;
 
-    const month = plannerMonthKey();
-    if (!budgets.personal) budgets.personal = {};
-    if (!budgets.personal[month])
-      budgets.personal[month] = {};
+  function plannerIsHidden(cat) {
+    return budgetDestinations.personalHidden?.[cat] === true;
+  }
 
-    budgets.personal[month][cat] = Number(input);
+  window.plannerToggleHidden = function() {
+    plannerShowHidden = !plannerShowHidden;
+    renderBudgetPage();
+  };
 
-    try {
-      await plannerSave();
-    } catch(e) {
-      console.error(e);
-      alert('預算儲存失敗');
-    }
+  window.plannerEditBudget = function(cat) {
+    document.getElementById('planner-budget-edit-modal')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'planner-budget-edit-modal';
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:9999;' +
+      'background:rgba(0,0,0,.42);display:flex;' +
+      'align-items:center;justify-content:center;padding:20px';
+
+    const dialog = document.createElement('div');
+    dialog.style.cssText =
+      'background:var(--card,#fff);color:var(--text,#222);' +
+      'border-radius:16px;padding:22px;width:100%;' +
+      'max-width:360px;box-shadow:0 12px 35px rgba(0,0,0,.18)';
+
+    const heading = document.createElement('h3');
+    heading.textContent = '編輯預算｜' + cat;
+    heading.style.marginBottom = '18px';
+
+    const label = document.createElement('div');
+    label.textContent = '本月預算金額';
+    label.style.cssText =
+      'font-size:12px;color:var(--text-dim);margin-bottom:7px';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.step = '1';
+    input.value = String(plannerBudget(cat));
+    input.style.cssText =
+      'width:100%;padding:12px;border:1px solid var(--border);' +
+      'border-radius:9px;background:var(--card);color:var(--text);' +
+      'font-size:17px;box-sizing:border-box';
+
+    const actions = document.createElement('div');
+    actions.style.cssText =
+      'display:flex;gap:8px;margin-top:20px;flex-wrap:wrap';
+
+    const button = (text, action) => {
+      const b = document.createElement('button');
+      b.className = 'fund-action';
+      b.textContent = text;
+      b.style.cssText = 'flex:1;padding:10px;min-width:70px';
+      b.onclick = action;
+      actions.appendChild(b);
+      return b;
+    };
+
+    const close = () => overlay.remove();
+
+    button('取消',close);
+
+    button(plannerIsHidden(cat) ? '取消隱藏' : '隱藏', async () => {
+      if (!budgetDestinations.personalHidden)
+        budgetDestinations.personalHidden = {};
+
+      const previous = plannerIsHidden(cat);
+      budgetDestinations.personalHidden[cat] = !previous;
+
+      try {
+        await saveUserSettings();
+        close();
+        renderBudgetPage();
+      } catch(e) {
+        budgetDestinations.personalHidden[cat] = previous;
+        console.error(e);
+        alert('隱藏設定儲存失敗');
+      }
+    });
+
+    const save = button('儲存', async () => {
+      const raw = input.value.trim();
+      const value = Number(raw);
+
+      if (!raw || !Number.isFinite(value) || value < 0) {
+        alert('請輸入有效金額');
+        return;
+      }
+
+      const month = plannerMonthKey();
+      if (!budgets.personal) budgets.personal = {};
+      if (!budgets.personal[month])
+        budgets.personal[month] = {};
+
+      const previous = budgets.personal[month][cat];
+      budgets.personal[month][cat] = value;
+      save.disabled = true;
+
+      try {
+        await saveUserSettings();
+        close();
+        renderBudgetPage();
+      } catch(e) {
+        if (previous === undefined)
+          delete budgets.personal[month][cat];
+        else
+          budgets.personal[month][cat] = previous;
+
+        save.disabled = false;
+        console.error(e);
+        alert('預算儲存失敗');
+      }
+    });
+
+    overlay.onclick = e => {
+      if (e.target === overlay) close();
+    };
+
+    dialog.append(heading,label,input,actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
   };
 
   window.plannerSetBudgetDest = async function(cat, dest) {
@@ -4664,6 +4763,29 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     root.appendChild(progress);
 
     const list = document.createElement('div');
+    list.style.cssText =
+      'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));' +
+      'gap:18px;align-items:start';
+
+    const fixedList = document.createElement('div');
+    fixedList.style.minWidth = '0';
+
+    const creditList = document.createElement('div');
+    creditList.style.minWidth = '0';
+
+    const fixedTitle = document.createElement('div');
+    fixedTitle.textContent = '固定撥款';
+    fixedTitle.style.cssText =
+      'font-size:13px;font-weight:600;margin-bottom:8px';
+
+    const creditTitle = document.createElement('div');
+    creditTitle.textContent = '信用卡確認';
+    creditTitle.style.cssText =
+      'font-size:13px;font-weight:600;margin-bottom:8px';
+
+    fixedList.appendChild(fixedTitle);
+    creditList.appendChild(creditTitle);
+    list.append(fixedList,creditList);
     root.appendChild(list);
 
     const footer = document.createElement('div');
@@ -4712,19 +4834,16 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       title.style.cssText =
         'font-size:14px;font-weight:500';
 
-      const subtitle = document.createElement('div');
-      subtitle.textContent = item.description;
-      subtitle.style.cssText =
-        'font-size:11px;color:var(--text-dim);' +
-        'margin-top:3px';
 
       const amount = document.createElement('strong');
       amount.textContent = plannerMoney(item.amount);
       amount.style.cssText =
         'font-size:14px;white-space:nowrap';
 
-      content.append(title,subtitle);
+      content.appendChild(title);
       row.append(checkbox,content,amount);
+      row.style.flexWrap = 'wrap';
+      amount.style.marginLeft = 'auto';
 
       function updateRowStyle() {
         title.style.textDecoration =
@@ -4756,7 +4875,8 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         }
       };
 
-      list.appendChild(row);
+      (item.source === 'credit'
+        ? creditList : fixedList).appendChild(row);
     }
 
     updateProgress();
@@ -5233,11 +5353,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       return el;
     }
 
-    const title = document.createElement('div');
-    title.textContent = '主要收入｜旅館';
-    title.style.cssText =
-      'font-size:18px;font-weight:700;margin:0 0 12px';
-    root.appendChild(title);
+    // planner-layout-v3
 
 
     const actualWrap = document.createElement('div');
@@ -5247,7 +5363,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       'padding:7px 0;border-bottom:1px solid var(--border)';
 
     const actualLabel = document.createElement('span');
-    actualLabel.textContent = '實際領薪水';
+    actualLabel.textContent = '薪水';
     actualLabel.style.fontWeight = '600';
 
     const actualInput = document.createElement('input');
@@ -5406,12 +5522,33 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       root.appendChild(empty);
     }
 
-    row('本月預計總收入', plannerMoney(plannedTotal), {strong:true});
-    row('本月已入帳收入', plannerMoney(actualTotal), {strong:true});
-    row('預計收入扣除規劃後', plannerMoney(plannedTotal - allocated), {strong:true});
+    const incomeTotal = info.actual === null
+      ? plannedTotal : actualTotal;
 
-    if (info.actual !== null) {
-      row('實際收入扣除規劃後', plannerMoney(actualTotal - allocated));
+    row('總收入', plannerMoney(incomeTotal), {strong:true});
+
+    const summary = document.getElementById(
+      'fund-planner-summary'
+    );
+
+    if (summary) {
+      summary.querySelector('#planner-salary-left')?.remove();
+
+      const balance = document.createElement('div');
+      balance.id = 'planner-salary-left';
+      balance.className = 'fund-summary-row';
+      balance.style.cssText =
+        'font-weight:700;font-size:15px;padding:13px 0';
+
+      const label = document.createElement('span');
+      label.textContent = '薪水還剩';
+
+      const value = document.createElement('strong');
+      value.textContent =
+        plannerMoney(incomeTotal - allocated);
+
+      balance.append(label,value);
+      summary.appendChild(balance);
     }
 
     const note = document.createElement('div');
@@ -5550,16 +5687,28 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       plannerDestinations.map(([key]) => [key, 0])
     );
 
-    // 消費預算，沿用原本的預算資料
+    // 隱藏分類不納入資金規劃，但保留原始預算資料
+    const toggleHidden = document.createElement('button');
+    toggleHidden.className = 'fund-action';
+    toggleHidden.style.cssText = 'margin:0 0 10px;font-size:12px';
+    toggleHidden.textContent = plannerShowHidden
+      ? '收起隱藏分類' : '管理隱藏分類';
+    toggleHidden.onclick = plannerToggleHidden;
+    budgetList.appendChild(toggleHidden);
+
     for (const cat of expenseCategories) {
+      const hidden = plannerIsHidden(cat.name);
+      if (hidden && !plannerShowHidden) continue;
+
       const amount = plannerBudget(cat.name);
       const dest =
         budgetDestinations.personal?.[cat.name] || 'unset';
 
-      totals[dest] += amount;
+      if (!hidden) totals[dest] += amount;
 
       const {row, main, money} =
-        plannerRow(cat.name, amount, '消費預算');
+        plannerRow(cat.name, amount,
+          hidden ? '已隱藏（不列入資金規劃）' : '');
 
       const edit = document.createElement('button');
       edit.className = 'fund-action';
@@ -5584,7 +5733,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       totals[dest] += amount;
 
       const {row} = plannerRow(
-        item.name, amount, '固定撥款'
+        item.name, amount, ''
       );
 
       const select = plannerDestinationSelect(
