@@ -843,10 +843,50 @@ body { background-color: var(--bg); color: var(--text); }
   </style>
 
   <div class="card">
-    <h2>本月薪資</h2>
+    <h2>本月收入</h2>
     <div id="planner-salary-panel"
          style="font-size:13px;padding-top:8px">
       正在讀取班表薪資…
+    </div>
+  </div>
+
+
+  <div id="planner-income-modal" class="modal-overlay"
+       onclick="if(event.target===this)closePlannerIncomeModal()">
+    <div class="modal-sheet" style="max-width:480px">
+      <div class="modal-handle"></div>
+      <h3 style="margin-bottom:16px">新增收入</h3>
+
+      <div class="form-compact">
+        <label>收入類別</label>
+        <select id="planner-income-type" class="input-sm"
+                onchange="plannerIncomeTypeChanged()"></select>
+
+        <div id="planner-income-custom-wrap" style="display:none">
+          <label>新收入類別名稱</label>
+          <input id="planner-income-custom" class="input-sm"
+                 placeholder="例如：貼圖收入"
+                 style="width:100%">
+        </div>
+
+        <label>收入日期</label>
+        <input type="date" id="planner-income-date"
+               class="input-sm" style="width:100%">
+
+        <label>實際收入金額</label>
+        <input type="number" min="0" step="1"
+               id="planner-income-amount"
+               class="input-sm" style="width:100%">
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="fund-action"
+                  style="flex:1;padding:10px"
+                  onclick="closePlannerIncomeModal()">取消</button>
+          <button class="fund-action"
+                  style="flex:1;padding:10px"
+                  onclick="savePlannerIncome()">儲存收入</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4851,6 +4891,252 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     }
   };
 
+
+  // planner-income-v1
+  let plannerIncomeEditingId = null;
+  let plannerIncomeTypes = ['貼圖收入','二手拍'];
+
+  function plannerIncomeRef(month) {
+    return doc(db,'users',currentUid,'plannerIncome',month);
+  }
+
+  async function plannerGetIncome(month) {
+    const snap = await getDoc(plannerIncomeRef(month));
+    const d = snap.exists() ? snap.data() : {};
+    return {
+      subsidyPlanned: Number(d.subsidyPlanned) || 0,
+      subsidyActual: d.subsidyActual === undefined ||
+                     d.subsidyActual === null
+        ? null : Number(d.subsidyActual),
+      entries: Array.isArray(d.entries) ? d.entries : []
+    };
+  }
+
+  async function plannerGetIncomeTypes() {
+    const snap = await getDoc(
+      doc(db,'users',currentUid,'plannerIncomeTypes','catalog')
+    );
+    const saved = snap.exists() ? snap.data().names : [];
+    const original = incomeCategories.map(c => c.name);
+    return [...new Set([
+      '貼圖收入','二手拍',
+      ...original,
+      ...(Array.isArray(saved) ? saved : [])
+    ])].filter(Boolean).filter(name =>
+      name !== '工作收入' && name !== '主要收入'
+    );
+  }
+
+  window.plannerEditSubsidy = async function(field) {
+    const month = plannerMonthKey();
+    const data = await plannerGetIncome(month);
+    const old = field === 'subsidyPlanned'
+      ? data.subsidyPlanned : data.subsidyActual;
+
+    const input = prompt(
+      field === 'subsidyPlanned'
+        ? '設定本月預計租屋補助'
+        : '輸入本月實際收到的租屋補助（留空表示未收到）',
+      old == null ? '' : String(old)
+    );
+    if (input === null) return;
+
+    if (input.trim() &&
+        (!Number.isFinite(Number(input)) ||
+         Number(input) < 0)) {
+      alert('請輸入有效金額');
+      return;
+    }
+
+    const value = input.trim() === ''
+      ? (field === 'subsidyActual' ? null : 0)
+      : Number(input);
+
+    try {
+      await setDoc(
+        plannerIncomeRef(month),
+        {[field]:value},
+        {merge:true}
+      );
+      renderPlannerSalary();
+    } catch(e) {
+      console.error(e);
+      alert('租屋補助儲存失敗');
+    }
+  };
+
+  window.plannerIncomeTypeChanged = function() {
+    const select = document.getElementById('planner-income-type');
+    document.getElementById(
+      'planner-income-custom-wrap'
+    ).style.display =
+      select.value === '__new__' ? 'block' : 'none';
+  };
+
+  window.openPlannerIncomeModal = async function(id=null) {
+    const month = plannerMonthKey();
+    let data, types;
+
+    try {
+      [data, types] = await Promise.all([
+        plannerGetIncome(month),
+        plannerGetIncomeTypes()
+      ]);
+    } catch(e) {
+      alert('收入資料讀取失敗');
+      return;
+    }
+
+    const entry = id
+      ? data.entries.find(x => x.id === id)
+      : null;
+
+    plannerIncomeEditingId = entry ? entry.id : null;
+    plannerIncomeTypes = types;
+
+    const select = document.getElementById('planner-income-type');
+    select.innerHTML = '';
+
+    const names = [...new Set([
+      ...types,
+      ...(entry ? [entry.type] : [])
+    ])];
+
+    for (const name of names) {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      select.appendChild(option);
+    }
+
+    const create = document.createElement('option');
+    create.value = '__new__';
+    create.textContent = '＋新增收入類別';
+    select.appendChild(create);
+
+    select.value = entry ? entry.type : names[0] || '__new__';
+
+    document.getElementById('planner-income-custom').value = '';
+    document.getElementById('planner-income-amount').value =
+      entry ? entry.amount : '';
+
+    const today = new Date();
+    const localToday =
+      `${today.getFullYear()}-` +
+      `${String(today.getMonth()+1).padStart(2,'0')}-` +
+      `${String(today.getDate()).padStart(2,'0')}`;
+
+    document.getElementById('planner-income-date').value =
+      entry ? entry.date : (
+        localToday.startsWith(month)
+          ? localToday : month + '-01'
+      );
+
+    plannerIncomeTypeChanged();
+
+    document.querySelector(
+      '#planner-income-modal h3'
+    ).textContent = entry ? '編輯收入' : '新增收入';
+
+    document.getElementById(
+      'planner-income-modal'
+    ).classList.add('show');
+  };
+
+  window.closePlannerIncomeModal = function() {
+    document.getElementById(
+      'planner-income-modal'
+    ).classList.remove('show');
+    plannerIncomeEditingId = null;
+  };
+
+  window.savePlannerIncome = async function() {
+    const month = plannerMonthKey();
+    const select = document.getElementById('planner-income-type');
+    const type = select.value === '__new__'
+      ? document.getElementById(
+          'planner-income-custom'
+        ).value.trim()
+      : select.value;
+
+    const date = document.getElementById(
+      'planner-income-date'
+    ).value;
+
+    const raw = document.getElementById(
+      'planner-income-amount'
+    ).value.trim();
+
+    const amount = Number(raw);
+
+    if (!type || !date || !date.startsWith(month) ||
+        !raw || !Number.isFinite(amount) || amount < 0) {
+      alert('請填寫類別、當月日期及有效金額');
+      return;
+    }
+
+    try {
+      const data = await plannerGetIncome(month);
+      const entries = [...data.entries];
+
+      const existing = entries.find(
+        x => x.id === plannerIncomeEditingId
+      );
+
+      if (existing) {
+        existing.type = type;
+        existing.date = date;
+        existing.amount = amount;
+      } else {
+        entries.push({
+          id:'income-' + Date.now() + '-' +
+            Math.random().toString(36).slice(2,8),
+          type,date,amount
+        });
+      }
+
+      const nextTypes = [...new Set([
+        ...plannerIncomeTypes,type
+      ])];
+
+      await setDoc(plannerIncomeRef(month),{
+        entries
+      },{merge:true});
+
+      await setDoc(
+        doc(db,'users',currentUid,'plannerIncomeTypes','catalog'),
+        {names:nextTypes},
+        {merge:true}
+      );
+
+      closePlannerIncomeModal();
+      renderPlannerSalary();
+    } catch(e) {
+      console.error(e);
+      alert('收入儲存失敗');
+    }
+  };
+
+  window.deletePlannerIncome = async function(id) {
+    const month = plannerMonthKey();
+    const data = await plannerGetIncome(month);
+    const item = data.entries.find(x => x.id === id);
+
+    if (!item || !confirm(
+      '確定刪除「' + item.type + '」這筆收入？'
+    )) return;
+
+    try {
+      await setDoc(plannerIncomeRef(month), {
+        entries:data.entries.filter(x => x.id !== id)
+      },{merge:true});
+      renderPlannerSalary();
+    } catch(e) {
+      console.error(e);
+      alert('收入刪除失敗');
+    }
+  };
+
   async function renderPlannerSalary() {
     const root = document.getElementById(
       'planner-salary-panel'
@@ -4864,7 +5150,12 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
     let info;
     try {
-      info = await plannerReadSalary(month);
+      const results = await Promise.all([
+        plannerReadSalary(month),
+        plannerGetIncome(month)
+      ]);
+      info = results[0];
+      var otherIncome = results[1];
     } catch(e) {
       console.error('薪資讀取失敗', e);
       if (run === plannerSalaryRun)
@@ -4898,6 +5189,11 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       row.append(left,right);
       root.appendChild(row);
     }
+
+    const section = document.createElement('h3');
+    section.textContent = '主要收入｜旅館';
+    section.style.margin = '8px 0';
+    root.appendChild(section);
 
     line('預計領薪水', info.estimated, true);
 
@@ -4937,6 +5233,96 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     button.onclick = plannerEditActualSalary;
     root.appendChild(button);
 
+
+    const subsidyTitle = document.createElement('h3');
+    subsidyTitle.textContent = '租屋補助';
+    subsidyTitle.style.margin = '22px 0 8px';
+    root.appendChild(subsidyTitle);
+
+    line('預計補助', otherIncome.subsidyPlanned);
+    line('實際收到', otherIncome.subsidyActual);
+
+    for (const [field,label] of [
+      ['subsidyPlanned','設定預計金額'],
+      ['subsidyActual','登記實際入帳']
+    ]) {
+      const b = document.createElement('button');
+      b.className = 'fund-action';
+      b.style.margin = '8px 8px 0 0';
+      b.textContent = label;
+      b.onclick = () => plannerEditSubsidy(field);
+      root.appendChild(b);
+    }
+
+    const extraTitle = document.createElement('h3');
+    extraTitle.textContent = '其他收入';
+    extraTitle.style.margin = '22px 0 8px';
+    root.appendChild(extraTitle);
+
+    const entries = [...otherIncome.entries].sort(
+      (a,b) => b.date.localeCompare(a.date)
+    );
+
+    for (const item of entries) {
+      const row = document.createElement('div');
+      row.className = 'fund-row';
+
+      const main = document.createElement('div');
+      main.className = 'fund-main';
+
+      const name = document.createElement('div');
+      name.className = 'fund-name';
+      name.textContent = item.type;
+
+      const date = document.createElement('div');
+      date.className = 'fund-sub';
+      date.textContent = item.date;
+
+      main.append(name,date);
+
+      const amount = document.createElement('strong');
+      amount.textContent = plannerMoney(Number(item.amount)||0);
+
+      const edit = document.createElement('button');
+      edit.className = 'fund-action';
+      edit.textContent = '編輯';
+      edit.onclick = () => openPlannerIncomeModal(item.id);
+
+      const del = document.createElement('button');
+      del.className = 'fund-action';
+      del.textContent = '刪除';
+      del.onclick = () => deletePlannerIncome(item.id);
+
+      row.append(main,amount,edit,del);
+      root.appendChild(row);
+    }
+
+    const add = document.createElement('button');
+    add.className = 'fund-action';
+    add.textContent = '＋ 新增收入';
+    add.style.marginTop = '12px';
+    add.onclick = () => openPlannerIncomeModal();
+    root.appendChild(add);
+
+    const extraTotal = entries.reduce(
+      (sum,x) => sum + (Number(x.amount)||0), 0
+    );
+
+    const plannedTotal =
+      info.estimated + otherIncome.subsidyPlanned +
+      extraTotal;
+
+    const actualTotal =
+      (info.actual === null ? 0 : info.actual) +
+      (otherIncome.subsidyActual === null
+        ? 0 : otherIncome.subsidyActual) +
+      extraTotal;
+
+    line('本月預計總收入', plannedTotal, true);
+
+    // 這是已登記入帳的金額，不包含未填的薪資或補助
+    line('本月已入帳收入', actualTotal, true);
+
     const allocatedRows = document.querySelectorAll(
       '#fund-planner-summary .fund-summary-row'
     );
@@ -4953,20 +5339,26 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       }
     });
 
-    const useSalary = info.actual === null
-      ? info.estimated : info.actual;
+    const plannedRemaining = plannedTotal - allocated;
+    line('預計收入扣除規劃後', plannedRemaining);
 
-    line('資金規劃後尚可分配', useSalary - allocated);
+    const hasAllActual =
+      info.actual !== null &&
+      otherIncome.subsidyActual !== null;
+
+    if (hasAllActual) {
+      line('實際收入扣除規劃後', actualTotal - allocated);
+    }
 
     const note = document.createElement('div');
     note.style.cssText =
       'font-size:11px;color:var(--text-dim);margin-top:10px';
 
     note.textContent =
-      '未輸入實領時採預估薪水。' +
-      '尚可分配金額不含信用卡已預存款項。' +
-      '若固定撥款或消費預算與卡費資金重疊，' +
-      '仍需依實際資金來源核對。';
+      '其他收入以已收到的金額登記。' +
+      '本月已入帳收入不包含尚未輸入的薪資或租屋補助。' +
+      '只有薪資與補助都登記實領後，才顯示完整實際結餘。' +
+      '信用卡預存資金仍需另外核對，避免重複計算。';
 
     root.appendChild(note);
   }
