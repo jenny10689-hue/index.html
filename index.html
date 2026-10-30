@@ -843,6 +843,14 @@ body { background-color: var(--bg); color: var(--text); }
   </style>
 
   <div class="card">
+    <h2>本月薪資</h2>
+    <div id="planner-salary-panel"
+         style="font-size:13px;padding-top:8px">
+      正在讀取班表薪資…
+    </div>
+  </div>
+
+  <div class="card">
     <h2>資金分配總覽</h2>
     <div id="fund-planner-summary"></div>
   </div>
@@ -4714,6 +4722,255 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     updateProgress();
   }
 
+
+  // planner-salary-v1
+  let plannerSalaryRun = 0;
+
+  async function plannerReadSalary(month) {
+    const [year, monthNum] = month.split('-').map(Number);
+
+    const refs = [
+      doc(db, 'schedule', month),
+      doc(db, 'overtime', 'balance'),
+      doc(db, 'leave', 'balance'),
+      doc(db, 'payroll', 'insurance'),
+      doc(db, 'payroll', 'attendance'),
+      doc(db, 'meal', 'exceptions'),
+      doc(db, 'users', currentUid, 'plannerSalary', month)
+    ];
+
+    const snaps = await Promise.all(refs.map(ref => getDoc(ref)));
+    const data = snaps.map(snap =>
+      snap.exists() ? snap.data() : {}
+    );
+
+    const [
+      schedule, overtime, leave,
+      insuranceData, attendanceData, mealData, actualData
+    ] = data;
+
+    const monthValueOrLatest = values => {
+      if (!values) return 0;
+      if (values[month] !== undefined &&
+          values[month] !== null)
+        return Number(values[month]) || 0;
+
+      const keys = Object.keys(values)
+        .filter(k => values[k] !== undefined &&
+                     values[k] !== null)
+        .sort();
+
+      return keys.length
+        ? Number(values[keys[keys.length - 1]]) || 0
+        : 0;
+    };
+
+    const salary = Number(appSettings.salary) || 0;
+    const attendance = monthValueOrLatest(
+      attendanceData.byMonth
+    );
+    const insurance = monthValueOrLatest(
+      insuranceData.byMonth
+    );
+
+    let noMealLateDays = 0;
+    const days = new Date(year, monthNum, 0).getDate();
+
+    for (let day = 1; day <= days; day++) {
+      const date = month + '-' + String(day).padStart(2,'0');
+      const shift = schedule[date];
+      const shiftName = typeof shift === 'string'
+        ? shift : shift?.shift;
+
+      if (shiftName === 'late' &&
+          !mealData.dates?.[date])
+        noMealLateDays++;
+    }
+
+    const meal = noMealLateDays * 80;
+
+    const leaveDeduct = (leave.entries || [])
+      .filter(e => e.date?.startsWith(month))
+      .reduce((sum,e) =>
+        sum + (Number(e.estAmount) || 0), 0);
+
+    const otSettlement = (overtime.settlements || [])
+      .filter(e => e.forMonth === month)
+      .reduce((sum,e) =>
+        sum + (Number(e.amount) || 0), 0);
+
+    const estimated = Math.round(
+      salary + attendance + meal + otSettlement -
+      insurance - leaveDeduct
+    );
+
+    const actual = actualData.actual === undefined ||
+                   actualData.actual === null
+      ? null
+      : Number(actualData.actual);
+
+    return {
+      estimated, actual, salary, attendance,
+      meal, insurance, leaveDeduct, otSettlement
+    };
+  }
+
+  window.plannerEditActualSalary = async function() {
+    const month = plannerMonthKey();
+    const input = prompt(
+      '輸入 ' + month + ' 實際入帳薪水\n' +
+      '留空可清除實領金額',
+      window.plannerActualSalaryValue == null
+        ? ''
+        : String(window.plannerActualSalaryValue)
+    );
+
+    if (input === null) return;
+
+    const trimmed = input.trim();
+
+    if (trimmed &&
+        (!Number.isFinite(Number(trimmed)) ||
+         Number(trimmed) < 0)) {
+      alert('請輸入有效的薪水金額');
+      return;
+    }
+
+    try {
+      await setDoc(
+        doc(db, 'users', currentUid, 'plannerSalary', month),
+        {
+          actual: trimmed === '' ? null : Number(trimmed)
+        },
+        {merge:true}
+      );
+      renderPlannerSalary();
+    } catch(e) {
+      console.error(e);
+      alert('實領薪水儲存失敗');
+    }
+  };
+
+  async function renderPlannerSalary() {
+    const root = document.getElementById(
+      'planner-salary-panel'
+    );
+    if (!root) return;
+
+    const month = plannerMonthKey();
+    const run = ++plannerSalaryRun;
+
+    root.textContent = '正在讀取班表薪資…';
+
+    let info;
+    try {
+      info = await plannerReadSalary(month);
+    } catch(e) {
+      console.error('薪資讀取失敗', e);
+      if (run === plannerSalaryRun)
+        root.textContent = '薪資讀取失敗，請重新進入頁面';
+      return;
+    }
+
+    if (run !== plannerSalaryRun ||
+        month !== plannerMonthKey()) return;
+
+    window.plannerActualSalaryValue = info.actual;
+
+    root.innerHTML = '';
+
+    function line(label, value, strong=false) {
+      const row = document.createElement('div');
+      row.className = 'fund-summary-row';
+
+      const left = document.createElement('span');
+      left.textContent = label;
+
+      const right = document.createElement('strong');
+      right.textContent =
+        value === null ? '尚未填寫' : plannerMoney(value);
+
+      if (strong) {
+        row.style.fontWeight = '600';
+        row.style.fontSize = '15px';
+      }
+
+      row.append(left,right);
+      root.appendChild(row);
+    }
+
+    line('預計領薪水', info.estimated, true);
+
+    const detail = document.createElement('div');
+    detail.style.cssText =
+      'font-size:11px;color:var(--text-dim);' +
+      'line-height:1.8;margin:8px 0 12px';
+
+    detail.textContent =
+      '底薪 ' + plannerMoney(info.salary) +
+      ' ＋ 全勤 ' + plannerMoney(info.attendance) +
+      ' ＋ 伙食補助 ' + plannerMoney(info.meal) +
+      ' ＋ 加班補休結算 ' +
+        plannerMoney(info.otSettlement) +
+      ' − 勞健保 ' + plannerMoney(info.insurance) +
+      ' − 請假扣款 ' +
+        plannerMoney(info.leaveDeduct);
+
+    root.appendChild(detail);
+
+    line('實際領薪水', info.actual, true);
+
+    if (info.actual !== null) {
+      line(
+        '實領與預估差額',
+        info.actual - info.estimated
+      );
+    }
+
+    const button = document.createElement('button');
+    button.className = 'fund-action';
+    button.style.marginTop = '12px';
+    button.textContent = info.actual === null
+      ? '＋填寫實際領薪水'
+      : '修改實際領薪水';
+
+    button.onclick = plannerEditActualSalary;
+    root.appendChild(button);
+
+    const allocatedRows = document.querySelectorAll(
+      '#fund-planner-summary .fund-summary-row'
+    );
+
+    let allocated = 0;
+
+    allocatedRows.forEach(row => {
+      if (row.firstElementChild?.textContent ===
+          '每月安排合計') {
+        allocated = Number(
+          row.lastElementChild.textContent
+            .replace(/[^0-9.-]/g,'')
+        ) || 0;
+      }
+    });
+
+    const useSalary = info.actual === null
+      ? info.estimated : info.actual;
+
+    line('資金規劃後尚可分配', useSalary - allocated);
+
+    const note = document.createElement('div');
+    note.style.cssText =
+      'font-size:11px;color:var(--text-dim);margin-top:10px';
+
+    note.textContent =
+      '未輸入實領時採預估薪水。' +
+      '尚可分配金額不含信用卡已預存款項。' +
+      '若固定撥款或消費預算與卡費資金重疊，' +
+      '仍需依實際資金來源核對。';
+
+    root.appendChild(note);
+  }
+
   async function renderBudgetPage() {
     budgetLedgerType = 'personal';
 
@@ -4831,6 +5088,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
     summary.appendChild(note);
     renderPlannerPaydayChecklist();
+    renderPlannerSalary();
   }
 
   // ===========================
@@ -7343,7 +7601,14 @@ function renderSchTakeHome() {
     if (e.date && e.date.startsWith(monthKey)) leaveDeduct += e.estAmount || 0;
   });
 
-  const takeHome = Math.round(salary + attendance + mealSubsidy - insurance - leaveDeduct);
+  const otSettlement = (schOtData.settlements || [])
+    .filter(x => x.forMonth === monthKey)
+    .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+
+  const takeHome = Math.round(
+    salary + attendance + mealSubsidy +
+    otSettlement - insurance - leaveDeduct
+  );
 
   const baseEl = document.getElementById('sch-pay-base');
   const attendEl = document.getElementById('sch-pay-attend');
@@ -7355,6 +7620,17 @@ function renderSchTakeHome() {
   if (mealEl2) mealEl2.textContent = `$${mealSubsidy.toLocaleString()}`;
   if (insEl) insEl.textContent = `$${Math.round(insurance).toLocaleString()}`;
   if (leaveEl) leaveEl.textContent = `$${Math.round(leaveDeduct).toLocaleString()}`;
+  let otEl = document.getElementById('sch-pay-ot-planner');
+  if (!otEl) {
+    otEl = document.createElement('div');
+    otEl.id = 'sch-pay-ot-planner';
+    otEl.style.cssText =
+      'font-size:11px;color:var(--text-dim);margin-top:5px';
+    totalEl.parentElement?.appendChild(otEl);
+  }
+  otEl.textContent =
+    '加班補休結算 +' + '$' + otSettlement.toLocaleString();
+
   totalEl.textContent = `$${takeHome.toLocaleString()}`;
 }
 
