@@ -848,6 +848,17 @@ body { background-color: var(--bg); color: var(--text); }
   </div>
 
   <div class="card">
+    <h2>發薪資金分配待辦</h2>
+    <div id="planner-payday-checklist">
+      <p style="font-size:12px;padding:12px 0">
+        正在讀取待辦項目…
+      </p>
+    </div>
+  </div>
+
+
+
+  <div class="card">
     <div style="display:flex;justify-content:space-between;
       align-items:center;gap:8px;margin-bottom:10px">
       <h2 style="margin:0">消費預算</h2>
@@ -870,8 +881,9 @@ body { background-color: var(--bg); color: var(--text); }
 
   <p style="font-size:12px;color:var(--text-dim);
     padding:0 4px 20px">
-    第一階段僅統計預算與固定撥款。
-    信用卡帳單及共同帳本同步將在後續加入。
+    待辦勾選僅表示已完成確認。
+    卡費不重複加入資金分配總額。
+    共同帳本結算將於後續加入。
   </p>
 </div>
 <!-- 爸爸帳本頁面 -->
@@ -4419,6 +4431,289 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     }
   };
 
+
+  // planner-payday-checklist-v1
+  let plannerChecklistRun = 0;
+
+  function plannerChecklistMonth() {
+    return plannerMonthKey();
+  }
+
+  async function plannerGetChecks(month) {
+    const ref = doc(
+      db, 'users', currentUid, 'plannerChecks', month
+    );
+    const snap = await getDoc(ref);
+    return snap.exists() ? (snap.data().checked || {}) : {};
+  }
+
+  async function plannerSaveCheck(month, id, checked) {
+    const ref = doc(
+      db, 'users', currentUid, 'plannerChecks', month
+    );
+    await setDoc(ref, {
+      checked: {[id]: checked}
+    }, {merge:true});
+  }
+
+  async function plannerReadCreditAmounts(month) {
+    const [year, m] = month.split('-').map(Number);
+
+    const totals = {cathay:0, fubon:0};
+
+    for (const ledger of ledgers) {
+      if (!['personal','shared'].includes(ledger.type))
+        continue;
+
+      const snap = await getDocs(
+        collection(db,'ledgers',ledger.id,'expenses')
+      );
+
+      for (const d of snap.docs) {
+        const r = d.data();
+
+        if (r.type !== 'expense') continue;
+
+        let key, day;
+
+        if (CC_CATHAY_QIAN.includes(r.payment)) {
+          key = 'cathay';
+          day = appSettings.cathayDay || 4;
+        } else if (CC_FUBON.includes(r.payment)) {
+          key = 'fubon';
+          day = appSettings.fubonDay || 3;
+        } else {
+          continue;
+        }
+
+        const start =
+          `${year}-${String(m).padStart(2,'0')}-` +
+          String(day).padStart(2,'0');
+
+        const end = getCycleEnd(year,m,day);
+
+        const belongs = r.billingMonth
+          ? r.billingMonth === month
+          : r.date >= start && r.date <= end;
+
+        if (belongs)
+          totals[key] += Number(r.amount) || 0;
+      }
+    }
+
+    const reconcileSnap = await getDoc(
+      doc(db,'users',currentUid,'ccReconcile',month)
+    );
+
+    const reconcile = reconcileSnap.exists()
+      ? reconcileSnap.data() : {};
+
+    function finalAmount(key, reconcileId) {
+      const value = reconcile[reconcileId]?.actual;
+
+      return value !== undefined &&
+             value !== null &&
+             value !== ''
+        ? Number(value)
+        : totals[key];
+    }
+
+    return {
+      cathay: finalAmount('cathay','recon-cathay'),
+      fubon: finalAmount('fubon','recon-fubon')
+    };
+  }
+
+  async function renderPlannerPaydayChecklist() {
+    const root = document.getElementById(
+      'planner-payday-checklist'
+    );
+    if (!root) return;
+
+    const month = plannerChecklistMonth();
+    const run = ++plannerChecklistRun;
+
+    root.textContent = '正在讀取本月待辦與信用卡金額…';
+
+    let checked, credit;
+
+    try {
+      [checked, credit] = await Promise.all([
+        plannerGetChecks(month),
+        plannerReadCreditAmounts(month)
+      ]);
+    } catch(e) {
+      console.error('發薪待辦讀取失敗',e);
+      if (run === plannerChecklistRun) {
+        root.textContent =
+          '資料讀取失敗，請確認網路後重新進入頁面。';
+      }
+      return;
+    }
+
+    if (run !== plannerChecklistRun ||
+        month !== plannerChecklistMonth()) return;
+
+    // 固定撥款沿用資金規劃資料，不另存金額
+    const destinationNames = Object.fromEntries(
+      plannerDestinations
+    );
+
+    const items = fundingFixedItems.map(item => ({
+      id:'fixed:'+item.id,
+      name:
+        (destinationNames[item.dest] || '未設定') +
+        '｜' + item.name,
+      amount:Number(item.amount) || 0,
+      description:'固定撥款',
+      source:'fixed'
+    }));
+
+    // 信用卡只做確認，不納入資金分配總額
+    items.push(
+      {
+        id:'credit:cathay',
+        name:'國泰 Cube 卡費',
+        amount:credit.cathay,
+        description:'已由信用卡頁面同步',
+        source:'credit'
+      },
+      {
+        id:'credit:fubon',
+        name:'富邦 Costco 卡費',
+        amount:credit.fubon,
+        description:'已由信用卡頁面同步',
+        source:'credit'
+      }
+    );
+
+    root.innerHTML = '';
+
+    const progress = document.createElement('div');
+    progress.style.cssText =
+      'margin:8px 0 18px;padding-bottom:10px';
+
+    const progressText = document.createElement('div');
+    progressText.style.cssText =
+      'font-size:12px;color:var(--text-dim);margin-bottom:6px';
+
+    const progressNumber = document.createElement('div');
+    progressNumber.style.cssText =
+      'font-size:24px;font-weight:600;margin-bottom:8px';
+
+    const track = document.createElement('div');
+    track.style.cssText =
+      'height:7px;background:var(--border);' +
+      'border-radius:9px;overflow:hidden';
+
+    const bar = document.createElement('div');
+    bar.style.cssText =
+      'height:100%;background:var(--text);' +
+      'width:0%;transition:width .2s';
+
+    track.appendChild(bar);
+    progress.append(progressText,progressNumber,track);
+    root.appendChild(progress);
+
+    const list = document.createElement('div');
+    root.appendChild(list);
+
+    const footer = document.createElement('div');
+    footer.style.cssText =
+      'padding-top:14px;margin-top:12px;' +
+      'border-top:1px solid var(--border);' +
+      'font-size:12px;color:var(--text-dim)';
+
+    root.appendChild(footer);
+
+    function updateProgress() {
+      const done = items.filter(
+        item => checked[item.id] === true
+      ).length;
+
+      progressText.textContent = '本月待辦完成進度';
+      progressNumber.textContent = done + ' / ' + items.length;
+
+      bar.style.width = items.length
+        ? (done / items.length * 100) + '%'
+        : '0%';
+
+      footer.textContent =
+        '已完成 ' + done + ' / ' + items.length +
+        ' 項｜勾選狀態依月份保存';
+    }
+
+    for (const item of items) {
+      const row = document.createElement('label');
+      row.style.cssText =
+        'display:flex;align-items:center;gap:12px;' +
+        'padding:12px 0;cursor:pointer';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = checked[item.id] === true;
+      checkbox.style.cssText =
+        'width:20px;height:20px;flex-shrink:0;' +
+        'accent-color:#333';
+
+      const content = document.createElement('div');
+      content.style.cssText = 'flex:1;min-width:0';
+
+      const title = document.createElement('div');
+      title.textContent = item.name;
+      title.style.cssText =
+        'font-size:14px;font-weight:500';
+
+      const subtitle = document.createElement('div');
+      subtitle.textContent = item.description;
+      subtitle.style.cssText =
+        'font-size:11px;color:var(--text-dim);' +
+        'margin-top:3px';
+
+      const amount = document.createElement('strong');
+      amount.textContent = plannerMoney(item.amount);
+      amount.style.cssText =
+        'font-size:14px;white-space:nowrap';
+
+      content.append(title,subtitle);
+      row.append(checkbox,content,amount);
+
+      function updateRowStyle() {
+        title.style.textDecoration =
+          checkbox.checked ? 'line-through' : 'none';
+        title.style.opacity =
+          checkbox.checked ? '.65' : '1';
+      }
+
+      updateRowStyle();
+
+      checkbox.onchange = async () => {
+        const next = checkbox.checked;
+        checkbox.disabled = true;
+        checked[item.id] = next;
+        updateRowStyle();
+        updateProgress();
+
+        try {
+          await plannerSaveCheck(month,item.id,next);
+        } catch(e) {
+          console.error(e);
+          checked[item.id] = !next;
+          checkbox.checked = !next;
+          updateRowStyle();
+          updateProgress();
+          alert('勾選儲存失敗，請再試一次');
+        } finally {
+          checkbox.disabled = false;
+        }
+      };
+
+      list.appendChild(row);
+    }
+
+    updateProgress();
+  }
+
   async function renderBudgetPage() {
     budgetLedgerType = 'personal';
 
@@ -4535,6 +4830,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       '此處不追蹤銀行餘額。';
 
     summary.appendChild(note);
+    renderPlannerPaydayChecklist();
   }
 
   // ===========================
