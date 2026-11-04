@@ -1317,18 +1317,20 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
     <div class="sch-wage-card" id="sch-payroll-card">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; text-align:center;">
+      <div style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center;">
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">本薪</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋全勤</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋餐費</div>
+        <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋勞退</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">－勞健保</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">－請假</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＝實領</div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; text-align:center; margin-top:2px;">
+      <div style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center; margin-top:2px;">
         <div id="sch-pay-base" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-attend" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-meal" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+        <div id="sch-pay-pension" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-insurance" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-leave" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-takehome-amount" style="font-size:12px; font-weight:600; color:var(--accent); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
@@ -8364,11 +8366,13 @@ function renderSchTakeHome() {
   const baseEl = document.getElementById('sch-pay-base');
   const attendEl = document.getElementById('sch-pay-attend');
   const mealEl2 = document.getElementById('sch-pay-meal');
+  const pensionEl = document.getElementById('sch-pay-pension');
   const insEl = document.getElementById('sch-pay-insurance');
   const leaveEl = document.getElementById('sch-pay-leave');
   if (baseEl) baseEl.textContent = `$${Math.round(salary).toLocaleString()}`;
   if (attendEl) attendEl.textContent = `$${Math.round(attendance).toLocaleString()}`;
   if (mealEl2) mealEl2.textContent = `$${mealSubsidy.toLocaleString()}`;
+  if (pensionEl) pensionEl.textContent = `$${Math.round(pensionExtra).toLocaleString()}`;
   if (insEl) insEl.textContent = `$${Math.round(insurance).toLocaleString()}`;
   if (leaveEl) leaveEl.textContent = `$${Math.round(leaveDeduct).toLocaleString()}`;
   let otEl = document.getElementById('sch-pay-ot-planner');
