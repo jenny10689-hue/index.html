@@ -2042,8 +2042,18 @@ margin:10px 0;background:var(--hover);border-radius:12px">
 </div>
 <!-- 分類管理 -->
 <div id="cat-modal" class="modal-box-overlay" onclick="handleOverlayClick(event,'cat-modal')">
-  <div class="modal-box" style="width:420px;">
+  <div class="modal-box"
+      style="width:420px;max-height:88vh;overflow-y:auto;">
     <h2>分類管理</h2>
+    <div id="cat-ledger-wrap"
+      style="margin:10px 0;display:flex;align-items:center;gap:8px;font-size:13px;">
+      <label for="cat-ledger-select">帳本</label>
+      <select id="cat-ledger-select"
+        onchange="categoryManagerSelectLedger(this.value)"
+        style="flex:1;min-width:0;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);"></select>
+    </div>
+    <div id="cat-manager-note"
+      style="font-size:11px;line-height:1.6;color:var(--text-dim);margin:8px 0 12px;"></div>
     <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
       <button id="cat-tab-expense" class="btn-sm btn-primary" onclick="setCatTab('expense')">支出分類</button>
       <button id="cat-tab-income"  class="btn-sm"             onclick="setCatTab('income')">收入分類</button>
@@ -2452,6 +2462,12 @@ if (currentLedger && currentLedger.type === 'dad') {
     } else if (page === 'habit-detail') {
       document.getElementById('page-habit-detail').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
+    } else if (page === 'category-manage') {
+      document.getElementById('page-settings').style.display = 'block';
+      document.getElementById('fab').style.display = 'none';
+      applyPageColor('settings');
+      renderSettingsPage();
+      openCategoryModal();
     } else if (page === 'settings') {
       document.getElementById('page-settings').style.display = 'block';
       document.getElementById('fab').style.display = 'none';
@@ -2558,7 +2574,7 @@ const personalId = `personal_${currentUid}`;
       restoredPage = sessionStorage.getItem('lastPage');
       savedLedgerId = sessionStorage.getItem('lastLedgerId');
     } catch(e) {}
-    autoFixSharedCategoriesIfWrong();
+    // 保留共同帳本自訂分類，不自動覆蓋。
     if (restoredPage === 'ledger') {
       const savedLedger = savedLedgerId ? ledgers.find(l => l.id === savedLedgerId) : null;
       if (savedLedger) {
@@ -3429,25 +3445,26 @@ async function saveUserSettings() {
     }, { merge:true });
   }
 
-  function getCatManageCategories() {
-    if (catTabType === 'income') return incomeCategories;
-    const ledger = modalSelectedLedger || currentLedger;
-    if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
-    if (ledger && ledger.type === 'dad') return dadExpenseCategories;
+
+  function getLedgerExpenseCategories(ledger) {
+    if (ledger && Array.isArray(ledger.expenseCategories))
+      return ledger.expenseCategories;
+    if (ledger?.type === 'shared')
+      return sharedExpenseCategories;
+    if (ledger?.type === 'dad')
+      return dadExpenseCategories;
     return expenseCategories;
   }
 
-  async function saveCatManageCategories() {
-    if (catTabType === 'income') {
-      await setDoc(doc(db,'users',currentUid), { incomeCategories }, { merge:true });
-      return;
-    }
-    const ledger = modalSelectedLedger || currentLedger;
-    const targetLedgerId = ledger ? ledger.id : currentLedgerId;
-    if (!targetLedgerId) return;
-    const cats = getCatManageCategories();
-    await updateDoc(doc(db,'ledgers',targetLedgerId), { expenseCategories: cats });
-    if (ledger) ledger.expenseCategories = cats;
+  function getCatManageCategories() {
+    if (catTabType === 'income')
+      return incomeCategories;
+
+    const ledger = ledgers.find(
+      l => l.id === catManagerLedgerId
+    ) || modalSelectedLedger || currentLedger;
+
+    return getLedgerExpenseCategories(ledger);
   }
 
   async function savePresets() {
@@ -3459,9 +3476,7 @@ async function saveUserSettings() {
   function getCurrentCategories() {
     const ledger = modalSelectedLedger || currentLedger;
     if (currentType === 'income') return incomeCategories;
-    if (ledger && ledger.type === 'shared') return sharedExpenseCategories;
-    if (ledger && ledger.type === 'dad') return dadExpenseCategories;
-    return expenseCategories;
+    return getLedgerExpenseCategories(ledger);
   }
 
 
@@ -3722,7 +3737,22 @@ async function saveUserSettings() {
   function renderCatPicker() {
     const container = document.getElementById('cat-picker');
     container.innerHTML = '';
-    const cats = getCurrentCategories();
+    const cats = getCurrentCategories()
+      .filter(cat =>
+        !cat.archived || cat.name === selectedCat
+      );
+
+    if (
+      selectedCat &&
+      !cats.some(cat => cat.name === selectedCat)
+    ) {
+      cats.push({
+        name:selectedCat,
+        emoji:'📌',
+        archived:true
+      });
+    }
+
     cats.forEach(function(cat) {
       const el = document.createElement('div');
       el.className = 'emoji-option' + (selectedCat === cat.name ? ' selected' : '');
@@ -3762,7 +3792,11 @@ async function saveUserSettings() {
   function renderPCatPicker() {
     const container = document.getElementById('p-cat-picker');
     container.innerHTML = '';
-    expenseCategories.forEach(function(cat) {
+    getLedgerExpenseCategories(
+      modalSelectedLedger || currentLedger
+    )
+      .filter(cat => !cat.archived)
+      .forEach(function(cat) {
       const el = document.createElement('div');
       el.className = 'emoji-option' + (selectedPCat === cat.name ? ' selected' : '');
       el.innerHTML = `${cat.emoji}<span class="emoji-tooltip">${cat.name}</span>`;
@@ -6253,9 +6287,24 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     const container = document.getElementById('filter-buttons');
     container.innerHTML = '';
 
-    const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
-      : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
-      : expenseCategories;
+    const cats = [
+      ...getLedgerExpenseCategories(currentLedger)
+    ];
+
+    records
+      .filter(r => r.type === 'expense')
+      .forEach(r => {
+        if (
+          r.category &&
+          !cats.some(c => c.name === r.category)
+        ) {
+          cats.push({
+            name:r.category,
+            emoji:'📌',
+            archived:true
+          });
+        }
+      });
 
     const select = document.createElement('select');
     select.style.cssText = 'flex:1; padding:0.35rem 0.6rem; font-size:0.88rem; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text); outline:none;';
@@ -6418,17 +6467,28 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
   function renderPieChart() {
     const expenseRecords = records.filter(r => r.type === 'expense');
-    const cats = currentLedger && currentLedger.type === 'shared' ? sharedExpenseCategories
-      : currentLedger && currentLedger.type === 'dad' ? dadExpenseCategories
-      : expenseCategories;
+    const cats =
+      getLedgerExpenseCategories(currentLedger);
 
     const data = {};
-    cats.forEach(c => { data[c.name] = 0; });
-    expenseRecords.forEach(r => {
-      if (data[r.category] !== undefined) data[r.category] += r.amount;
+
+    cats.forEach(c => {
+      data[c.name] = 0;
     });
 
-    const labels  = cats.map(c => c.name).filter(n => data[n] > 0);
+    expenseRecords.forEach(r => {
+      const name = r.category || '未分類';
+      data[name] =
+        (data[name] || 0) +
+        (Number(r.amount) || 0);
+    });
+
+    const labels = [
+      ...new Set([
+        ...cats.map(c => c.name),
+        ...Object.keys(data)
+      ])
+    ].filter(n => data[n] > 0);
     const values  = labels.map(n => data[n]);
     const total   = values.reduce((a,b) => a+b, 0);
     const emojis  = labels.map(n => cats.find(c => c.name === n)?.emoji || '');
@@ -6724,76 +6784,429 @@ renderReconcile(reconcileId, total, showSaved);
 
 
   // ===========================
-  // 🏷️ 分類管理
-  // ===========================
 
-// 從新增記錄 modal 開啟分類管理
-  // 先關閉記錄 modal，管理完再重新開啟
-window.openCategoryModalFromRecord = function() {
-    document.getElementById('record-modal').classList.remove('show');
-    catTabType = currentType === 'income' ? 'income' : 'expense';
+  // safe-ledger-category-manager-v1
+  let catManagerLedgerId = null;
+  let catManagerFromSettings = false;
+  let catManagerBusy = false;
+
+  function catManagerLedger() {
+    return ledgers.find(
+      l => l.id === catManagerLedgerId
+    ) || modalSelectedLedger || currentLedger;
+  }
+
+  function catManagerWritable() {
+    return catTabType === 'income' ||
+      catManagerLedger()?.owner === currentEmail;
+  }
+
+  function catManagerClone() {
+    return getCatManageCategories().map(
+      c => ({...c})
+    );
+  }
+
+  async function catManagerSave(next) {
+    if (catManagerBusy) return false;
+
+    if (!catManagerWritable()) {
+      alert('只有帳本擁有者可以修改支出分類');
+      return false;
+    }
+
+    catManagerBusy = true;
+
+    try {
+      if (catTabType === 'income') {
+        await setDoc(
+          doc(db,'users',currentUid),
+          {incomeCategories:next},
+          {merge:true}
+        );
+        incomeCategories = next;
+      } else {
+        const ledger = catManagerLedger();
+
+        if (!ledger)
+          throw new Error('找不到帳本');
+
+        await updateDoc(
+          doc(db,'ledgers',ledger.id),
+          {expenseCategories:next}
+        );
+
+        ledger.expenseCategories = next;
+
+        if (currentLedger?.id === ledger.id) {
+          currentLedger.expenseCategories = next;
+
+          if (ledger.type === 'personal')
+            expenseCategories = next;
+
+          if (ledger.type === 'shared')
+            sharedExpenseCategories = next;
+
+          if (ledger.type === 'dad')
+            dadExpenseCategories = next;
+        }
+
+        if (modalSelectedLedger?.id === ledger.id)
+          modalSelectedLedger.expenseCategories = next;
+      }
+
+      renderCatList();
+
+      if (
+        currentLedger?.id === catManagerLedger()?.id
+      ) {
+        await updateLedgerUI();
+      }
+
+      if (currentPage === 'ledger') {
+        render();
+        renderPieChart();
+      }
+
+      if (currentPage === 'home')
+        renderHomePage();
+
+      return true;
+
+    } catch(e) {
+      console.error('分類儲存失敗',e);
+      alert('分類儲存失敗，請稍後重試');
+      return false;
+
+    } finally {
+      catManagerBusy = false;
+    }
+  }
+
+  window.openCategoryModalFromRecord = function() {
+    document.getElementById('record-modal')
+      .classList.remove('show');
+
+    catManagerFromSettings = false;
+    catManagerLedgerId =
+      (modalSelectedLedger || currentLedger)?.id || null;
+
+    catTabType =
+      currentType === 'income' ? 'income' : 'expense';
+
     renderCatList();
-    // 稍微延遲確保第一個視窗完全關閉後再開啟
-    setTimeout(function() {
-      document.getElementById('cat-modal').classList.add('show');
-    }, 150);
+
+    setTimeout(() => {
+      document.getElementById('cat-modal')
+        .classList.add('show');
+    },150);
   };
+
   window.openCategoryModal = function() {
+    catManagerFromSettings =
+      currentPage === 'category-manage';
+
+    catManagerLedgerId =
+      currentLedger?.id || ledgers[0]?.id || null;
+
     catTabType = 'expense';
+
     renderCatList();
-    document.getElementById('cat-modal').classList.add('show');
+
+    document.getElementById('cat-modal')
+      .classList.add('show');
   };
 
   window.closeCatModal = function() {
-    document.getElementById('cat-modal').classList.remove('show');
+    document.getElementById('cat-modal')
+      .classList.remove('show');
+
+    if (catManagerFromSettings) {
+      catManagerFromSettings = false;
+      showPage('settings');
+    }
+  };
+
+  window.categoryManagerSelectLedger = function(id) {
+    if (!ledgers.some(l => l.id === id)) return;
+
+    catManagerLedgerId = id;
+    renderCatList();
   };
 
   window.setCatTab = function(type) {
     catTabType = type;
-    document.getElementById('cat-tab-expense').className = type==='expense' ? 'btn-sm btn-primary' : 'btn-sm';
-    document.getElementById('cat-tab-income').className  = type==='income'  ? 'btn-sm btn-primary' : 'btn-sm';
+
+    document.getElementById('cat-tab-expense')
+      .className =
+        type === 'expense'
+          ? 'btn-sm btn-primary' : 'btn-sm';
+
+    document.getElementById('cat-tab-income')
+      .className =
+        type === 'income'
+          ? 'btn-sm btn-primary' : 'btn-sm';
+
     renderCatList();
   };
 
   function renderCatList() {
-    const container = document.getElementById('cat-list');
+    const container =
+      document.getElementById('cat-list');
+
     container.innerHTML = '';
+
+    const selectorRow =
+      document.getElementById('cat-ledger-wrap');
+
+    const selector =
+      document.getElementById('cat-ledger-select');
+
+    const note =
+      document.getElementById('cat-manager-note');
+
+    const income = catTabType === 'income';
+
+    selectorRow.style.display =
+      income ? 'none' : 'flex';
+
+    document.getElementById('cat-tab-expense')
+      .className =
+        income ? 'btn-sm' : 'btn-sm btn-primary';
+
+    document.getElementById('cat-tab-income')
+      .className =
+        income ? 'btn-sm btn-primary' : 'btn-sm';
+
+    if (!income) {
+      selector.innerHTML = '';
+
+      for (const ledger of ledgers) {
+        const option =
+          document.createElement('option');
+
+        option.value = ledger.id;
+        option.textContent = ledger.name;
+        selector.appendChild(option);
+      }
+
+      if (!ledgers.some(l =>
+        l.id === catManagerLedgerId
+      )) {
+        catManagerLedgerId =
+          currentLedger?.id || ledgers[0]?.id || null;
+      }
+
+      selector.value = catManagerLedgerId || '';
+    }
+
+    const writable = catManagerWritable();
+
+    note.textContent = income
+      ? '收入分類為共用設定。封存後不再提供新增記帳，舊紀錄保留。'
+      : '封存不會刪除歷史消費；改名會保留舊分類，再建立新名稱。原本預算不會自動移轉。' +
+        (writable
+          ? ''
+          : '（此帳本只有擁有者可修改）');
+
     const cats = getCatManageCategories();
-    cats.forEach(function(cat, idx) {
+
+    if (!cats.length) {
+      const empty = document.createElement('div');
+      empty.textContent =
+        '目前沒有分類，可以從下方新增。';
+      empty.style.cssText =
+        'padding:12px;color:var(--text-dim);font-size:12px';
+      container.appendChild(empty);
+    }
+
+    for (const [index,cat] of cats.entries()) {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid #f1efe8;';
-      row.innerHTML = `
-        <span style="font-size:1.1rem;">${cat.emoji}</span>
-        <span style="flex:1; font-size:0.9rem;">${cat.name}</span>
-        <button class="btn-sm" style="color:#c0392b; border-color:#e0b0ad;"
-          onclick="removeCategory(${idx})">刪除</button>
-      `;
+
+      row.style.cssText =
+        'display:flex;align-items:center;gap:7px;' +
+        'padding:9px 0;' +
+        'border-bottom:1px solid var(--border);';
+
+      const emoji = document.createElement('span');
+      emoji.textContent = cat.emoji || '📌';
+      emoji.style.fontSize = '19px';
+
+      const name = document.createElement('span');
+      name.textContent =
+        cat.name +
+        (cat.archived ? '（已封存）' : '');
+
+      name.style.cssText =
+        'flex:1;min-width:0;overflow-wrap:anywhere;' +
+        'font-size:13px;' +
+        (cat.archived
+          ? 'color:var(--text-dim);'
+          : '');
+
+      row.append(emoji,name);
+
+      if (!cat.archived) {
+        const edit = document.createElement('button');
+        edit.className = 'btn-sm';
+        edit.textContent = '編輯';
+        edit.disabled = !writable;
+        edit.onclick = () =>
+          categoryManagerEdit(index);
+
+        row.appendChild(edit);
+      }
+
+      const action = document.createElement('button');
+      action.className = 'btn-sm';
+      action.textContent =
+        cat.archived ? '恢復' : '封存';
+
+      action.disabled = !writable;
+
+      if (!cat.archived)
+        action.style.color = '#b65b4b';
+
+      action.onclick = () =>
+        categoryManagerArchive(index);
+
+      row.appendChild(action);
       container.appendChild(row);
-    });
+    }
+
+    for (const id of [
+      'new-cat-input','new-cat-emoji'
+    ]) {
+      const input = document.getElementById(id);
+      if (input) input.disabled = !writable;
+    }
   }
 
-  window.removeCategory = async function(idx) {
-    const cats = getCatManageCategories();
-    cats.splice(idx, 1);
-    await saveCatManageCategories();
-    renderCatList();
+  window.categoryManagerEdit = async function(index) {
+    if (catManagerBusy || !catManagerWritable())
+      return;
+
+    const cats = catManagerClone();
+    const cat = cats[index];
+
+    if (!cat || cat.archived) return;
+
+    const nameInput = prompt(
+      '修改分類名稱',cat.name
+    );
+    if (nameInput === null) return;
+
+    const name = nameInput.trim();
+
+    if (!name)
+      return alert('分類名稱不能空白');
+
+    const emojiInput = prompt(
+      '修改圖示（Emoji）',cat.emoji || '📌'
+    );
+    if (emojiInput === null) return;
+
+    const emoji = emojiInput.trim();
+
+    if (!emoji)
+      return alert('圖示不能空白');
+
+    if (
+      name === cat.name &&
+      emoji === cat.emoji
+    ) return;
+
+    if (name !== cat.name) {
+      if (cats.some(c => c.name === name)) {
+        return alert(
+          '名稱已存在，包含已封存分類；請先恢復舊分類。'
+        );
+      }
+
+      if (!confirm(
+        '改名會封存「' + cat.name +
+        '」，另建「' + name +
+        '」，不會修改以前的消費分類。確定繼續？'
+      )) return;
+
+      cats[index] = {...cat,archived:true};
+
+      cats.splice(index+1,0,{
+        name,emoji
+      });
+
+    } else {
+      cats[index] = {...cat,emoji};
+    }
+
+    await catManagerSave(cats);
   };
+
+  window.categoryManagerArchive =
+    async function(index) {
+      if (
+        catManagerBusy ||
+        !catManagerWritable()
+      ) return;
+
+      const cats = catManagerClone();
+      const cat = cats[index];
+
+      if (!cat) return;
+
+      if (!cat.archived && !confirm(
+        '封存「' + cat.name + '」？\n' +
+        '只會從新增記帳選項隱藏，不會刪除歷史紀錄。'
+      )) return;
+
+      cats[index] = {
+        ...cat,
+        archived:!cat.archived
+      };
+
+      await catManagerSave(cats);
+    };
+
+  // 舊的刪除按鈕也改用安全封存
+  window.removeCategory =
+    window.categoryManagerArchive;
 
   window.addCategory = async function() {
-    const name  = document.getElementById('new-cat-input').value.trim();
-    const emoji = document.getElementById('new-cat-emoji').value.trim();
-    if (!name || !emoji) { alert('請填寫分類名稱和 emoji！'); return; }
+    if (
+      catManagerBusy ||
+      !catManagerWritable()
+    ) return;
 
-    const cats = getCatManageCategories();
-    if (cats.find(c => c.name === name)) { alert('已存在！'); return; }
-    cats.push({ name, emoji });
+    const input =
+      document.getElementById('new-cat-input');
 
-    document.getElementById('new-cat-input').value  = '';
-    document.getElementById('new-cat-emoji').value  = '';
-    await saveCatManageCategories();
-    renderCatList();
+    const iconInput =
+      document.getElementById('new-cat-emoji');
+
+    const name = input.value.trim();
+    const emoji = iconInput.value.trim();
+
+    if (!name || !emoji) {
+      return alert(
+        '請填入分類名稱與 Emoji 圖示'
+      );
+    }
+
+    const cats = catManagerClone();
+
+    if (cats.some(c => c.name === name)) {
+      return alert(
+        '分類已存在（可能已封存），請先恢復原分類。'
+      );
+    }
+
+    cats.push({name,emoji});
+
+    if (await catManagerSave(cats)) {
+      input.value = '';
+      iconInput.value = '';
+    }
   };
-
 
   // ===========================
   // 👥 邀請成員
@@ -7239,18 +7652,30 @@ window.submitStock = async function() {
     document.getElementById('dad-balance').textContent = balance.toLocaleString();
 
     // 圓餅圖（支出分類）
-    const dadCats = [
-      { name: '股票',   emoji: '💹' },
-      { name: '電話費', emoji: '📞' },
-    ];
+    const dadCats =
+      getLedgerExpenseCategories(currentLedger);
 
     const data = {};
-    dadCats.forEach(c => { data[c.name] = 0; });
-    dadRecords.filter(r => r.type === 'expense').forEach(r => {
-      if (data[r.category] !== undefined) data[r.category] += r.amount;
+
+    dadCats.forEach(c => {
+      data[c.name] = 0;
     });
 
-    const labels  = dadCats.map(c => c.name).filter(n => data[n] > 0);
+    dadRecords
+      .filter(r => r.type === 'expense')
+      .forEach(r => {
+        const name = r.category || '未分類';
+        data[name] =
+          (data[name] || 0) +
+          (Number(r.amount) || 0);
+      });
+
+    const labels = [
+      ...new Set([
+        ...dadCats.map(c => c.name),
+        ...Object.keys(data)
+      ])
+    ].filter(n => data[n] > 0);
     const values  = labels.map(n => data[n]);
     const total   = values.reduce((a,b) => a+b, 0);
     const emojis  = labels.map(n => dadCats.find(c => c.name === n)?.emoji || '');
@@ -7264,7 +7689,7 @@ window.submitStock = async function() {
         const item = document.createElement('div');
         item.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-sub);';
         item.innerHTML = `
-          <div style="width:7px; height:7px; border-radius:50%; background:${COLORS[i]}; flex-shrink:0;"></div>
+          <div style="width:7px; height:7px; border-radius:50%; background:${COLORS[i % COLORS.length]}; flex-shrink:0;"></div>
           <span>${label}</span>
           <span style="color:var(--text); font-weight:500; margin-left:2px;">$${values[i].toLocaleString()}</span>
         `;
@@ -7279,7 +7704,7 @@ window.submitStock = async function() {
           labels,
           datasets: [{
             data: values,
-            backgroundColor: COLORS.slice(0, labels.length),
+            backgroundColor: labels.map((_,i) => COLORS[i % COLORS.length]),
             borderWidth: 2, borderColor: '#fff'
           }]
         },
@@ -7310,7 +7735,7 @@ window.submitStock = async function() {
       const div = document.createElement('div');
       div.className = 'record-item';
       div.innerHTML = `
-        <div class="record-icon">${isExpense ? (item.category === '股票' ? '💹' : '📞') : '💵'}</div>
+        <div class="record-icon">${isExpense ? getCatEmoji(item.category) : '💵'}</div>
         <div class="record-body">
           <div class="record-name">${item.name}</div>
           <div class="record-meta">
@@ -7947,9 +8372,17 @@ async function renderHomePage() {
     const monthKey =
       `${homeYear}-${String(homeMonth).padStart(2, '0')}`;
 
-    const cashCategories = expenseCategories.filter(cat =>
+    const cashCategories =
+      getLedgerExpenseCategories(ledger).filter(cat =>
       budgetDestinations.personal?.[cat.name] === 'cash-budget' &&
-      budgetDestinations.personalHidden?.[cat.name] !== true
+      budgetDestinations.personalHidden?.[cat.name] !== true &&
+      (
+        !cat.archived ||
+        monthRecords.some(r =>
+          r.type === 'expense' &&
+          r.category === cat.name
+        )
+      )
     );
 
     const items = cashCategories.map(cat => {
@@ -8449,7 +8882,7 @@ async function renderHomePage() {
 
   const budgetKey = homeTab;
   const monthKey  = `${homeYear}-${String(homeMonth).padStart(2,'0')}`;
-  const cats = homeTab === 'shared' ? sharedExpenseCategories : expenseCategories;
+  const cats = getLedgerExpenseCategories(ledger);
   const totalBudget = cats.reduce((s, cat) => {
     let pm = homeMonth-1, py = homeYear;
     if (pm < 1) { pm = 12; py--; }
@@ -8466,9 +8899,26 @@ async function renderHomePage() {
   }
 
   const COLORS = ['#c3e1bf','#f5e9a5','#d19f7c','#FAC1B6','#a4dae3','#f499a6','#C1D1C4','#f6cb66'];
-  const data = {}; cats.forEach(c => { data[c.name] = 0; });
-  monthRecords.filter(r => r.type==='expense').forEach(r => { if (data[r.category]!==undefined) data[r.category] += r.amount; });
-  const labels = cats.map(c => c.name).filter(n => data[n] > 0);
+  const data = {};
+  cats.forEach(c => {
+    data[c.name] = 0;
+  });
+
+  monthRecords
+    .filter(r => r.type === 'expense')
+    .forEach(r => {
+      const name = r.category || '未分類';
+      data[name] =
+        (data[name] || 0) +
+        (Number(r.amount) || 0);
+    });
+
+  const labels = [
+    ...new Set([
+      ...cats.map(c => c.name),
+      ...Object.keys(data)
+    ])
+  ].filter(n => data[n] > 0);
   const values = labels.map(n => data[n]);
   const total  = values.reduce((a,b) => a+b, 0);
 
