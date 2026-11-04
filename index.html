@@ -1317,7 +1317,58 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
 
     <div class="sch-wage-card" id="sch-payroll-card">
       <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">💰 薪水計算</div>
-      <div style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center;">
+      <!-- schedule-mobile-payroll-v1 -->
+      <style>
+        #sch-payroll-card .sch-pay-mobile {
+          display: none;
+        }
+        @media (max-width:600px) {
+          #sch-payroll-card .sch-pay-desktop {
+            display: none !important;
+          }
+          #sch-payroll-card .sch-pay-mobile {
+            display: block;
+          }
+          #sch-payroll-card .sch-mobile-plus {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0,1fr));
+            gap: 4px;
+            text-align: center;
+          }
+          #sch-payroll-card .sch-mobile-minus {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 8px;
+            text-align: center;
+            margin-top: 12px;
+          }
+          #sch-payroll-card .sch-mobile-cell {
+            min-width: 0;
+          }
+          #sch-payroll-card .sch-mobile-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+          }
+          #sch-payroll-card .sch-mobile-value {
+            font-size: 11px;
+            color: var(--text);
+            font-weight: 500;
+            overflow-wrap: anywhere;
+          }
+          #sch-payroll-card .sch-mobile-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 11px;
+            border-top: 1px solid var(--border);
+          }
+        }
+      </style>
+
+      <div class="sch-pay-desktop" style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center;">
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">本薪</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋全勤</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＋餐費</div>
@@ -1326,7 +1377,7 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">－請假</div>
         <div style="font-size:9px; color:var(--text-dim); min-width:0;">＝實領</div>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center; margin-top:2px;">
+      <div class="sch-pay-desktop" style="display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; text-align:center; margin-top:2px;">
         <div id="sch-pay-base" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-attend" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-meal" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
@@ -1334,6 +1385,48 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
         <div id="sch-pay-insurance" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-pay-leave" style="font-size:10px; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
         <div id="sch-takehome-amount" style="font-size:12px; font-weight:600; color:var(--accent); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">$0</div>
+      </div>
+
+      <div class="sch-pay-mobile">
+        <div class="sch-mobile-plus">
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">本薪</div>
+            <div class="sch-mobile-value" id="sch-mob-base">$0</div>
+          </div>
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">＋全勤</div>
+            <div class="sch-mobile-value" id="sch-mob-attend">$0</div>
+          </div>
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">＋餐費</div>
+            <div class="sch-mobile-value" id="sch-mob-meal">$0</div>
+          </div>
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">＋勞退</div>
+            <div class="sch-mobile-value" id="sch-mob-pension">$0</div>
+          </div>
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">＋加班</div>
+            <div class="sch-mobile-value" id="sch-mob-ot">$0</div>
+          </div>
+        </div>
+        <div class="sch-mobile-minus">
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">－勞健保</div>
+            <div class="sch-mobile-value" id="sch-mob-insurance">$0</div>
+          </div>
+          <div class="sch-mobile-cell">
+            <div class="sch-mobile-label">－請假</div>
+            <div class="sch-mobile-value" id="sch-mob-leave">$0</div>
+          </div>
+        </div>
+        <div class="sch-mobile-total">
+          <span style="font-size:13px;font-weight:600">
+            預估實領
+          </span>
+          <strong id="sch-mob-total"
+            style="font-size:19px;color:var(--accent)">$0</strong>
+        </div>
       </div>
       <div style="font-size:10px; color:var(--text-dim); margin-top:8px; line-height:1.4;">⚠️ 全勤計算方式待確認：實際請假應依比例扣全勤，但確切比例尚未確認，目前先加全額估算。</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
@@ -8387,6 +8480,27 @@ function renderSchTakeHome() {
     '加班補休結算 +' + '$' + otSettlement.toLocaleString();
 
   totalEl.textContent = `$${takeHome.toLocaleString()}`;
+
+  // 手機專用明細，與電腦版共用相同計算結果
+  const mobileValues = {
+    'sch-mob-base': salary,
+    'sch-mob-attend': attendance,
+    'sch-mob-meal': mealSubsidy,
+    'sch-mob-pension': pensionExtra,
+    'sch-mob-ot': otSettlement,
+    'sch-mob-insurance': insurance,
+    'sch-mob-leave': leaveDeduct,
+    'sch-mob-total': takeHome
+  };
+
+  for (const [id, amount] of Object.entries(mobileValues)) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent =
+        '$' + Math.round(Number(amount) || 0).toLocaleString();
+    }
+  }
+
 }
 
 async function cycleSchShift(dateStr, el) {
