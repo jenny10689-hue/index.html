@@ -8358,7 +8358,7 @@ function renderSchTakeHome() {
   const pensionExtra = Number(appSettings.pensionExtra) || 0;
   const takeHome = Math.round(
     salary + attendance + mealSubsidy +
-    otSettlement + pensionExtra - insurance - leaveDeduc
+    otSettlement + pensionExtra - insurance - leaveDeduct
   );
 
   const baseEl = document.getElementById('sch-pay-base');
