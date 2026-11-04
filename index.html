@@ -1015,6 +1015,19 @@ style="background:var(--hover); flex-shrink:0; font-size:0.8rem; width:auto; pad
           $ <input type="number" id="set-salary" class="settings-input-sm" placeholder="0" style="width:90px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; text-align:right;">
         </div>
       </div>
+      <!-- salary-pension-extra-v1 -->
+      <div class="settings-row">
+        <div class="settings-row-label">勞退加項</div>
+        <div class="settings-row-right">
+          $ <input type="number" id="set-pension-extra"
+            class="settings-input-sm" min="0" step="1"
+            placeholder="0"
+            style="width:90px;background:#fff;
+            border:1px solid var(--border);
+            border-radius:6px;padding:3px 6px;
+            text-align:right;">
+        </div>
+      </div>
       <div class="settings-row">
         <div class="settings-row-label">特休總天數（每年）</div>
         <div class="settings-row-right">
@@ -2325,6 +2338,8 @@ if (currentLedger && currentLedger.type === 'dad') {
       const sal = document.getElementById('set-annual-leave-days');
       if (sd) sd.value = appSettings.salaryDate || 10;
       if (sl) sl.value = appSettings.salary || '';
+      const pe = document.getElementById('set-pension-extra');
+      if (pe) pe.value = appSettings.pensionExtra ?? 0;
       if (sal) sal.value = appSettings.annualLeaveDays !== undefined ? appSettings.annualLeaveDays : 8;
       updateBudgetStartModeButtons(appSettings.budgetStartMode || 'first');
       loadSchInsuranceData();
@@ -4299,7 +4314,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
   function plannerBudget(cat) {
     return fundingBudgetValue(
-      'personal', plannerMonthKey(), cat
+      'personal', plannerMonthKey(), ca
     );
   }
 
@@ -4971,9 +4986,10 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       .reduce((sum,e) =>
         sum + (Number(e.amount) || 0), 0);
 
+    const pensionExtra = Number(appSettings.pensionExtra) || 0;
     const estimated = Math.round(
-      salary + attendance + meal + otSettlement -
-      insurance - leaveDeduct
+      salary + attendance + meal + otSettlement +
+      pensionExtra - insurance - leaveDeduc
     );
 
     const actual = actualData.actual === undefined ||
@@ -4983,7 +4999,8 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
     return {
       estimated, actual, salary, attendance,
-      meal, insurance, leaveDeduct, otSettlement
+      meal, insurance, leaveDeduct, otSettlement,
+      pensionExtra
     };
   }
 
@@ -5223,7 +5240,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
         entries.push({
           id:'income-' + Date.now() + '-' +
             Math.random().toString(36).slice(2,8),
-          type,date,amount
+          type,date,amoun
         });
       }
 
@@ -5335,7 +5352,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       if (row.firstElementChild?.textContent ===
           '每月安排合計') {
         allocated = Number(
-          row.lastElementChild.textContent
+          row.lastElementChild.textConten
             .replace(/[^0-9.-]/g,'')
         ) || 0;
       }
@@ -5445,6 +5462,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       ' ＋ 全勤 ' + plannerMoney(info.attendance) +
       ' ＋ 伙食補助 ' + plannerMoney(info.meal) +
       ' ＋ 加班補休結算 ' + plannerMoney(info.otSettlement) +
+      ' ＋ 勞退 ' + plannerMoney(info.pensionExtra) +
       ' − 勞健保 ' + plannerMoney(info.insurance) +
       ' − 請假扣款 ' + plannerMoney(info.leaveDeduct);
 
@@ -7898,7 +7916,16 @@ window.saveSettingsSalary = async function() {
   const salaryDate = parseInt(document.getElementById('set-salary-date')?.value) || 10;
   const salary     = parseInt(document.getElementById('set-salary')?.value) || 0;
   const annualLeaveDays = parseInt(document.getElementById('set-annual-leave-days')?.value);
-  await saveAppSettings({ salaryDate, salary, annualLeaveDays: isNaN(annualLeaveDays) ? 8 : annualLeaveDays });
+  const pensionRaw = document.getElementById('set-pension-extra')?.value ?? '0';
+  const pensionExtra = Number(pensionRaw);
+  if (!Number.isFinite(pensionExtra) || pensionExtra < 0) {
+    alert('請輸入有效的勞退加項金額');
+    return;
+  }
+  await saveAppSettings({
+    salaryDate, salary, pensionExtra,
+    annualLeaveDays: isNaN(annualLeaveDays) ? 8 : annualLeaveDays
+  });
   alert('已儲存！');
   showPage('settings');
 };
@@ -8328,9 +8355,10 @@ function renderSchTakeHome() {
     .filter(x => x.forMonth === monthKey)
     .reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
 
+  const pensionExtra = Number(appSettings.pensionExtra) || 0;
   const takeHome = Math.round(
     salary + attendance + mealSubsidy +
-    otSettlement - insurance - leaveDeduct
+    otSettlement + pensionExtra - insurance - leaveDeduc
   );
 
   const baseEl = document.getElementById('sch-pay-base');
