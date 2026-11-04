@@ -7527,6 +7527,176 @@ async function renderHomePage() {
     } catch(e) {}
   }
 
+
+  // home-cash-budget-progress-v1
+  if (homeTab === 'personal') {
+    const monthKey =
+      homeYear + '-' + String(homeMonth).padStart(2,'0');
+
+    const categories = expenseCategories.filter(cat =>
+      budgetDestinations.personal?.[cat.name] === 'cash-budget' &&
+      budgetDestinations.personalHidden?.[cat.name] !== true
+    );
+
+    const results = categories.map(cat => {
+      const budget = fundingBudgetValue(
+        'personal', monthKey, cat.name
+      );
+
+      const spent = monthRecords
+        .filter(r =>
+          r.type === 'expense' &&
+          r.category === cat.name
+        )
+        .reduce((sum,r) => sum + (Number(r.amount)||0),0);
+
+      return {
+        name:cat.name,
+        emoji:cat.emoji || '',
+        budget,
+        spent,
+        remaining:budget-spent
+      };
+    });
+
+    const budgetTotal = results.reduce(
+      (sum,r) => sum+r.budget, 0
+    );
+    const spentTotal = results.reduce(
+      (sum,r) => sum+r.spent, 0
+    );
+
+    const money = value =>
+      (value < 0 ? '-$' : '$') +
+      Math.abs(Math.round(value)).toLocaleString('zh-TW');
+
+    const expenseEl = document.getElementById('home-expense');
+    const remainEl = document.getElementById('home-budget-remain');
+
+    if (expenseEl) {
+      expenseEl.textContent = money(spentTotal);
+      if (expenseEl.previousElementSibling)
+        expenseEl.previousElementSibling.textContent =
+          '預算本已使用';
+    }
+
+    if (remainEl) {
+      remainEl.textContent =
+        results.length ? money(budgetTotal-spentTotal) : '未設定';
+      remainEl.style.color =
+        budgetTotal-spentTotal < 0 ? '#c0392b' : '#2e7d32';
+
+      if (remainEl.previousElementSibling)
+        remainEl.previousElementSibling.textContent =
+          '預算本剩餘';
+    }
+
+    const legend = document.getElementById('home-pie-legend');
+    const canvas = document.getElementById('home-pie-canvas');
+    const card = legend?.closest('.card');
+    const heading = card?.firstElementChild?.firstElementChild;
+
+    if (heading) heading.textContent = '現金預算本使用狀況';
+
+    if (canvas) canvas.style.display = 'none';
+    if (homePieChart) {
+      homePieChart.destroy();
+      homePieChart = null;
+    }
+
+    if (legend) {
+      legend.replaceChildren();
+      legend.style.gap = '14px';
+      legend.style.width = '100%';
+
+      if (!results.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText =
+          'font-size:12px;color:var(--text-dim);' +
+          'line-height:1.7;padding:10px 0';
+
+        empty.textContent =
+          '目前沒有設定「現金預算本」分類。' +
+          '請到每月資金規劃設定各分類的資金去向。';
+
+        legend.appendChild(empty);
+      }
+
+      for (const item of results) {
+        const group = document.createElement('div');
+        group.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+
+        const top = document.createElement('div');
+        top.style.cssText =
+          'display:flex;justify-content:space-between;' +
+          'align-items:center;gap:8px;font-size:12px';
+
+        const name = document.createElement('span');
+        name.textContent = item.emoji + ' ' + item.name;
+        name.style.fontWeight = '600';
+
+        const figures = document.createElement('span');
+        figures.textContent =
+          money(item.spent) + ' / ' + money(item.budget);
+        figures.style.cssText =
+          'font-size:11px;color:var(--text-dim);' +
+          'white-space:nowrap';
+
+        top.append(name,figures);
+
+        const track = document.createElement('div');
+        track.style.cssText =
+          'width:100%;height:7px;background:var(--border);' +
+          'border-radius:8px;overflow:hidden';
+
+        const fill = document.createElement('div');
+        fill.style.cssText =
+          'height:100%;border-radius:8px;' +
+          'background:' +
+          (item.remaining < 0 ? '#c0392b' : 'var(--accent)');
+
+        const percent = item.budget > 0
+          ? Math.min(100,item.spent/item.budget*100)
+          : (item.spent > 0 ? 100 : 0);
+
+        fill.style.width = percent + '%';
+        track.appendChild(fill);
+
+        const bottom = document.createElement('div');
+        bottom.style.cssText =
+          'text-align:right;font-size:11px;color:' +
+          (item.remaining < 0 ? '#c0392b' : 'var(--text-dim)');
+
+        bottom.textContent =
+          item.remaining < 0
+            ? '超支 ' + money(-item.remaining)
+            : '剩餘 ' + money(item.remaining);
+
+        group.append(top,track,bottom);
+        legend.appendChild(group);
+      }
+    }
+  } else {
+    const homeHeading =
+      document.getElementById('home-pie-legend')
+        ?.closest('.card')
+        ?.firstElementChild?.firstElementChild;
+
+    if (homeHeading)
+      homeHeading.textContent = '支出分佈';
+
+    const homeCanvas = document.getElementById('home-pie-canvas');
+    if (homeCanvas) homeCanvas.style.display = '';
+
+    const exp = document.getElementById('home-expense');
+    const rem = document.getElementById('home-budget-remain');
+
+    if (exp?.previousElementSibling)
+      exp.previousElementSibling.textContent = '本月支出';
+
+    if (rem?.previousElementSibling)
+      rem.previousElementSibling.textContent = '剩餘預算';
+
   const totalExpense = monthRecords.filter(r => r.type==='expense').reduce((s,r) => s+r.amount, 0);
   const expEl = document.getElementById('home-expense');
   if (expEl) expEl.textContent = '$' + totalExpense.toLocaleString();
@@ -7576,6 +7746,9 @@ async function renderHomePage() {
     if (total > 0) {
       homePieChart = new Chart(canvas, { type:'doughnut', data:{ labels, datasets:[{ data:values, backgroundColor:COLORS.slice(0,labels.length), borderWidth:2, borderColor:'#fff' }] }, options:{ responsive:false, plugins:{ legend:{ display:false } }, cutout:'60%' } });
     } else { canvas.getContext('2d').clearRect(0,0,80,80); }
+  }
+
+
   }
 
   renderHomeRecordList(ledger, monthRecords);
