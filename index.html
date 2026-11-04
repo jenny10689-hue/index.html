@@ -5084,7 +5084,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     const pensionExtra = Number(appSettings.pensionExtra) || 0;
     const estimated = Math.round(
       salary + attendance + meal + otSettlement +
-      pensionExtra - insurance - leaveDeduc
+      pensionExtra - insurance - leaveDeduct
     );
 
     const actual = actualData.actual === undefined ||
