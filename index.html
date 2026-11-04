@@ -669,6 +669,10 @@ body { background-color: var(--bg); color: var(--text); }
         <button onclick="changeMonth(1)">&#8250;</button>
       </span>
     </h1>
+    <div id="personal-ledger-period"
+      style="display:none;font-size:11px;
+      color:var(--text-dim);margin:-5px 0 12px;
+      text-align:right"></div>
 
     <!-- 圓餅圖 + 統計合併 -->
     <div class="card" id="pie-card">
@@ -3437,9 +3441,44 @@ async function saveUserSettings() {
   // 📅 月份
   // ===========================
 
+  // personal-ledger-payday-cycle-v1
+  function personalLedgerPeriod(year, month) {
+    const next = new Date(year, month, 1);
+
+    const pad = n => String(n).padStart(2, '0');
+
+    const start =
+      year + '-' + pad(month) + '-10';
+
+    const end =
+      next.getFullYear() + '-' +
+      pad(next.getMonth() + 1) + '-09';
+
+    const label =
+      pad(month) + '/10～' +
+      pad(next.getMonth() + 1) + '/09';
+
+    return { start, end, label };
+  }
+
   function updateMonthLabel() {
     document.getElementById('month-label').textContent =
       `${currentYear}/${String(currentMonth).padStart(2,'0')}`;
+
+    const periodEl = document.getElementById(
+      'personal-ledger-period'
+    );
+
+    if (periodEl) {
+      const personal = currentLedger?.type === 'personal';
+      periodEl.style.display = personal ? 'block' : 'none';
+
+      if (personal) {
+        periodEl.textContent =
+          '記帳期間：' +
+          personalLedgerPeriod(currentYear,currentMonth).label;
+      }
+    }
   }
 
   window.changeMonth = function(delta) {
@@ -3929,8 +3968,15 @@ async function saveUserSettings() {
     if (unsubscribeRecords) unsubscribeRecords();
     if (!currentLedgerId) return;
 
-    const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
-    const endDate   = `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+    const period = currentLedger?.type === 'personal'
+      ? personalLedgerPeriod(currentYear,currentMonth)
+      : null;
+
+    const startDate = period?.start ??
+      `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+
+    const endDate = period?.end ??
+      `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
 
     const q = query(collection(db,'ledgers',currentLedgerId,'expenses'), orderBy('date','desc'));
 
@@ -7418,8 +7464,23 @@ async function renderHomePage() {
   } else if (walletCard) { walletCard.style.display = 'none'; }
 
   const ledger = homeTab === 'shared' ? ledgers.find(l => l.type==='shared') : ledgers.find(l => l.type==='personal');
-  const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
-  const endDate   = `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+
+  const personalPeriod = homeTab === 'personal'
+    ? personalLedgerPeriod(currentYear,currentMonth)
+    : null;
+
+  const startDate = personalPeriod?.start ??
+    `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+
+  const endDate = personalPeriod?.end ??
+    `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+
+  if (monthEl && personalPeriod) {
+    monthEl.textContent =
+      `${currentYear}年${String(currentMonth).padStart(2,'0')}月` +
+      '｜' + personalPeriod.label;
+  }
+
   let monthRecords = [];
   if (ledger) {
     try {
