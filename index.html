@@ -4678,6 +4678,18 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     if (!root) return;
 
     const month = plannerChecklistMonth();
+
+    // planner-credit-previous-month-v1
+    // 發薪月份往前一個月，作為信用卡帳單月份
+    const [payYear, payMonth] = month.split('-').map(Number);
+    const creditDate = new Date(payYear, payMonth - 2, 1);
+    const creditMonth =
+      creditDate.getFullYear() + '-' +
+      String(creditDate.getMonth() + 1).padStart(2, '0');
+
+    const creditMonthLabel =
+      creditDate.getMonth() + 1;
+
     const run = ++plannerChecklistRun;
 
     root.textContent = '正在讀取本月待辦與信用卡金額…';
@@ -4687,7 +4699,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     try {
       [checked, credit] = await Promise.all([
         plannerGetChecks(month),
-        plannerReadCreditAmounts(month)
+        plannerReadCreditAmounts(creditMonth)
       ]);
     } catch(e) {
       console.error('發薪待辦讀取失敗',e);
@@ -4720,14 +4732,14 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
     items.push(
       {
         id:'credit:cathay',
-        name:'國泰 Cube 卡費',
+        name:'國泰 Cube｜' + creditMonthLabel + ' 月帳單',
         amount:credit.cathay,
         description:'已由信用卡頁面同步',
         source:'credit'
       },
       {
         id:'credit:fubon',
-        name:'富邦 Costco 卡費',
+        name:'富邦 Costco｜' + creditMonthLabel + ' 月帳單',
         amount:credit.fubon,
         description:'已由信用卡頁面同步',
         source:'credit'
