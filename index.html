@@ -7901,7 +7901,7 @@ async function renderHomePage() {
 
         legend.appendChild(key);
 
-        // 直立長條圖，可在手機左右滑動
+        // home-cash-responsive-bars-v3
         const chart = document.createElement('div');
 
         chart.setAttribute(
@@ -7910,11 +7910,11 @@ async function renderHomePage() {
         );
 
         chart.style.cssText =
-          'display:flex;gap:7px;align-items:flex-end;' +
-          'overflow-x:auto;max-width:100%;' +
-          'padding:6px 1px 10px;' +
-          'scrollbar-width:thin;' +
-          'overscroll-behavior-x:contain';
+          'display:grid;grid-template-columns:' +
+          'repeat(auto-fit,minmax(46px,1fr));' +
+          'column-gap:4px;row-gap:16px;align-items:end;' +
+          'width:100%;max-width:100%;min-width:0;' +
+          'overflow:hidden;padding:6px 0 10px;';
 
         const maxAmount = Math.max(
           1,
@@ -7936,7 +7936,7 @@ async function renderHomePage() {
         items.forEach((item, index) => {
           const col = document.createElement('div');
           col.style.cssText =
-            'flex:0 0 77px;min-width:0;' +
+            'width:100%;min-width:0;' +
             'display:flex;flex-direction:column;' +
             'align-items:center;gap:4px;' +
             'cursor:pointer;border-radius:10px;' +
@@ -7967,7 +7967,8 @@ async function renderHomePage() {
           const spentLabel = document.createElement('strong');
           spentLabel.textContent = money(item.spent);
           spentLabel.style.cssText =
-            'font-size:10px;white-space:nowrap';
+            'font-size:clamp(9px,2.5vw,11px);' +
+            'white-space:nowrap;max-width:100%;';
 
           const barArea = document.createElement('div');
           barArea.style.cssText =
@@ -7986,7 +7987,7 @@ async function renderHomePage() {
           );
 
           bar.style.cssText =
-            `width:55px;height:${barHeight}px;` +
+            `width:min(55px,84%);height:${barHeight}px;` +
             'border-radius:9px 9px 4px 4px;' +
             'background:#f1dfcc;overflow:hidden;' +
             'display:flex;flex-direction:column;' +
@@ -8032,25 +8033,29 @@ async function renderHomePage() {
 
           catLabel.title = item.name;
           catLabel.style.cssText =
-            'width:100%;font-size:11px;font-weight:600;' +
-            'text-align:center;white-space:nowrap;' +
-            'overflow:hidden;text-overflow:ellipsis';
+            'width:100%;min-height:30px;' +
+            'font-size:clamp(10px,2.7vw,11px);' +
+            'font-weight:600;text-align:center;' +
+            'white-space:normal;overflow-wrap:anywhere;' +
+            'line-height:1.3;';
 
           const budgetLabel = document.createElement('div');
           budgetLabel.textContent =
-            `預算 ${money(item.budget)}`;
+            `預算\n${money(item.budget)}`;
 
           budgetLabel.style.cssText =
             'font-size:9px;color:var(--text-dim);' +
-            'white-space:nowrap';
+            'white-space:pre-line;text-align:center;' +
+            'line-height:1.3';
 
           const remainingLabel = document.createElement('div');
           remainingLabel.textContent = item.remaining < 0
-            ? `超支 ${money(-item.remaining)}`
-            : `剩餘 ${money(item.remaining)}`;
+            ? `超支\n${money(-item.remaining)}`
+            : `剩餘\n${money(item.remaining)}`;
 
           remainingLabel.style.cssText =
-            'font-size:10px;white-space:nowrap;color:' +
+            'font-size:9px;white-space:pre-line;' +
+            'text-align:center;line-height:1.3;color:' +
             (item.remaining < 0
               ? '#b65b4b'
               : 'var(--text-sub)');
@@ -8068,15 +8073,7 @@ async function renderHomePage() {
 
         legend.appendChild(chart);
 
-        if (items.length > 4) {
-          const hint = document.createElement('div');
-          hint.textContent = '左右滑動可查看其他分類';
-          hint.style.cssText =
-            'text-align:center;font-size:10px;' +
-            'color:var(--text-dim)';
 
-          legend.appendChild(hint);
-        }
       }
     }
 
