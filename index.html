@@ -5008,6 +5008,17 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
   // planner-salary-v1
   let plannerSalaryRun = 0;
 
+  // planner-previous-salary-month-v1
+  function plannerPreviousSalaryMonth() {
+    const [year, month] = plannerMonthKey()
+      .split('-').map(Number);
+
+    const previous = new Date(year, month - 2, 1);
+
+    return previous.getFullYear() + '-' +
+      String(previous.getMonth() + 1).padStart(2, '0');
+  }
+
   async function plannerReadSalary(month) {
     const [year, monthNum] = month.split('-').map(Number);
 
@@ -5100,7 +5111,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
   }
 
   window.plannerEditActualSalary = async function() {
-    const month = plannerMonthKey();
+    const month = plannerPreviousSalaryMonth();
     const input = prompt(
       '輸入 ' + month + ' 實際入帳薪水\n' +
       '留空可清除實領金額',
@@ -5396,8 +5407,10 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
     let info, otherIncome;
     try {
+      const salaryMonth = plannerPreviousSalaryMonth();
+
       const results = await Promise.all([
-        plannerReadSalary(month),
+        plannerReadSalary(salaryMonth),
         plannerGetIncome(month)
       ]);
       info = results[0];
@@ -5487,7 +5500,8 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       'padding:7px 0;border-bottom:1px solid var(--border)';
 
     const actualLabel = document.createElement('span');
-    actualLabel.textContent = '薪水';
+    actualLabel.textContent =
+      '薪水（' + plannerPreviousSalaryMonth().replace('-', '/') + '）';
     actualLabel.style.fontWeight = '600';
 
     const actualInput = document.createElement('input');
@@ -5523,7 +5537,10 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
 
       try {
         await setDoc(
-          doc(db, 'users', currentUid, 'plannerSalary', month),
+          doc(
+            db, 'users', currentUid,
+            'plannerSalary', plannerPreviousSalaryMonth()
+          ),
           { actual: raw === '' ? null : Number(raw) },
           { merge:true }
         );
