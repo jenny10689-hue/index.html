@@ -7865,7 +7865,7 @@ async function renderHomePage() {
           : '尚未設定預算金額';
 
         const right = document.createElement('span');
-        right.textContent = `總預算 ${money(budgetTotal)}`;
+        right.textContent = `${money(spentTotal)} / ${money(budgetTotal)}`;
 
         overallText.append(left, right);
 
