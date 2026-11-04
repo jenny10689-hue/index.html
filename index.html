@@ -703,6 +703,14 @@ body { background-color: var(--bg); color: var(--text); }
             <span class="summary-value income" style="font-size:0.9rem;">$<span id="total-income">0</span></span>
           </div>
           <div id="ledger-salary-summary-note" style="display:none;font-size:0.68rem;line-height:1.5;color:var(--text-dim);margin:-2px 0 3px;"></div>
+          <!-- personal-ledger-fixed-allocation-v1 -->
+          <div id="ledger-fixed-allocation-row"
+            title="依每月資金規劃的固定撥款清單自動計入"
+            style="display:none;justify-content:space-between;font-size:0.8rem;">
+            <span style="color:var(--text-dim);">固定撥款</span>
+            <span class="summary-value expense"
+              style="font-size:0.9rem;">$<span id="total-fixed-allocation">0</span></span>
+          </div>
           <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
             <span style="color:var(--text-dim);">本月支出</span>
             <span class="summary-value expense" style="font-size:0.9rem;">$<span id="total-expense">0</span></span>
@@ -4066,6 +4074,35 @@ async function saveUserSettings() {
         ? salary.amount
         : 0;
 
+    // 固定撥款只算一次，不新增記帳交易
+    const fixedAllocationTotal =
+      isPersonal && Array.isArray(fundingFixedItems)
+        ? fundingFixedItems.reduce((sum, item) => {
+            const amount = Number(item.amount);
+            return sum + (
+              Number.isFinite(amount) && amount > 0
+                ? amount : 0
+            );
+          }, 0)
+        : 0;
+
+    const fixedRow = document.getElementById(
+      'ledger-fixed-allocation-row'
+    );
+    const fixedValue = document.getElementById(
+      'total-fixed-allocation'
+    );
+
+    if (fixedRow) {
+      fixedRow.style.display =
+        isPersonal ? 'flex' : 'none';
+    }
+
+    if (fixedValue) {
+      fixedValue.textContent =
+        fixedAllocationTotal.toLocaleString('zh-TW');
+    }
+
     const totalIncome = manualIncome + automaticAmount;
 
     document.getElementById('total-income').textContent =
@@ -4075,7 +4112,8 @@ async function saveUserSettings() {
       expense.toLocaleString('zh-TW');
 
     document.getElementById('total-balance').textContent =
-      (totalIncome - expense).toLocaleString('zh-TW');
+      (totalIncome - fixedAllocationTotal - expense)
+        .toLocaleString('zh-TW');
 
     const note = document.getElementById(
       'ledger-salary-summary-note'
