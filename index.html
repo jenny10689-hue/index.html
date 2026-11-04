@@ -2381,6 +2381,7 @@ if (currentLedger && currentLedger.type === 'dad') {
   return;
 }
             document.getElementById('page-ledger').style.display = 'block';
+      applyLedgerPeriodMonth();
       updateMonthLabel();
       listenRecords();
     } else if (page === 'cc-summary') {
@@ -3461,6 +3462,33 @@ async function saveUserSettings() {
     return { start, end, label };
   }
 
+  // personal-ledger-default-period-v1
+  const ledgerMonthState = {};
+
+  function currentLedgerPeriodMonth(type) {
+    const today = new Date();
+    const firstDay = type === 'personal' &&
+      today.getDate() < 10
+      ? new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      : new Date(today.getFullYear(), today.getMonth(), 1);
+
+    return {
+      year: firstDay.getFullYear(),
+      month: firstDay.getMonth() + 1
+    };
+  }
+
+  function applyLedgerPeriodMonth() {
+    const type = currentLedger?.type || 'personal';
+
+    if (!ledgerMonthState[type]) {
+      ledgerMonthState[type] = currentLedgerPeriodMonth(type);
+    }
+
+    currentYear = ledgerMonthState[type].year;
+    currentMonth = ledgerMonthState[type].month;
+  }
+
   function updateMonthLabel() {
     document.getElementById('month-label').textContent =
       `${currentYear}/${String(currentMonth).padStart(2,'0')}`;
@@ -3485,6 +3513,13 @@ async function saveUserSettings() {
     currentMonth += delta;
     if (currentMonth > 12) { currentMonth = 1;  currentYear++; }
     if (currentMonth < 1)  { currentMonth = 12; currentYear--; }
+
+    const type = currentLedger?.type || 'personal';
+    ledgerMonthState[type] = {
+      year: currentYear,
+      month: currentMonth
+    };
+
     updateMonthLabel();
     listenRecords();
   };
@@ -7438,10 +7473,13 @@ async function renderHomeWeekSchedule() {
 }
 
 async function renderHomePage() {
+  const homePeriod = currentLedgerPeriodMonth(homeTab);
+  const homeYear = homePeriod.year;
+  const homeMonth = homePeriod.month;
   const greetEl = document.getElementById('home-greeting');
   const monthEl = document.getElementById('home-month');
   if (greetEl) greetEl.textContent = `你好，${currentName?.split(' ')[0] || ''} 👋`;
-  if (monthEl) monthEl.textContent = `${currentYear}年${String(currentMonth).padStart(2,'0')}月`;
+  if (monthEl) monthEl.textContent = `${homeYear}年${String(homeMonth).padStart(2,'0')}月`;
 
   renderHomeWeekSchedule();
 
@@ -7466,18 +7504,18 @@ async function renderHomePage() {
   const ledger = homeTab === 'shared' ? ledgers.find(l => l.type==='shared') : ledgers.find(l => l.type==='personal');
 
   const personalPeriod = homeTab === 'personal'
-    ? personalLedgerPeriod(currentYear,currentMonth)
+    ? personalLedgerPeriod(homeYear,homeMonth)
     : null;
 
   const startDate = personalPeriod?.start ??
-    `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+    `${homeYear}-${String(homeMonth).padStart(2,'0')}-01`;
 
   const endDate = personalPeriod?.end ??
-    `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+    `${homeYear}-${String(homeMonth).padStart(2,'0')}-31`;
 
   if (monthEl && personalPeriod) {
     monthEl.textContent =
-      `${currentYear}年${String(currentMonth).padStart(2,'0')}月` +
+      `${homeYear}年${String(homeMonth).padStart(2,'0')}月` +
       '｜' + personalPeriod.label;
   }
 
@@ -7494,10 +7532,10 @@ async function renderHomePage() {
   if (expEl) expEl.textContent = '$' + totalExpense.toLocaleString();
 
   const budgetKey = homeTab;
-  const monthKey  = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+  const monthKey  = `${homeYear}-${String(homeMonth).padStart(2,'0')}`;
   const cats = homeTab === 'shared' ? sharedExpenseCategories : expenseCategories;
   const totalBudget = cats.reduce((s, cat) => {
-    let pm = currentMonth-1, py = currentYear;
+    let pm = homeMonth-1, py = homeYear;
     if (pm < 1) { pm = 12; py--; }
     const pk = `${py}-${String(pm).padStart(2,'0')}`;
     return s + ((budgets[budgetKey]?.[monthKey]?.[cat.name]) ?? (budgets[budgetKey]?.[pk]?.[cat.name]) ?? 0);
