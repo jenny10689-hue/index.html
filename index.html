@@ -647,13 +647,6 @@ body { background-color: var(--bg); color: var(--text); }
         <div id="home-pie-legend" style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:0;"></div>
       </div>
     </div>
-    <div id="home-cash-alerts-card" class="card"
-      style="display:none;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:600;
-        color:var(--text);margin-bottom:10px;">本月提醒</div>
-      <div id="home-cash-alerts-list"
-        style="display:flex;flex-direction:column;gap:8px;"></div>
-    </div>
     <div class="card" style="margin-bottom:10px;">
       <div style="font-size:13px; font-weight:500; color:var(--text); margin-bottom:8px;">帳本明細</div>
       <div id="home-record-list"></div>
@@ -7481,6 +7474,203 @@ async function renderHomeWeekSchedule() {
   }).join('');
 }
 
+
+// home-cash-category-detail-v1
+function showHomeCashCategoryDetail(item, monthRecords, period) {
+  document.getElementById(
+    'home-cash-detail-overlay'
+  )?.remove();
+
+  const records = monthRecords
+    .filter(r =>
+      r.type === 'expense' &&
+      r.category === item.name
+    )
+    .sort((a,b) =>
+      String(b.date || '').localeCompare(String(a.date || ''))
+    );
+
+  const money = value =>
+    (value < 0 ? '-$' : '$') +
+    Math.abs(Math.round(value)).toLocaleString('zh-TW');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'home-cash-detail-overlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:10000;' +
+    'background:rgba(0,0,0,.4);' +
+    'display:flex;align-items:center;' +
+    'justify-content:center;padding:18px';
+
+  const dialog = document.createElement('div');
+  dialog.setAttribute('role','dialog');
+  dialog.setAttribute('aria-modal','true');
+  dialog.setAttribute('aria-label',item.name+'消費明細');
+
+  dialog.style.cssText =
+    'width:100%;max-width:440px;max-height:85vh;' +
+    'overflow-y:auto;background:var(--card,#fff);' +
+    'color:var(--text,#333);border-radius:16px;' +
+    'padding:19px;box-shadow:0 10px 35px rgba(0,0,0,.2)';
+
+  const header = document.createElement('div');
+  header.style.cssText =
+    'display:flex;align-items:center;' +
+    'justify-content:space-between;gap:10px';
+
+  const title = document.createElement('h3');
+  title.textContent =
+    (item.emoji ? item.emoji+' ' : '') +
+    item.name + '｜消費明細';
+
+  title.style.cssText =
+    'font-size:17px;margin:0';
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.textContent = '✕';
+  close.setAttribute('aria-label','關閉明細');
+  close.style.cssText =
+    'border:0;background:transparent;' +
+    'font-size:21px;color:var(--text-sub);' +
+    'cursor:pointer;padding:4px 8px';
+
+  close.onclick = () => overlay.remove();
+
+  header.append(title,close);
+  dialog.appendChild(header);
+
+  const periodText = document.createElement('div');
+  periodText.textContent =
+    '記帳期間：' +
+    period.start.replaceAll('-','/') +
+    '～' +
+    period.end.replaceAll('-','/');
+
+  periodText.style.cssText =
+    'font-size:11px;color:var(--text-dim);' +
+    'margin:7px 0 17px';
+
+  dialog.appendChild(periodText);
+
+  const summary = document.createElement('div');
+  summary.style.cssText =
+    'display:grid;grid-template-columns:1fr 1fr;' +
+    'gap:10px;margin-bottom:15px';
+
+  for (const [label,amount] of [
+    ['已使用',item.spent],
+    ['預算剩餘',item.remaining]
+  ]) {
+    const cell = document.createElement('div');
+    cell.style.cssText =
+      'padding:12px;border-radius:10px;' +
+      'background:var(--hover,#f7f4ef)';
+
+    const name = document.createElement('div');
+    name.textContent = label;
+    name.style.cssText =
+      'font-size:11px;color:var(--text-dim);' +
+      'margin-bottom:5px';
+
+    const value = document.createElement('strong');
+    value.textContent = money(amount);
+    value.style.cssText = 'font-size:17px';
+
+    if (amount < 0) value.style.color = '#b65b4b';
+
+    cell.append(name,value);
+    summary.appendChild(cell);
+  }
+
+  dialog.appendChild(summary);
+
+  const listTitle = document.createElement('div');
+  listTitle.textContent =
+    '消費項目（' + records.length + ' 筆）';
+
+  listTitle.style.cssText =
+    'font-size:13px;font-weight:600;' +
+    'padding:8px 0;border-bottom:1px solid var(--border)';
+
+  dialog.appendChild(listTitle);
+
+  const list = document.createElement('div');
+  list.style.cssText =
+    'max-height:43vh;overflow-y:auto';
+
+  if (!records.length) {
+    const empty = document.createElement('div');
+    empty.textContent = '本期目前沒有消費紀錄';
+    empty.style.cssText =
+      'padding:22px 0;text-align:center;' +
+      'font-size:12px;color:var(--text-dim)';
+
+    list.appendChild(empty);
+  }
+
+  for (const record of records) {
+    const line = document.createElement('div');
+    line.style.cssText =
+      'display:flex;justify-content:space-between;' +
+      'align-items:center;gap:12px;' +
+      'padding:12px 0;' +
+      'border-bottom:1px solid var(--border)';
+
+    const info = document.createElement('div');
+    info.style.minWidth = '0';
+
+    const name = document.createElement('div');
+    name.textContent = record.name || '未命名項目';
+    name.style.cssText =
+      'font-size:13px;font-weight:500;' +
+      'overflow-wrap:anywhere';
+
+    const detail = document.createElement('div');
+
+    const date = String(record.date || '')
+      .replaceAll('-','/');
+
+    const details = [
+      date,
+      record.payment || '',
+      record.note || ''
+    ].filter(Boolean);
+
+    detail.textContent = details.join(' · ');
+
+    detail.style.cssText =
+      'font-size:11px;color:var(--text-dim);' +
+      'margin-top:4px;overflow-wrap:anywhere';
+
+    info.append(name,detail);
+
+    const amount = document.createElement('strong');
+    amount.textContent = money(
+      Number(record.amount) || 0
+    );
+    amount.style.cssText =
+      'font-size:13px;white-space:nowrap';
+
+    line.append(info,amount);
+    list.appendChild(line);
+  }
+
+  dialog.appendChild(list);
+  overlay.appendChild(dialog);
+
+  overlay.onclick = event => {
+    if (event.target === overlay) overlay.remove();
+  };
+
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+  close.focus();
+}
+
 async function renderHomePage() {
   const homePeriod = currentLedgerPeriodMonth(homeTab);
   const homeYear = homePeriod.year;
@@ -7748,7 +7938,31 @@ async function renderHomePage() {
           col.style.cssText =
             'flex:0 0 77px;min-width:0;' +
             'display:flex;flex-direction:column;' +
-            'align-items:center;gap:4px';
+            'align-items:center;gap:4px;' +
+            'cursor:pointer;border-radius:10px;' +
+            'outline-offset:3px';
+
+          col.setAttribute('role','button');
+          col.setAttribute('tabindex','0');
+          col.setAttribute(
+            'aria-label',
+            item.name + '：已花 ' + money(item.spent) +
+            '，查看本期消費明細'
+          );
+
+          const openDetails = () =>
+            showHomeCashCategoryDetail(
+              item,monthRecords,personalPeriod
+            );
+
+          col.addEventListener('click',openDetails);
+          col.addEventListener('keydown',event => {
+            if (event.key === 'Enter' ||
+                event.key === ' ') {
+              event.preventDefault();
+              openDetails();
+            }
+          });
 
           const spentLabel = document.createElement('strong');
           spentLabel.textContent = money(item.spent);
@@ -7866,76 +8080,6 @@ async function renderHomePage() {
       }
     }
 
-    // 預算提醒：超支或使用達80%的分類
-    const alertCard = document.getElementById(
-      'home-cash-alerts-card'
-    );
-
-    const alertList = document.getElementById(
-      'home-cash-alerts-list'
-    );
-
-    if (alertCard && alertList) {
-      alertCard.style.display =
-        items.length ? 'block' : 'none';
-
-      alertList.replaceChildren();
-
-      const urgent = [...items]
-        .filter(item =>
-          item.spent > 0 &&
-          (
-            item.budget === 0 ||
-            item.spent / item.budget >= 0.8
-          )
-        )
-        .sort((a, b) =>
-          (b.budget ? b.spent / b.budget : Infinity) -
-          (a.budget ? a.spent / a.budget : Infinity)
-        )
-        .slice(0, 3);
-
-      if (!urgent.length) {
-        const note = document.createElement('div');
-        note.textContent =
-          '目前沒有分類接近預算上限。';
-
-        note.style.cssText =
-          'font-size:12px;color:var(--text-dim)';
-
-        alertList.appendChild(note);
-      }
-
-      for (const item of urgent) {
-        const note = document.createElement('div');
-        note.style.cssText =
-          'display:flex;gap:7px;' +
-          'font-size:12px;line-height:1.6';
-
-        const bullet = document.createElement('span');
-        bullet.textContent = '•';
-        bullet.style.color = '#c78f78';
-
-        const content = document.createElement('span');
-
-        if (item.budget === 0) {
-          content.textContent =
-            `${item.name} 尚未設定預算，` +
-            `已花 ${money(item.spent)}。`;
-        } else if (item.remaining < 0) {
-          content.textContent =
-            `${item.name} 已超支 ${money(-item.remaining)}。`;
-        } else {
-          content.textContent =
-            `${item.name} 已使用 ${
-              (item.spent / item.budget * 100).toFixed(0)
-            }%，剩餘 ${money(item.remaining)}。`;
-        }
-
-        note.append(bullet, content);
-        alertList.appendChild(note);
-      }
-    }
   } else {
     const homeHeading =
       document.getElementById('home-pie-legend')
@@ -7944,11 +8088,6 @@ async function renderHomePage() {
 
     if (homeHeading)
       homeHeading.textContent = '支出分佈';
-
-    const alertCard = document.getElementById(
-      'home-cash-alerts-card'
-    );
-    if (alertCard) alertCard.style.display = 'none';
 
     const sharedLegend = document.getElementById(
       'home-pie-legend'
