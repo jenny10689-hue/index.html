@@ -702,6 +702,7 @@ body { background-color: var(--bg); color: var(--text); }
             <span style="color:var(--text-dim);">本月收入</span>
             <span class="summary-value income" style="font-size:0.9rem;">$<span id="total-income">0</span></span>
           </div>
+          <div id="ledger-salary-summary-note" style="display:none;font-size:0.68rem;line-height:1.5;color:var(--text-dim);margin:-2px 0 3px;"></div>
           <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
             <span style="color:var(--text-dim);">本月支出</span>
             <span class="summary-value expense" style="font-size:0.9rem;">$<span id="total-expense">0</span></span>
@@ -4017,6 +4018,95 @@ async function saveUserSettings() {
   // 👂 監聽記錄
   // ===========================
 
+
+  // personal-ledger-income-prev-salary-v1
+  let ledgerSalaryLoadSerial = 0;
+  let ledgerAutoSalary = null;
+
+  function ledgerIncomePeriodKey() {
+    return [
+      currentUid,
+      currentLedgerId,
+      currentYear,
+      String(currentMonth).padStart(2, '0')
+    ].join('|');
+  }
+
+  function refreshLedgerIncomeSummary() {
+    const manualIncomeRecords =
+      records.filter(r => r.type === 'income');
+
+    const manualIncome = manualIncomeRecords.reduce(
+      (sum, r) => sum + (Number(r.amount) || 0), 0
+    );
+
+    const expense = records
+      .filter(r => r.type === 'expense')
+      .reduce(
+        (sum, r) => sum + (Number(r.amount) || 0), 0
+      );
+
+    const isPersonal =
+      currentLedger?.type === 'personal';
+
+    // 已手動登記工作收入時，不重複加算自動薪水
+    const hasManualSalary = isPersonal &&
+      manualIncomeRecords.some(r =>
+        r.category === '工作收入' ||
+        /薪水|薪資|月薪|工資/.test(String(r.name || ''))
+      );
+
+    const salary = isPersonal &&
+      ledgerAutoSalary?.periodKey ===
+        ledgerIncomePeriodKey()
+      ? ledgerAutoSalary : null;
+
+    const automaticAmount =
+      !hasManualSalary && salary?.status === 'ready'
+        ? salary.amount
+        : 0;
+
+    const totalIncome = manualIncome + automaticAmount;
+
+    document.getElementById('total-income').textContent =
+      totalIncome.toLocaleString('zh-TW');
+
+    document.getElementById('total-expense').textContent =
+      expense.toLocaleString('zh-TW');
+
+    document.getElementById('total-balance').textContent =
+      (totalIncome - expense).toLocaleString('zh-TW');
+
+    const note = document.getElementById(
+      'ledger-salary-summary-note'
+    );
+
+    if (!note) return;
+
+    if (!isPersonal) {
+      note.style.display = 'none';
+      return;
+    }
+
+    note.style.display = 'block';
+
+    if (hasManualSalary) {
+      note.textContent =
+        '已有手動工作收入，未重複加算薪水';
+    } else if (!salary || salary.status === 'loading') {
+      note.textContent = '正在讀取上個月薪水…';
+    } else if (salary.status === 'error') {
+      note.textContent =
+        '薪水讀取失敗，暫時只顯示手動收入';
+    } else {
+      note.textContent =
+        '已含 ' +
+        salary.salaryMonth.replace('-', '/') +
+        ' ' + salary.kind + '薪水 $' +
+        salary.amount.toLocaleString('zh-TW');
+    }
+  }
+
   function listenRecords() {
     if (unsubscribeRecords) unsubscribeRecords();
     if (!currentLedgerId) return;
@@ -4030,6 +4120,80 @@ async function saveUserSettings() {
 
     const endDate = period?.end ??
       `${currentYear}-${String(currentMonth).padStart(2,'0')}-31`;
+
+    // 每次切換月份或帳本時重新取得薪水
+    const salaryRequest = ++ledgerSalaryLoadSerial;
+    ledgerAutoSalary = null;
+
+    if (currentLedger?.type === 'personal' && currentUid) {
+      const targetLedger = currentLedgerId;
+      const targetUser = currentUid;
+      const targetYear = currentYear;
+      const targetMonth = currentMonth;
+      const targetKey = ledgerIncomePeriodKey();
+
+      const previous = new Date(
+        targetYear, targetMonth - 2, 1
+      );
+
+      const salaryMonth =
+        previous.getFullYear() + '-' +
+        String(previous.getMonth() + 1).padStart(2,'0');
+
+      ledgerAutoSalary = {
+        periodKey: targetKey,
+        salaryMonth,
+        status: 'loading',
+        amount: 0
+      };
+
+      const stillCurrent = () =>
+        salaryRequest === ledgerSalaryLoadSerial &&
+        currentLedgerId === targetLedger &&
+        currentUid === targetUser &&
+        currentYear === targetYear &&
+        currentMonth === targetMonth &&
+        currentLedger?.type === 'personal';
+
+      plannerReadSalary(salaryMonth)
+        .then(info => {
+          if (!stillCurrent()) return;
+
+          const hasActual =
+            info.actual !== null &&
+            info.actual !== undefined &&
+            Number.isFinite(Number(info.actual));
+
+          const rawAmount = hasActual
+            ? Number(info.actual)
+            : Number(info.estimated);
+
+          ledgerAutoSalary = {
+            periodKey: targetKey,
+            salaryMonth,
+            status: 'ready',
+            amount: Number.isFinite(rawAmount)
+              ? rawAmount : 0,
+            kind: hasActual ? '實領' : '預估'
+          };
+
+          refreshLedgerIncomeSummary();
+        })
+        .catch(error => {
+          console.error('讀取上月薪水失敗', error);
+
+          if (!stillCurrent()) return;
+
+          ledgerAutoSalary = {
+            periodKey: targetKey,
+            salaryMonth,
+            status: 'error',
+            amount: 0
+          };
+
+          refreshLedgerIncomeSummary();
+        });
+    }
 
     const q = query(collection(db,'ledgers',currentLedgerId,'expenses'), orderBy('date','desc'));
 
@@ -6094,11 +6258,7 @@ document.getElementById('confirm-delete-btn').onclick = async function() {
       filtered = allLedgerRecords.filter(r => r.type === 'expense' && !r.settled && TENG_PAYS.includes(r.payment));
     }
 
-    const totalIncome  = records.filter(r => r.type === 'income').reduce((s,r)  => s + r.amount, 0);
-    const totalExpense = records.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
-    document.getElementById('total-income').textContent  = totalIncome.toLocaleString();
-    document.getElementById('total-expense').textContent = totalExpense.toLocaleString();
-    document.getElementById('total-balance').textContent = (totalIncome - totalExpense).toLocaleString();
+    refreshLedgerIncomeSummary();
 
     if (filtered.length === 0) {
       container.innerHTML = '<div style="text-align:center; color:#b4b2a9; padding:2rem 0; font-size:0.9rem;">本月沒有記錄</div>';
