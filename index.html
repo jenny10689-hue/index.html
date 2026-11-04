@@ -8429,6 +8429,7 @@ function renderSchOtModal() {
     settleEl.innerHTML = settlements.length === 0 ? '' : settlements.map(s => `
       <div style="display:grid; grid-template-columns:1fr auto; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); padding:2px 0;">
         <span>${s.date} 結算 ${s.hours}h → $${Number(s.amount).toLocaleString()}（${s.forMonth} 入帳）</span>
+        <button onclick="editSchOtSettlementMonth('${s.id}')" style="background:none; border:0.5px solid var(--border); border-radius:6px; color:var(--text-sub); cursor:pointer; font-size:10px; padding:2px 6px; margin-right:4px;">改月份</button>
         <button onclick="undoSchOtSettlement('${s.id}')" style="background:none; border:0.5px solid var(--border); border-radius:6px; color:var(--text-sub); cursor:pointer; font-size:10px; padding:2px 6px;">還原</button>
       </div>
     `).join('');
@@ -8449,38 +8450,238 @@ function calcOtSettlementPay(hours) {
   return Math.round(pay);
 }
 
-window.settleSchOt = async function() {
+
+// sch-ot-settlement-month-v1
+
+function schOtDefaultPayMonth() {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0');
+}
+
+function schOtCloseSettlementEditor() {
+  document.getElementById('sch-ot-settlement-editor')?.remove();
+}
+
+function schOtOpenSettlementEditor({
+  title, amount, month, editableAmount, onSave
+}) {
+  schOtCloseSettlementEditor();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sch-ot-settlement-editor';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:10000;' +
+    'background:rgba(0,0,0,.42);display:flex;' +
+    'align-items:center;justify-content:center;padding:20px';
+
+  const card = document.createElement('div');
+  card.style.cssText =
+    'background:var(--card,#fff);color:var(--text,#222);' +
+    'width:100%;max-width:360px;border-radius:16px;' +
+    'padding:22px;box-shadow:0 12px 32px rgba(0,0,0,.2)';
+
+  function heading(text) {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.cssText =
+      'font-size:13px;color:var(--text-sub);margin:12px 0 6px';
+    return el;
+  }
+
+  const h = document.createElement('h3');
+  h.textContent = title;
+  h.style.margin = '0 0 16px';
+  card.appendChild(h);
+
+  const money = document.createElement('input');
+  money.type = 'number';
+  money.min = '0';
+  money.step = '1';
+  money.value = String(amount);
+  money.disabled = !editableAmount;
+  money.style.cssText =
+    'width:100%;box-sizing:border-box;padding:11px;' +
+    'border:1px solid var(--border);border-radius:8px;' +
+    'background:var(--card);color:var(--text);font-size:16px';
+
+  card.appendChild(heading('結算金額'));
+  card.appendChild(money);
+
+  const monthInput = document.createElement('input');
+  monthInput.type = 'month';
+  monthInput.value = month;
+  monthInput.required = true;
+  monthInput.style.cssText =
+    'width:100%;box-sizing:border-box;padding:11px;' +
+    'border:1px solid var(--border);border-radius:8px;' +
+    'background:var(--card);color:var(--text);font-size:16px';
+
+  card.appendChild(heading('計入薪水月份'));
+  card.appendChild(monthInput);
+
+  const note = document.createElement('p');
+  note.textContent =
+    '結算金額會計入指定月份的預估實領薪水。';
+  note.style.cssText =
+    'font-size:12px;color:var(--text-dim);' +
+    'line-height:1.6;margin:12px 0 18px';
+  card.appendChild(note);
+
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:8px';
+
+  const cancel = document.createElement('button');
+  cancel.className = 'fund-action';
+  cancel.textContent = '取消';
+  cancel.style.cssText = 'flex:1;padding:10px';
+  cancel.onclick = schOtCloseSettlementEditor;
+
+  const save = document.createElement('button');
+  save.className = 'fund-action';
+  save.textContent = '確認儲存';
+  save.style.cssText =
+    'flex:1;padding:10px;background:var(--accent);' +
+    'color:var(--accent-text)';
+
+  save.onclick = async () => {
+    const nextMonth = monthInput.value;
+    const nextAmount = Number(money.value);
+
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(nextMonth)) {
+      alert('請選擇有效的薪水月份');
+      return;
+    }
+
+    if (!Number.isFinite(nextAmount) || nextAmount <= 0) {
+      alert('請輸入大於零的結算金額');
+      return;
+    }
+
+    save.disabled = true;
+    cancel.disabled = true;
+
+    try {
+      await onSave(nextMonth, nextAmount);
+      schOtCloseSettlementEditor();
+      renderSchOtModal();
+      renderOtSummary();
+      renderSchTakeHome();
+
+      const planner = document.getElementById('page-budget');
+      if (planner && planner.style.display !== 'none' &&
+          typeof renderPlannerSalary === 'function') {
+        renderPlannerSalary();
+      }
+    } catch(e) {
+      console.error('加班結算儲存失敗',e);
+      alert('儲存失敗，原本紀錄未完成更新，請再試一次');
+      save.disabled = false;
+      cancel.disabled = false;
+    }
+  };
+
+  actions.append(cancel,save);
+  card.appendChild(actions);
+  overlay.appendChild(card);
+
+  overlay.onclick = e => {
+    if (e.target === overlay && !save.disabled)
+      schOtCloseSettlementEditor();
+  };
+
+  document.body.appendChild(overlay);
+}
+
+window.settleSchOt = function() {
   const entries = schOtData.entries || [];
-  let total = 0, used = 0;
+
+  let total = 0;
+  let used = 0;
+
   entries.forEach(e => {
     if (e.settled) return;
-    if (e.type === 'overtime') total += e.hours;
-    else used += e.hours;
+    if (e.type === 'overtime') total += Number(e.hours)||0;
+    else used += Number(e.hours)||0;
   });
+
   const remain = total - used;
-  if (remain <= 0) { alert('目前沒有加班餘額可以結算'); return; }
+
+  if (remain <= 0) {
+    alert('目前沒有加班餘額可以結算');
+    return;
+  }
 
   const suggested = calcOtSettlementPay(remain);
-  const input = prompt(`結算 ${remain} 小時加班，估算金額 $${suggested}（可修改，照薪資單為準）`, suggested);
-  if (input === null) return;
-  const amount = Number(input);
-  if (!amount || amount <= 0) { alert('請輸入有效金額'); return; }
 
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  const nm = new Date(now.getFullYear(), now.getMonth()+1, 1);
-  const forMonth = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}`;
+  schOtOpenSettlementEditor({
+    title: '結算加班補休｜' + remain + ' 小時',
+    amount: suggested,
+    month: schOtDefaultPayMonth(),
+    editableAmount: true,
+    onSave: async (forMonth,amount) => {
+      const now = new Date();
+      const date = now.getFullYear() + '-' +
+        String(now.getMonth()+1).padStart(2,'0') + '-' +
+        String(now.getDate()).padStart(2,'0');
 
-  const settlementId = String(Date.now());
-  entries.forEach(e => { if (!e.settled) { e.settled = true; e.settlementId = settlementId; } });
-  if (!schOtData.settlements) schOtData.settlements = [];
-  schOtData.settlements.push({ id: settlementId, date: todayStr, hours: remain, amount, forMonth });
-  schOtChanged = true;
-  await saveSchOtData();
-  renderSchOtModal();
-  renderOtSummary();
-  renderSchTakeHome();
-  alert(`已結算 ${remain} 小時、$${amount.toLocaleString()}，將計入 ${forMonth} 預估實領`);
+      const settlementId = String(Date.now());
+
+      const previous = JSON.parse(JSON.stringify(schOtData));
+      const updated = JSON.parse(JSON.stringify(schOtData));
+      const updatedEntries = updated.entries || [];
+
+      updatedEntries.forEach(e => {
+        if (!e.settled) {
+          e.settled = true;
+          e.settlementId = settlementId;
+        }
+      });
+
+      if (!updated.settlements) updated.settlements = [];
+
+      updated.settlements.push({
+        id: settlementId,
+        date,
+        hours: remain,
+        amount,
+        forMonth
+      });
+
+      // 只有 Firestore 成功後才更新畫面資料
+      await setDoc(doc(db,'overtime','balance'),updated);
+      schOtData = updated;
+      schOtChanged = false;
+    }
+  });
+};
+
+window.editSchOtSettlementMonth = function(settlementId) {
+  const settlement = (schOtData.settlements || [])
+    .find(x => String(x.id) === String(settlementId));
+
+  if (!settlement) return;
+
+  schOtOpenSettlementEditor({
+    title: '修改結算月份',
+    amount: Number(settlement.amount)||0,
+    month: settlement.forMonth || schOtDefaultPayMonth(),
+    editableAmount: false,
+    onSave: async forMonth => {
+      const updated = JSON.parse(JSON.stringify(schOtData));
+      const item = (updated.settlements || [])
+        .find(x => String(x.id) === String(settlementId));
+
+      if (!item) throw new Error('找不到原始結算紀錄');
+
+      item.forMonth = forMonth;
+
+      await setDoc(doc(db,'overtime','balance'),updated);
+      schOtData = updated;
+      schOtChanged = false;
+    }
+  });
 };
 
 window.undoSchOtSettlement = async function(settlementId) {
